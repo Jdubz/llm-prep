@@ -75,6 +75,18 @@ The code examples double as a tour of modern Python patterns:
 ```
 llm-prep/
 ├── README.md                          ← You are here
+├── LICENSE                            # MIT License
+├── CONTRIBUTING.md                    # How to contribute
+├── CODE_OF_CONDUCT.md                 # Contributor Covenant
+├── CHANGELOG.md                       # Version history
+├── pyproject.toml                     # Project metadata & tool config
+├── .editorconfig                      # Editor formatting rules
+├── .github/
+│   ├── workflows/lint.yml             # CI: ruff + mypy
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md              # Error report template
+│   │   └── feature_request.md         # Content request template
+│   └── PULL_REQUEST_TEMPLATE.md       # PR template
 ├── 01-foundations/
 │   ├── concepts.md                    # How LLMs work (transformers, attention, etc.)
 │   └── key-terminology.md             # Quick-reference glossary
@@ -107,6 +119,10 @@ llm-prep/
 - **For system design questions,** use the framework in `06-interview-prep/system-design.md` — interviewers love structured thinking.
 - **The Python examples are meant to be read, not run.** They demonstrate patterns and interfaces, not boilerplate apps. To make them runnable, plug in a provider SDK (e.g., `openai`, `anthropic`).
 
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 ## License
 
-MIT
+[MIT](LICENSE)
