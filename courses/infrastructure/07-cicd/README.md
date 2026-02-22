@@ -51,11 +51,30 @@ Source -> Build -> Unit Tests -> Integration Tests -> Security Scan -> Staging D
 
 ### Parallel vs Sequential Execution
 
+```yaml
+# Sequential: each stage depends on the previous
+stages:
+  - build
+  - test
+  - deploy
+
+# Parallel within stages: independent jobs run concurrently
+test:
+  unit-tests:        # These run in parallel
+    ...
+  integration-tests: # within the "test" stage
+    ...
+  security-scan:
+    ...
+```
+
 **When to parallelize:** Independent test suites (unit, integration, linting), multi-platform builds (linux/amd64, linux/arm64), multi-service monorepo builds, matrix builds across language/runtime versions.
 
 **When to keep sequential:** Deploy stages that depend on test results, database migrations before application deployment, smoke tests after deployment before traffic shifting.
 
 ### Fail-Fast Strategies
+
+The goal is to surface failures as quickly as possible to minimize wasted compute and developer wait time.
 
 - **Lint and type-check first** -- fastest checks run before compilation
 - **Run unit tests before integration tests** -- cheaper tests gate expensive ones
@@ -65,9 +84,23 @@ Source -> Build -> Unit Tests -> Integration Tests -> Security Scan -> Staging D
 
 ### Artifact Management
 
-Artifacts are immutable -- once built, never modified. Store in a dedicated registry (Docker Hub, ECR, Artifactory, GitHub Packages). Tag with commit SHA for traceability: `myapp:a1b2c3d`. Implement retention policies to manage storage costs. Sign artifacts for supply chain security (cosign, Notary).
+```
+Build -> Artifact Registry -> Deploy (pull artifact)
+         (immutable)
+```
 
-**Anti-patterns:** Rebuilding for each environment (staging artifact != production artifact), using mutable tags like `latest` in production, storing artifacts in git (large binary files), no cleanup policy.
+**Principles:**
+- Artifacts are immutable -- once built, never modified
+- Store in a dedicated registry (Docker Hub, ECR, Artifactory, GitHub Packages)
+- Tag with commit SHA for traceability: `myapp:a1b2c3d`
+- Implement retention policies to manage storage costs
+- Sign artifacts for supply chain security (cosign, Notary)
+
+**Anti-patterns:**
+- Rebuilding for each environment (staging artifact != production artifact)
+- Using mutable tags like `latest` in production
+- Storing artifacts in git (large binary files)
+- No cleanup policy -- registries grow unbounded
 
 ---
 
@@ -93,6 +126,8 @@ After validation, switch:
 
 ### Zero-Downtime Switching
 
+The traffic switch happens at the load balancer or DNS level:
+
 - **Load balancer switch** (preferred): Update target group to point to the green environment. Instantaneous, no DNS propagation delay.
 - **DNS switch**: Update DNS record to point to green. Subject to TTL propagation -- clients may still hit blue for minutes.
 - **Service mesh switch**: Route 100% traffic to the new version via Istio VirtualService or similar.
@@ -100,6 +135,7 @@ After validation, switch:
 ### Database Migrations with Blue-Green
 
 Both blue and green must talk to the same database during the transition. Use the **Expand/Contract pattern**:
+
 1. **Expand**: Add new columns/tables without removing old ones. Both v1.0 and v1.1 can operate.
 2. **Deploy green (v1.1)**: It uses the new schema while blue (v1.0) ignores the new fields.
 3. **Switch traffic**: Green is now live.
@@ -112,8 +148,9 @@ Both blue and green must talk to the same database during the transition. Use th
 - **Instant rollback**: Switch load balancer back to blue. This is the primary advantage of blue-green.
 - **Database rollback concern**: If green wrote data using new schema features, switching back to blue may cause issues. Design migrations to be backward-compatible.
 - **Keep blue alive**: Do not decommission blue until the green deployment is confirmed stable (hours or days, not minutes).
+- **Session state**: If using sticky sessions, in-flight sessions on blue may be disrupted on switch. Prefer stateless architecture.
 
-**Tradeoffs:** Instant rollback and full validation before switch, but requires double the infrastructure and careful expand/contract discipline for database changes.
+**Tradeoffs:** Instant rollback and full environment validation before switch, but requires double the infrastructure and careful expand/contract discipline for database changes.
 
 ---
 
@@ -131,7 +168,11 @@ t=30m: [v1.0:  50%] [v1.1:  50%]
 t=60m: [v1.0:   0%] [v1.1: 100%]
 ```
 
-**Implementation:** Istio VirtualService with weight-based routing, ALB weighted target groups, CDN-level (Cloudflare Workers), or feature flags.
+**Implementation mechanisms:**
+- **Kubernetes**: Istio VirtualService with weight-based routing
+- **AWS**: ALB weighted target groups
+- **CDN-level**: Cloudflare Workers, AWS CloudFront functions
+- **Application-level**: Feature flags directing traffic subsets
 
 ```yaml
 # Istio VirtualService for canary routing
@@ -154,9 +195,9 @@ spec:
 
 ### Metric-Based Promotion
 
-Automated canary analysis compares the canary's metrics against the baseline: error rate, latency (p50/p95/p99), saturation (CPU, memory), business metrics.
+Automated canary analysis compares the canary's metrics against the baseline: error rate (HTTP 5xx, exception rate), latency (p50, p95, p99), saturation (CPU, memory), and business metrics (conversion rate, cart abandonment).
 
-**Tools:** Flagger (Kubernetes-native, integrates with Istio/Linkerd), Argo Rollouts (supports multiple traffic managers), Spinnaker (multi-cloud, Netflix-origin), AWS CodeDeploy.
+**Tools:** Flagger (Kubernetes-native, integrates with Istio/Linkerd/NGINX), Argo Rollouts (K8s-native, supports multiple traffic managers), Spinnaker (multi-cloud, Netflix-origin), AWS CodeDeploy.
 
 ### Automated Rollback
 
@@ -171,15 +212,21 @@ spec:
     metrics:
     - name: request-success-rate
       thresholdRange:
-        min: 99
+        min: 99           # rollback if success rate < 99%
     - name: request-duration
       thresholdRange:
-        max: 500
+        max: 500          # rollback if p99 latency > 500ms
 ```
+
+If any metric breaches the threshold, the canary is automatically rolled back to 0% traffic.
 
 ### Progressive Delivery
 
-Extends canary with: header-based routing (internal/beta users to canary), geographic routing (one region first), cohort-based (user ID hash for consistent experience), manual gates (human approval before advancing).
+Progressive delivery extends canary deployments with:
+- **Header-based routing**: Route specific users (internal, beta testers) to the canary
+- **Geographic routing**: Roll out to one region first
+- **Cohort-based**: Route by user ID hash for consistent experience
+- **Manual gates**: Require human approval before advancing to the next traffic percentage
 
 ---
 
@@ -187,7 +234,11 @@ Extends canary with: header-based routing (internal/beta users to canary), geogr
 
 ### maxUnavailable and maxSurge
 
+Kubernetes rolling update strategy replaces pods incrementally.
+
 ```yaml
+apiVersion: apps/v1
+kind: Deployment
 spec:
   replicas: 10
   strategy:
@@ -211,7 +262,7 @@ spec:
 
 ### Connection Draining
 
-When terminating a pod: (1) SIGTERM received, (2) removed from service endpoints, (3) `terminationGracePeriodSeconds` to finish in-flight requests, (4) SIGKILL after grace period. Use a `preStop` sleep hook to allow endpoint removal to propagate before the application starts shutting down.
+When terminating a pod: (1) SIGTERM received, (2) removed from service endpoints (no new traffic), (3) `terminationGracePeriodSeconds` to finish in-flight requests, (4) SIGKILL after grace period. Use a `preStop` sleep hook to allow endpoint removal to propagate before the application starts shutting down.
 
 ---
 
@@ -230,6 +281,12 @@ When terminating a pod: (1) SIGTERM received, (2) removed from service endpoints
 ### Flag Types
 
 **Release flags**: Gate new features behind a flag. Enable incrementally. Remove after full rollout.
+```javascript
+if (featureFlags.isEnabled('new-checkout-flow', user)) {
+  return <NewCheckoutFlow />;
+}
+return <LegacyCheckoutFlow />;
+```
 
 **Operational flags**: Circuit breakers, graceful degradation. Long-lived.
 
@@ -241,6 +298,8 @@ When terminating a pod: (1) SIGTERM received, (2) removed from service endpoints
 
 ```
 Create -> Develop -> Test -> Roll Out (%) -> Fully On -> Remove Flag
+                                                          ^
+                                                    CRITICAL STEP
 ```
 
 Stale flags cause dead code paths, testing combinatorial explosion (N flags = 2^N states), cognitive overhead, and risk of accidentally toggling forgotten flags. Mitigate with: expiration dates at creation, automated alerts when 100% on for >30 days, linting rules, quarterly cleanup sprints, mandatory ownership.
@@ -267,6 +326,17 @@ terraform {
 
 **Modules:** Reusable components from the registry or internal modules. Version-pin for stability.
 
+```hcl
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.0.0"
+
+  name = "production-vpc"
+  cidr = "10.0.0.0/16"
+  azs  = ["us-east-1a", "us-east-1b", "us-east-1c"]
+}
+```
+
 **Plan/Apply Workflow:**
 ```bash
 terraform init      # Initialize providers and backend
@@ -275,13 +345,26 @@ terraform apply     # Apply changes after confirmation
 terraform destroy   # Tear down resources (dangerous!)
 ```
 
-**Drift Detection:** `terraform plan` detects drift between state and reality. Reconcile by updating config to match reality or applying to enforce desired state. Tools like Driftctl or Terraform Cloud automate detection.
+**Drift Detection:** `terraform plan` detects drift between state and reality. Reconcile by updating config to match or applying to enforce desired state. Tools like Driftctl or Terraform Cloud automate detection.
 
 **Workspaces:** Manage multiple environments with the same configuration. Some teams prefer separate directories per environment.
 
 ### Pulumi
 
-Uses general-purpose languages (TypeScript, Python, Go) instead of HCL. Advantages: familiar languages, full language power for loops/conditionals, native unit testing. Tradeoffs: smaller ecosystem, different state management (Pulumi Cloud).
+Uses general-purpose languages (TypeScript, Python, Go) instead of HCL.
+
+```typescript
+import * as aws from "@pulumi/aws";
+
+const bucket = new aws.s3.Bucket("my-bucket", {
+  acl: "private",
+  versioning: { enabled: true },
+});
+
+export const bucketName = bucket.id;
+```
+
+Advantages: familiar languages, full language power for loops/conditionals, native unit testing. Tradeoffs: smaller ecosystem, different state management (Pulumi Cloud or self-managed).
 
 ---
 
@@ -289,16 +372,15 @@ Uses general-purpose languages (TypeScript, Python, Go) instead of HCL. Advantag
 
 ### Never in Git
 
-Non-negotiable. Secrets in git are compromised secrets, even if removed from HEAD (they remain in history). This includes API keys, tokens, passwords, database connection strings, TLS private keys, OAuth secrets, encryption keys.
+Non-negotiable. Secrets in git are compromised secrets, even if removed from HEAD (they remain in history). This includes: API keys, tokens, passwords, database connection strings, TLS private keys, OAuth secrets, encryption keys.
 
 ### Tools
 
-**HashiCorp Vault:** Dynamic secrets, encryption as a service, identity-based access (K8s service account, AWS IAM), audit logging.
+**HashiCorp Vault:** Dynamic secrets (short-lived DB credentials on demand), encryption as a service, identity-based access (K8s service account, AWS IAM), audit logging.
 
-**AWS Secrets Manager / Parameter Store:** Native AWS integration, automatic rotation for RDS credentials, cross-account sharing.
+**AWS Secrets Manager / Parameter Store:** Native AWS integration, automatic rotation for RDS credentials, cross-account sharing. Parameter Store is cheaper for simpler use cases.
 
-**External Secrets Operator (Kubernetes):** Syncs secrets from central store into K8s Secrets.
-
+**External Secrets Operator (Kubernetes):**
 ```yaml
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
@@ -362,7 +444,7 @@ jobs:
 
 ### Reusable Workflows
 
-Define with `workflow_call`, invoke from multiple repositories. Pass inputs and secrets explicitly. Avoids duplicating pipeline definitions across repos.
+Define with `workflow_call`, invoke from multiple repositories. Pass inputs and secrets explicitly.
 
 ### Matrix Builds
 
@@ -371,7 +453,7 @@ strategy:
   matrix:
     node-version: [18, 20, 22]
     os: [ubuntu-latest, macos-latest]
-  fail-fast: false
+  fail-fast: false  # don't cancel other matrix jobs on failure
 ```
 
 ### Self-Hosted Runners
@@ -380,7 +462,7 @@ For GPU access, private networks, specific hardware, or cost optimization. **Sec
 
 ### Security: OIDC for Cloud Auth
 
-Never store long-lived cloud credentials in GitHub Secrets. Use OIDC federation for short-lived tokens:
+**Never store long-lived cloud credentials in GitHub Secrets.** Use OIDC federation:
 
 ```yaml
 steps:
@@ -388,6 +470,7 @@ steps:
   with:
     role-to-assume: arn:aws:iam::123456789012:role/github-actions-role
     aws-region: us-east-1
+# Now AWS CLI/SDKs use short-lived credentials
 ```
 
 ---
@@ -396,7 +479,7 @@ steps:
 
 ### Trunk-Based Development
 
-All developers commit to `main` frequently -- at least daily. Short-lived feature branches (< 2 days). Feature flags hide incomplete work. Main is always deployable. No long-lived branches.
+All developers commit to `main` frequently -- at least daily, ideally multiple times per day. Short-lived feature branches (< 2 days). Feature flags hide incomplete work. Main is always deployable. No long-lived branches.
 
 **Why senior teams prefer it:** Reduces merge conflicts dramatically, forces small incremental changes, faster feedback loops, eliminates "integration hell."
 
@@ -404,7 +487,7 @@ All developers commit to `main` frequently -- at least daily. Short-lived featur
 
 Long-lived develop and main branches with feature, release, and hotfix branches. Makes sense for packaged software with versioned releases, multiple supported versions, or regulatory requirements. Overkill for SaaS products deploying continuously.
 
-**Recommendation for most SaaS teams**: Trunk-based development with feature flags.
+**Recommendation for most SaaS teams**: Trunk-based development with feature flags. GitFlow adds ceremony that slows down continuous delivery.
 
 ---
 
@@ -412,13 +495,14 @@ Long-lived develop and main branches with feature, release, and hotfix branches.
 
 ### The Expand/Contract Pattern
 
-**Phase 1 -- Expand** (backward-compatible only):
+**Phase 1 -- Expand** (backward-compatible changes only):
 ```sql
 ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE;
+CREATE TABLE user_preferences (...);
 CREATE INDEX CONCURRENTLY idx_users_email ON users(email);
 ```
 
-**Phase 2 -- Migrate** (application uses both schemas):
+**Phase 2 -- Migrate** (application uses both old and new schema):
 ```sql
 UPDATE users SET email_verified = TRUE WHERE verified_at IS NOT NULL;
 ```
@@ -432,13 +516,17 @@ ALTER TABLE users DROP COLUMN verified_at;
 
 Every migration must be compatible with both current and previous application versions.
 
-**Safe operations:** Adding nullable columns, adding tables, adding indexes (CONCURRENTLY), widening types.
+**Safe operations:** Adding nullable columns, adding tables, adding indexes (CONCURRENTLY), widening types (int -> bigint, varchar(50) -> varchar(100)).
 
 **Dangerous operations (require expand/contract):** Renaming columns, removing columns, changing types, adding NOT NULL without defaults, splitting/merging tables.
 
 ### Migration Testing
 
-Run migrations against production-sized data (sanitized) in CI. Test both up and down migrations. Measure migration duration. Use advisory locks to prevent concurrent execution. Tools: Flyway, Liquibase, Alembic, Prisma Migrate.
+- Run migrations against production-sized data (sanitized) in CI
+- Test both up and down migrations
+- Measure migration duration on production-sized data
+- Use advisory locks to prevent concurrent migration execution
+- Tools: Flyway, Liquibase, golang-migrate, Alembic, Prisma Migrate
 
 ---
 
@@ -450,7 +538,7 @@ A: (1) Affected service detection via git diff using Nx/Turborepo -- only build/
 
 **Q: Your CI pipeline takes 45 minutes. How do you reduce it?**
 
-A: Profile first -- measure, don't guess. Then: parallelize independent suites, cache dependencies and Docker layers, split tests across runners (Jest `--shard`), use larger runners, run targeted tests on PR (full suite nightly), pre-build base images, quarantine flaky tests.
+A: Profile first -- measure, don't guess. Then: parallelize independent suites, cache dependencies and Docker layers, split tests across runners (Jest `--shard`, pytest-split), use larger runners, run targeted tests on PR (full suite nightly), pre-build base images, quarantine flaky tests instead of re-running.
 
 **Q: When would you choose canary over blue-green deployment?**
 
@@ -460,17 +548,17 @@ A: **Canary** when you need gradual risk reduction with real traffic, have good 
 
 A: All schema changes must be backward-compatible (expand/contract). Run migrations before deploying the canary -- the stable version must tolerate the new schema. Never drop columns while both versions run. The contract phase happens only after 100% rollout and stabilization.
 
-**Q: Your team uses Terraform but someone made changes via the AWS console. How do you handle drift?**
+**Q: Your team uses Terraform but someone changed things via the AWS console. How do you handle drift?**
 
-A: Run `terraform plan` to detect drift. If the change should be kept: `terraform import` + update config. If it should be reverted: `terraform apply` to enforce desired state. Prevent future drift with SCPs, Terraform Cloud drift detection, and policy-as-code (Sentinel, OPA).
+A: Run `terraform plan` to detect drift. Evaluate if the change was intentional. If keeping: `terraform import` + update config. If reverting: `terraform apply` to enforce desired state. Prevent future drift with SCPs, drift detection alerts, and policy-as-code (Sentinel, OPA).
 
 **Q: Your codebase has 200 feature flags, many stale. How do you address this?**
 
-A: Audit for flags 100% on/off for >30 days. Assign owners to every flag. Enforce expiration dates with platform alerts. Lint rules to detect stale references. Quarterly cleanup sprints. Cap active flags per team.
+A: Audit for flags 100% on/off for >30 days. Assign owners. Enforce expiration dates with platform alerts. Lint rules for stale references. Quarterly cleanup sprints. Cap active flags per team to force cleanup before creating new ones.
 
 **Q: How would you design secrets management for a Kubernetes-based platform?**
 
-A: Central store (Vault or AWS Secrets Manager) as source of truth. External Secrets Operator syncs into K8s Secrets. Per-service access control via Vault policies or IAM. Automated rotation with application-side credential refresh. Audit logging. Developers never see production secrets. ExternalSecret manifests in git reference secrets by path, not by value.
+A: Central store (Vault or AWS Secrets Manager) as source of truth. External Secrets Operator syncs into K8s Secrets. Per-service access control via Vault policies or IAM. Automated rotation with credential refresh. Audit logging. Developers never see production secrets. ExternalSecret manifests reference secrets by path, not value.
 
 ---
 

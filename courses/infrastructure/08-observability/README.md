@@ -61,6 +61,12 @@ This is the observability investigation loop. If any pillar is missing, you hit 
 
 Unstructured logs are for humans reading a terminal. Structured logs are for machines parsing at scale.
 
+**Unstructured (bad for aggregation):**
+```
+2024-01-15 10:23:45 ERROR Failed to process order #12345 for user john@example.com: insufficient inventory
+```
+
+**Structured (good for aggregation):**
 ```json
 {
   "timestamp": "2024-01-15T10:23:45.123Z",
@@ -83,13 +89,16 @@ Unstructured logs are for humans reading a terminal. Structured logs are for mac
 
 ### Log Levels
 
+Use log levels consistently across all services.
+
 | Level | When to Use | Example |
 |-------|------------|---------|
+| **TRACE** | Extremely detailed, rarely enabled | Function entry/exit, variable values |
 | **DEBUG** | Diagnostic information for developers | SQL queries, cache hits/misses |
 | **INFO** | Normal operational events | Request completed, job started, user logged in |
-| **WARN** | Unexpected but recoverable situations | Retry attempt, deprecated API used |
-| **ERROR** | Operation failed but service continues | Failed request, external service down |
-| **FATAL** | Service cannot continue, shutting down | Cannot connect to database, OOM |
+| **WARN** | Unexpected but recoverable situations | Retry attempt, deprecated API used, high latency |
+| **ERROR** | Operation failed but service continues | Failed to process request, external service down |
+| **FATAL** | Service cannot continue, shutting down | Cannot connect to database, out of memory |
 
 **Common mistake**: Logging expected outcomes at WARN or ERROR. A user entering an invalid email is INFO (normal application behavior), not ERROR (unexpected failure).
 
@@ -98,6 +107,7 @@ Unstructured logs are for humans reading a terminal. Structured logs are for mac
 A correlation ID ties together all log entries for a single request, across all services. Generate at the API gateway, propagate via `X-Request-ID` header, attach to async context for automatic inclusion in all logs.
 
 ```javascript
+// Express middleware to extract or generate correlation ID
 app.use((req, res, next) => {
   const correlationId = req.headers['x-request-id'] || crypto.randomUUID();
   req.correlationId = correlationId;
@@ -110,21 +120,21 @@ app.use((req, res, next) => {
 
 | Platform | Type | Strengths |
 |----------|------|-----------|
-| **ELK Stack** | Self-hosted / Cloud | Full-text search, powerful queries, mature |
-| **Grafana Loki** | Self-hosted / Cloud | Label-indexed (not full-text), cost-efficient |
+| **ELK Stack** (Elasticsearch, Logstash, Kibana) | Self-hosted / Cloud | Full-text search, powerful queries, mature |
+| **Grafana Loki** | Self-hosted / Cloud | Lightweight, label-indexed (not full-text), cost-efficient |
 | **Datadog Logs** | SaaS | Integrated with metrics/traces, easy setup |
 | **Splunk** | SaaS / Self-hosted | Enterprise, powerful SPL query language |
 
-Loki indexes labels only (cheaper to operate). Elasticsearch indexes everything (faster full-text search).
+**Loki vs Elasticsearch:** Loki indexes labels only (much cheaper to operate). Elasticsearch indexes everything (faster full-text search). Loki is ideal when you filter by labels and grep within results. Elasticsearch is ideal for arbitrary text search across all logs.
 
 ### Avoiding Log Noise
 
-- Do not log sensitive data (PII, tokens, credit card numbers)
-- Do not log per-request at DEBUG in production -- use sampling or dynamic log levels
-- Do not log successful health checks -- they dominate volume with zero signal
-- Do log at service boundaries: incoming/outgoing requests, key decisions
-- Use sampling for high-volume paths: 1% of successes, 100% of errors
-- Set retention policies: 7 days for DEBUG, 30 days for INFO, 90+ days for ERROR
+- **Do not log sensitive data**: PII, passwords, tokens, credit card numbers
+- **Do not log per-request at DEBUG in production**: Use sampling or dynamic log levels
+- **Do not log successful health checks**: They dominate log volume with zero signal
+- **Do log at service boundaries**: Incoming requests, outgoing requests, key decisions
+- **Use sampling for high-volume paths**: Log 1% of successful requests, 100% of errors
+- **Set retention policies**: 7 days for DEBUG, 30 days for INFO, 90+ days for ERROR
 
 ---
 
@@ -132,19 +142,29 @@ Loki indexes labels only (cheaper to operate). Elasticsearch indexes everything 
 
 ### RED Method (for Services)
 
-| Signal | What to Measure | Prometheus Type |
-|--------|----------------|----------------|
+The RED method gives you the three signals that matter for any request-driven service.
+
+| Signal | What to Measure | Prometheus Metric Type |
+|--------|----------------|----------------------|
 | **R**ate | Requests per second | Counter |
 | **E**rrors | Failed requests per second | Counter |
 | **D**uration | Request latency distribution | Histogram |
 
 ```promql
+# Rate: requests per second over last 5 minutes
 rate(http_requests_total[5m])
-rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m])
+
+# Error rate: percentage of 5xx responses
+rate(http_requests_total{status=~"5.."}[5m])
+  / rate(http_requests_total[5m])
+
+# Duration: 99th percentile latency
 histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
 ```
 
 ### USE Method (for Resources)
+
+The USE method covers infrastructure resources (CPU, memory, disk, network).
 
 | Signal | What to Measure | Example |
 |--------|----------------|---------|
@@ -156,24 +176,28 @@ histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))
 
 | Type | Description | Use Case | Example |
 |------|------------|----------|---------|
-| **Counter** | Monotonically increasing | Total requests, errors, bytes | `http_requests_total` |
-| **Gauge** | Goes up and down | Queue depth, connections, temperature | `db_connections_active` |
-| **Histogram** | Distribution in buckets | Latency, response sizes | `http_request_duration_seconds` |
-| **Summary** | Client-side quantiles | Exact quantiles (prefer histogram) | `rpc_duration_seconds` |
+| **Counter** | Monotonically increasing value | Total requests, errors, bytes | `http_requests_total` |
+| **Gauge** | Value that goes up and down | Queue depth, connections, temperature | `db_connections_active` |
+| **Histogram** | Distribution of observations in buckets | Latency, response sizes | `http_request_duration_seconds` |
+| **Summary** | Pre-calculated quantiles (client-side) | Exact quantiles (prefer histogram) | `rpc_duration_seconds` |
 
-Histogram: server-side aggregation, can combine across instances, configurable buckets -- preferred for most use cases. Summary: cannot aggregate across instances, use only when exact quantiles are critical.
+**Histogram vs Summary:** Histogram allows server-side aggregation across instances and is preferred for most use cases. Summary cannot aggregate across instances -- use only when exact quantiles are critical.
 
 ### Instrumentation Example
 
 ```python
 from prometheus_client import Counter, Histogram
 
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests',
-    ['method', 'endpoint', 'status'])
+REQUEST_COUNT = Counter(
+    'http_requests_total', 'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
 
-REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'HTTP request latency',
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds', 'HTTP request latency',
     ['method', 'endpoint'],
-    buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0])
+    buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+)
 
 @app.route('/api/orders', methods=['POST'])
 def create_order():
@@ -190,15 +214,24 @@ def create_order():
 ### PromQL Basics
 
 ```promql
-http_requests_total{job="api-server"}                          # instant vector
-rate(http_requests_total[5m])                                   # per-second rate
-sum(rate(http_requests_total[5m])) by (endpoint)               # aggregation
-topk(5, sum(rate(http_requests_total[5m])) by (endpoint))      # top 5
+# Instant vector: current value
+http_requests_total{job="api-server"}
+
+# Rate: per-second rate of increase for counters
+rate(http_requests_total[5m])
+
+# Aggregation: sum across all instances
+sum(rate(http_requests_total[5m])) by (endpoint)
+
+# Top 5 endpoints by request rate
+topk(5, sum(rate(http_requests_total[5m])) by (endpoint))
 ```
 
 ### Custom Metrics
 
-Instrument business logic: orders created (by payment method), order value distribution, cart abandonment, cache hit/miss rates, queue depth. **Label cardinality warning:** Every unique label combination creates a new time series. Never use user IDs or request IDs as labels -- they will overwhelm Prometheus.
+Instrument your business logic: orders created (by payment method), order value distribution, cart abandonment, cache hit/miss rates, queue depth.
+
+**Label cardinality warning:** Every unique combination of label values creates a new time series. Labels with high cardinality (user IDs, request IDs) will overwhelm Prometheus. Use labels for low-cardinality dimensions only (method, status code, service name).
 
 ---
 
@@ -206,11 +239,15 @@ Instrument business logic: orders created (by payment method), order value distr
 
 ### OpenTelemetry
 
-OTel is the industry standard for vendor-neutral instrumentation.
+OpenTelemetry (OTel) is the industry standard for vendor-neutral instrumentation.
 
-**Core concepts:** A Trace is the entire journey of a request across services. A Span is a single operation within a trace (name, start time, duration, attributes, events, status, child spans). Context propagation passes trace context between services via the W3C `traceparent` header.
+**Core Concepts:** A Trace is the entire journey of a request across services. A Span is a single operation within a trace (name, start time, duration, attributes, events, status, child spans).
+
+**Context Propagation:** Trace context must be passed between services for spans to be linked. The W3C Trace Context standard (`traceparent` header) is the propagation format. OTel handles this automatically for HTTP, gRPC, and messaging.
 
 ### Auto-Instrumentation
+
+OTel SDKs auto-instrument common frameworks with minimal code changes:
 
 ```javascript
 const { NodeSDK } = require('@opentelemetry/sdk-node');
@@ -225,13 +262,44 @@ const sdk = new NodeSDK({
 sdk.start();
 ```
 
-Covers: HTTP clients/servers, database clients (pg, mysql2, redis), gRPC, message brokers (Kafka, RabbitMQ), AWS SDK calls.
+Covers: HTTP clients/servers (Express, Fastify), database clients (pg, mysql2, redis), gRPC, message brokers (Kafka, RabbitMQ), AWS SDK calls.
 
 ### Manual Spans
 
-For business logic that auto-instrumentation does not cover, create spans explicitly with attributes, status codes, and exception recording.
+For business logic that auto-instrumentation does not cover, create spans explicitly:
+
+```javascript
+const { trace } = require('@opentelemetry/api');
+const tracer = trace.getTracer('order-service');
+
+async function processOrder(order) {
+  return tracer.startActiveSpan('process_order', async (span) => {
+    try {
+      span.setAttribute('order.id', order.id);
+      span.setAttribute('order.item_count', order.items.length);
+
+      await tracer.startActiveSpan('check_inventory', async (inventorySpan) => {
+        const available = await inventoryService.check(order.items);
+        inventorySpan.setAttribute('inventory.all_available', available);
+        inventorySpan.end();
+      });
+
+      span.setStatus({ code: SpanStatusCode.OK });
+      return { success: true };
+    } catch (error) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+      span.recordException(error);
+      throw error;
+    } finally {
+      span.end();
+    }
+  });
+}
+```
 
 ### Sampling Strategies
+
+At scale, tracing 100% of requests is prohibitively expensive.
 
 | Strategy | Description | Tradeoff |
 |----------|------------|----------|
@@ -242,7 +310,12 @@ For business logic that auto-instrumentation does not cover, create spans explic
 
 ### Tracing Backends
 
-**Jaeger:** Mature, K8s-native. **Grafana Tempo:** Cost-efficient (object storage). **Datadog APM:** Full-stack integration. **Honeycomb:** High-cardinality queries, BubbleUp.
+| Platform | Type | Strengths |
+|----------|------|-----------|
+| **Jaeger** | Open source | Mature, Kubernetes-native, good UI |
+| **Grafana Tempo** | Open source | Cost-efficient (object storage), integrates with Grafana |
+| **Datadog APM** | SaaS | Full-stack integration, strong analytics |
+| **Honeycomb** | SaaS | High-cardinality queries, BubbleUp for anomaly detection |
 
 ---
 
@@ -262,20 +335,24 @@ SLIs should measure what users experience, not internal state. "CPU utilization"
 
 | Service Type | SLI | How to Measure |
 |-------------|-----|---------------|
-| HTTP API | Availability | (non-5xx responses) / (total responses) |
-| HTTP API | Latency | (requests < 500ms) / (total requests) |
-| Data pipeline | Freshness | current_time - last_successful_run |
-| Storage | Durability | 1 - (data_loss_events / total_objects) |
+| HTTP API | Availability (% successful) | (non-5xx responses) / (total responses) |
+| HTTP API | Latency (% within threshold) | (requests < 500ms) / (total requests) |
+| Data pipeline | Freshness (data age) | current_time - last_successful_run |
+| Data pipeline | Correctness | Validation checks on output |
+| Storage | Durability (% retained) | 1 - (data_loss_events / total_objects) |
 
 ### Error Budgets
 
-Error budget = inverse of SLO. At 99.9%: 43.2 min/month downtime allowed. At 99.95%: 21.6 min. At 99.99%: 4.32 min.
+Error budget = inverse of SLO. At 99.9% availability: 43.2 min/month allowed downtime. At 99.95%: 21.6 min. At 99.99%: 4.32 min.
 
-**Policy:** Budget >50%: deploy freely. Budget <25%: slow down, focus reliability. Exhausted: freeze features, all effort on reliability.
+**Error budget policy:**
+- Budget >50% remaining: Deploy freely, run experiments, take risks
+- Budget <25% remaining: Slow down deploys, focus on reliability
+- Budget exhausted: Freeze feature releases, all effort on reliability
 
 ### Burn Rate Alerting
 
-Alert based on the rate at which you consume your error budget, not on static thresholds.
+Traditional alerting ("alert if error rate > 1% for 5 minutes") is either too sensitive or too slow. Alert based on the rate at which you consume your error budget instead.
 
 ```
 Burn rate = (actual error rate) / (error rate allowed by SLO)
@@ -290,7 +367,7 @@ SLO 99.9%, actual error rate 1.0% -> burn rate = 10x
 | Page (high) | 6x | 6 hours | 30 minutes | 5% in 6 hours |
 | Ticket (medium) | 3x | 1 day | 2 hours | 10% in 1 day |
 
-Both windows must fire simultaneously -- long window catches sustained issues, short window confirms it is still happening.
+Both windows must fire simultaneously -- the long window catches sustained issues, the short window confirms it is still happening.
 
 ---
 
@@ -298,14 +375,23 @@ Both windows must fire simultaneously -- long window catches sustained issues, s
 
 ### Reducing Alert Fatigue
 
-Symptoms: acknowledging without investigating, permanent suppression, "ignore these alerts" tribal knowledge, pages during maintenance windows.
+Alert fatigue is the single biggest threat to on-call effectiveness. When engineers are drowning in noise, they ignore real alerts.
 
-Solutions: delete alerts with no action in 30 days, use burn rate instead of static thresholds, route by severity (not everything is a page), aggregate related alerts, use maintenance windows.
+**Symptoms:** Acknowledging without investigating, permanent suppression, "ignore these alerts" tribal knowledge, pages during maintenance windows, alert-to-incident ratio worse than 10:1.
+
+**Solutions:** Delete alerts with no action in 30 days, raise thresholds, use burn rate instead of static thresholds, route by severity (not everything is a page), maintenance windows, aggregate related alerts.
 
 ### Actionable Alerts
 
 Every alert answers: (1) What is happening? (2) Why does it matter? (3) What should I do?
 
+**Bad alert:**
+```
+FIRING: HighCPU
+  cpu_usage > 80% for 5 minutes on host-42
+```
+
+**Good alert:**
 ```
 FIRING: Order Processing Degraded
   Summary: Order service p99 latency exceeded 2s for 15 minutes
@@ -318,14 +404,14 @@ FIRING: Order Processing Degraded
 
 | Severity | Response Time | Notification |
 |----------|--------------|-------------|
-| **P1 - Critical** | Immediate | Page on-call |
+| **P1 - Critical** | Immediate | Page on-call engineer |
 | **P2 - High** | < 30 min | Page during business hours, Slack otherwise |
-| **P3 - Medium** | < 4 hours | Slack + ticket |
+| **P3 - Medium** | < 4 hours | Slack channel, create ticket |
 | **P4 - Low** | Next business day | Ticket only |
 
 ### Runbooks
 
-Every paging alert links to a runbook: quick assessment steps (dashboard, recent deploys, dependent services), common causes with fixes, escalation path. Without runbooks, on-call engineers waste time rediscovering known solutions.
+Every paging alert should link to a runbook: quick assessment steps (check dashboard, recent deploys, dependent services), common causes with fixes, escalation path. Without runbooks, on-call engineers waste time rediscovering known solutions.
 
 ---
 
@@ -333,15 +419,15 @@ Every paging alert links to a runbook: quick assessment steps (dashboard, recent
 
 ### On-Call Practices
 
-Healthy on-call: fair rotation, compensated (time off or pay), max one page per shift on average, handoff with context, authority to make operational decisions (rollback, scale up, circuit breaker).
+**Healthy on-call:** Fair rotation, compensated (time off or pay), max one page per shift on average, handoff with context, authority to make operational decisions (rollback, scale up, circuit breaker).
 
 ### Incident Commander Role
 
-For P1/P2 incidents, designate an IC who coordinates but does NOT debug. IC responsibilities: declare incident, set severity, create communication channel, assign roles, make decisions (rollback or not, involve other teams), track timeline, communicate updates every 15-30 minutes, schedule postmortem.
+For P1/P2 incidents, designate an IC who coordinates but does NOT debug. IC responsibilities: declare incident, set severity, create communication channel, assign roles (who debugs, who communicates), make decisions (rollback or not, involve other teams), track timeline, communicate updates every 15-30 minutes, schedule postmortem.
 
 ### Communication
 
-**Internal:** Dedicated Slack channel per incident. Status updates every 15-30 minutes, even with no news. Pin current status, impact, and assignments.
+**Internal:** Dedicated Slack channel per incident (`#inc-2024-01-15-order-outage`). Status updates every 15-30 minutes, even with no news. Pin current status, impact, and assignments.
 
 **External (status page):** Acknowledge within 5 minutes. Update regularly. Be honest about impact. Confirm resolution with brief explanation.
 
@@ -349,11 +435,11 @@ For P1/P2 incidents, designate an IC who coordinates but does NOT debug. IC resp
 
 Focus on systemic causes, not individuals. "Human error" is never a root cause -- the system allowed the error. Ask "what made this possible?" not "who did this?"
 
-**Template:** Summary, impact (users, duration, revenue), timeline, root cause, contributing factors, what went well, what could improve, action items with owners and due dates.
+**Template:** Summary, impact (users affected, duration, revenue), timeline, root cause, contributing factors, what went well, what could improve, action items with owners and due dates.
 
 ### Follow-Up Tracking
 
-Track actions alongside regular work (Jira, Linear, Issues). Assign owners and due dates. Review in weekly meetings. Escalate overdue items. Measure: % completed within 30 days.
+Track actions alongside regular work (Jira, Linear, GitHub Issues). Assign owners and due dates. Review in weekly meetings. Escalate overdue items. Measure: % completed within 30 days.
 
 ---
 
@@ -361,19 +447,19 @@ Track actions alongside regular work (Jira, Linear, Issues). Assign owners and d
 
 ### Golden Signals Dashboard
 
-Every service: Latency (p50/p95/p99), Traffic (RPS), Errors (rate, count), Saturation (CPU, memory, connection pool). Include recent deployments for correlation.
+Every service should display: Latency (p50/p95/p99), Traffic (RPS), Errors (rate, count), Saturation (CPU, memory, connection pool). Include recent deployments for correlation.
 
 ### Service Health Dashboard
 
-Platform overview: all services with status, SLO, error budget remaining, active incidents, deploy count.
+Platform overview for the team: all services with status, SLO, error budget remaining, active incidents, and deploy count for the day.
 
-### Business Metrics
+### Business Metrics Dashboard
 
-Orders per minute (vs last week), checkout conversion, payment success rate by provider, search CTR, API usage by tier. Observability is not just for engineers.
+Orders per minute (vs same time last week), checkout conversion rate, payment success rate by provider, search CTR, API usage by tier. Observability is not just for engineers.
 
-### Avoiding Sprawl
+### Avoiding Dashboard Sprawl
 
-Hierarchy (platform -> service), ownership (unowned = deleted), standardized templates, quarterly usage review, link from alerts, deployment annotations.
+Hierarchy (top-level platform -> per-service dashboards), ownership (unowned dashboards = deleted), standardized templates (golden signals), quarterly usage review, link from alerts to relevant dashboard sections, deployment and incident annotations on graphs.
 
 ---
 
@@ -381,32 +467,37 @@ Hierarchy (platform -> service), ownership (unowned = deleted), standardized tem
 
 **Q: You join a team with no observability. How do you build it from scratch?**
 
-A: Phased. Week 1-2: structured JSON logging with correlation IDs, basic RED metrics with Prometheus/Grafana, /healthz endpoints. Week 3-4: define SLIs/SLOs with product, burn-rate alerts, golden signals dashboards. Month 2: distributed tracing with OTel auto-instrumentation, incident process with postmortem template. Month 3+: custom business metrics, anomaly detection, profiling, RUM.
+A: Phased approach. Week 1-2: structured JSON logging with correlation IDs, basic RED metrics (rate/errors/duration) with Prometheus + Grafana, /healthz endpoints. Week 3-4: define SLIs/SLOs with product team, burn-rate alerts for SLOs, golden signals dashboards. Month 2: distributed tracing with OTel auto-instrumentation on the critical path, incident response process with postmortem template. Month 3+: custom business metrics, anomaly detection, profiling, RUM.
+
+**Q: How do you decide between logging, metrics, and tracing for a problem?**
+
+A: They serve different purposes. Need to debug a specific request? Trace. Need current service health? Metrics. Need exact failure details? Logs. Need alerting? Metrics (burn rates, SLO-based). The investigation flow is: metrics alert you, traces show you where, logs tell you why.
 
 **Q: Your SLO is 99.95% but you are at 99.7%. What do you do?**
 
-A: Triage errors by endpoint/region/cause. Fix top contributors (rollback, scale, circuit breaker). If budget exhausted, invoke error budget policy -- freeze features, prioritize reliability. Review 30 days of incidents for patterns. Evaluate if SLO is appropriate.
+A: Triage errors by endpoint/region/cause. Fix top contributors (rollback, scale, circuit breaker). If budget exhausted, invoke error budget policy -- freeze features, prioritize reliability. Review 30 days of incidents for patterns. Evaluate if SLO is appropriate -- either invest in reliability or adjust SLO.
 
 **Q: How do you handle alert fatigue (50+ pages/week)?**
 
-A: Audit last month -- was each actionable? Delete/suppress non-actionable. Consolidate per-instance into aggregate alerts. Switch to SLO-based burn rate alerting. Fix underlying instability. Target: 0-2 pages per shift.
+A: Audit last month of alerts -- was each actionable? Delete/suppress non-actionable. Consolidate per-instance into aggregate alerts. Switch to SLO-based burn rate alerting. Fix underlying instability. Target: 0-2 actionable pages per shift.
 
-**Q: How would you implement tracing across 50 microservices?**
+**Q: How would you implement distributed tracing across 50 microservices?**
 
-A: Incremental. Deploy OTel Collector as DaemonSet. Auto-instrumentation first (80% of value). Manual spans for top 3-5 user flows. Tail-based sampling (100% errors, 5% baseline). Verify traceparent propagation. Expand gradually.
+A: Incremental rollout. Deploy OTel Collector as DaemonSet. Start with auto-instrumentation (covers 80% of useful data). Add manual spans for the top 3-5 user-facing request flows. Implement tail-based sampling (100% errors, 100% slow, 5% baseline). Verify W3C traceparent propagation across all inter-service communication. Expand gradually.
 
 **Q: Walk me through running a major incident as IC.**
 
-A: (1) Declare, create channel, post summary with impact. (2) Page relevant leads, assign debug vs comms roles. (3) Parallel investigation. (4) Status page within 5 min, internal updates every 15 min. (5) If no root cause in 15 min, mitigate first (rollback, scale, fallback). (6) Confirm resolution with monitoring. (7) Postmortem within 48 hours.
+A: (1) Declare incident, create channel, post summary with impact. (2) Page relevant team leads, assign who debugs vs who communicates. (3) Parallel investigation workstreams. (4) Status page update within 5 min, internal updates every 15 min. (5) If no root cause in 15 min, mitigate first (rollback, scale, fallback). (6) Confirm resolution with monitoring. (7) Schedule postmortem within 48 hours.
 
 ---
 
 ## Key Takeaways
 
-1. **Observability is not monitoring**: Monitoring tells you when something breaks. Observability lets you ask arbitrary questions without new deploys.
+1. **Observability is not monitoring**: Monitoring tells you when something breaks. Observability lets you ask arbitrary questions without deploying new code.
 2. **Structure everything**: Structured logs, standardized metrics, correlated traces.
-3. **SLOs are the foundation**: Without SLOs, every alert is an opinion. With SLOs, every alert is grounded in user impact.
-4. **Burn rate alerting reduces noise dramatically** compared to static thresholds.
+3. **SLOs are the foundation of reliable operations**: Without SLOs, every alert is an opinion. With SLOs, every alert is grounded in user impact.
+4. **Burn rate alerting reduces noise dramatically** compared to static threshold alerts.
 5. **Blameless postmortems create learning organizations**: Improve the system, not punish individuals.
 6. **Invest in tracing early**: Distributed tracing is the fastest path to understanding cross-service behavior.
-7. **The investigation loop: metrics alert, traces locate, logs explain.**
+7. **Dashboards should tell a story**: Golden signals per service, platform health overview, business metrics -- each for a different audience.
+8. **The investigation loop: metrics alert, traces locate, logs explain.**
