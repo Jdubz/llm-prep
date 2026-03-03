@@ -45,6 +45,19 @@ Targeted prep for specific company interviews. Each guide covers the company's p
 
 ---
 
+## Cheat Sheets
+
+One-page PDF quick-reference cards for each course. Designed for printing or quick review between interview rounds.
+
+```bash
+# Build all cheat sheets (requires pandoc + texlive)
+./cheat-sheets/build.sh
+```
+
+PDFs are output to `cheat-sheets/out/`. Source markdown lives in `cheat-sheets/`.
+
+---
+
 ## License
 
 MIT

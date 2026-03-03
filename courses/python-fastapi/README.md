@@ -8,6 +8,13 @@ Advanced Python backend development with FastAPI. Covers async patterns, Pydanti
 
 ## Modules
 
+### 00 — [Python for TypeScript Engineers](00-python-prereqs.md)
+- Python syntax, types, and patterns mapped to TypeScript equivalents
+- Type hints, `Annotated`, generics, and `from __future__ import annotations`
+- Classes, decorators, context managers, generators, comprehensions
+- Pydantic fundamentals: models, validation, serialization, inheritance
+- Environment setup: venv, pip, project structure
+
 ### 01 — FastAPI Foundations
 - Request/response lifecycle vs Express middleware
 - Path operations, dependency injection, and the DI container
@@ -78,6 +85,11 @@ Each module directory contains:
 - **`examples.py`** — Complete, runnable production patterns. Study and run these.
 - **`exercises.py`** — Skeleton functions with TODOs. Implement to test your knowledge.
 
+## Exercises
+
+### [Python Interview Exercises](exercises/)
+Core Python exercises for coding screens and live interviews. 30 exercises across 5 files covering strings & collections, functions & decorators, classes & protocols, generators & iterators, and async patterns. Pure stdlib — no pip dependencies.
+
 ## Projects
 
 Complete mini-applications that tie multiple modules together:
@@ -92,7 +104,7 @@ Complete mini-applications that tie multiple modules together:
 ## Prerequisites
 - Solid understanding of REST API design
 - Experience with at least one ORM (Prisma, TypeORM, etc.)
-- Familiarity with Python basics (see `courses/llms/00-python-quickstart/` if needed)
+- Read [Module 00: Python for TypeScript Engineers](00-python-prereqs.md) if you're coming from Node.js/TypeScript
 
 ## Status
 **Content complete** — all modules written with exercises, examples, and projects.

@@ -8,6 +8,14 @@ Advanced LLM implementation for applied AI engineers. Covers transformer interna
 
 ## Modules
 
+### 00 — [AI & ML Foundations](00-ai-foundations.md)
+- What machine learning actually is (training vs inference, supervised vs self-supervised)
+- Neural networks in 5 minutes (neurons, layers, gradient descent, overfitting)
+- Key LLM concepts: tokens, embeddings, attention, temperature, context windows
+- The LLM stack: how an API call works, provider APIs, autoregressive generation
+- Python essentials for LLM engineering
+- Math intuition: vectors, cosine similarity, softmax, loss functions
+
 ### 01 — LLM Fundamentals
 - Transformer architecture, attention mechanism, positional encoding
 - Tokenization (BPE, SentencePiece, WordPiece) and its implications
@@ -81,7 +89,7 @@ Each module directory contains:
 ## Prerequisites
 - Solid understanding of REST APIs and distributed systems
 - Familiarity with at least one backend language (Python or TypeScript)
-- For Python-specific skills, see `courses/python-fastapi/`
+- Read [Module 00: AI & ML Foundations](00-ai-foundations.md) if you're new to ML/AI concepts
 
 ## Status
 **Content complete** — all modules written with exercises, examples, and full interview prep.

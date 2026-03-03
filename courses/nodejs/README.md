@@ -10,6 +10,7 @@ Expert-level Node.js and TypeScript course for engineers with 10+ years of TypeS
 
 | # | Topic | What You'll Nail |
 |---|-------|-----------------|
+| 00 | [TS & Node Fundamentals](00-ts-node-fundamentals.md) | V8 internals, closures, prototypes, event loop, promises, TypeScript essentials, modules |
 | 01 | [TypeScript Advanced](01-typescript-advanced/) | Conditional types, mapped types, template literals, branded types, type-level programming |
 | 02 | [Node.js Runtime](02-node-runtime/) | Event loop phases, libuv, worker threads, cluster, memory management |
 | 03 | [REST API Design](03-rest-api-design/) | Resource modeling, pagination, versioning, idempotency, error conventions |
@@ -40,7 +41,7 @@ Each module directory contains:
 ## Prerequisites
 - 10+ years TypeScript experience
 - Production Node.js experience
-- This course assumes expert-level knowledge and focuses on sharpening, not teaching
+- Review [Module 00: TS & Node Fundamentals](00-ts-node-fundamentals.md) to ensure the basics are sharp
 
 ## Status
 **Content complete** — all modules written.

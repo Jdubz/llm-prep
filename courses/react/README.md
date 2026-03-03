@@ -10,6 +10,7 @@ Advanced React course for senior engineers. Each lesson covers what you need to 
 
 | # | Topic | What You'll Nail |
 |---|-------|-----------------|
+| 00 | [React Fundamentals](00-react-fundamentals.md) | Components, props, state, effects, refs, events, context, TypeScript patterns |
 | 01 | [Hooks Deep Dive](src/lessons/01-hooks-deep-dive/) | useState pitfalls, useEffect mastery, rules of hooks internals |
 | 02 | [Custom Hooks](src/lessons/02-custom-hooks/) | Extraction patterns, composition, real-world hook implementations |
 | 03 | [Performance](src/lessons/03-performance/) | Memoization decision-making, React Compiler, profiling, virtualization |
@@ -46,3 +47,7 @@ Currently implemented: Lesson 02 (Custom Hooks) with useFetch and usePrevious de
 **Deep prep (12-16 hours)**: Work through all READMEs, then deep-dive.md for your weaker areas.
 
 **During the interview**: Cheat sheets are designed to be scannable for quick refreshers.
+
+## Prerequisites
+- 10+ years TypeScript experience with production React
+- Review [Lesson 00: React Fundamentals](00-react-fundamentals.md) to ensure the basics are sharp

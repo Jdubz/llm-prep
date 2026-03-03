@@ -8,6 +8,16 @@ Go for senior TypeScript engineers. Covers Go's type system, concurrency model, 
 
 ## Modules
 
+### 00 — [Go for TypeScript Engineers](00-go-prereqs.md)
+- Go toolchain, modules, and project structure mapped to npm equivalents
+- Syntax translation: variables, types, strings, collections, control flow
+- Functions, closures, variadic args, defer
+- Structs, methods, composition (no inheritance)
+- Interfaces (implicit satisfaction), the empty interface (`any`)
+- Error handling with multiple returns (no try/catch)
+- Pointers: when and why
+- Packages and visibility (uppercase = exported)
+
 ### 01 — Go Mental Model (for TS Engineers)
 - Types: structs vs interfaces vs classes, zero values vs undefined
 - Error handling: multiple returns vs try/catch, `errors.Is`/`errors.As`
@@ -82,7 +92,7 @@ Go for senior TypeScript engineers. Covers Go's type system, concurrency model, 
 ## Prerequisites
 - Strong programming fundamentals in any language
 - Understanding of concurrency concepts (event loop, async I/O)
-- Basic understanding of compiled languages is helpful but not required
+- Read [Module 00: Go for TypeScript Engineers](00-go-prereqs.md) before starting
 
 ## Status
 **Scaffolded** — module outlines complete, content to be written.

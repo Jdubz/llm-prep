@@ -61,7 +61,15 @@ from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
 
 class BookBase(BaseModel):
     # TODO: Define shared fields with appropriate Field() constraints
-    ...
+    title: str = Field(..., min_length=1, max_length=200)
+    author: str = Field(..., min_length=1, max_length=200)
+
+    @field_validator("isbn")
+    def isbn: 
+    
+    genre:
+    page_count:
+    price:
 
 
 class BookCreate(BookBase):

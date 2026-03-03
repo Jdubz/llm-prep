@@ -8,6 +8,14 @@ System design, infrastructure, and scaling patterns for senior engineers. Covers
 
 ## Modules
 
+### 00 — [Computing Fundamentals](00-computing-fundamentals.md)
+- Networking: DNS, TCP/UDP, HTTP, TLS, latency numbers
+- OS concepts: processes vs threads, concurrency vs parallelism, memory, file systems
+- Database fundamentals: SQL, ACID, indexing, SQL vs NoSQL trade-offs
+- Cloud computing: regions, VPCs, common services, managed vs self-hosted
+- Distributed systems: CAP theorem, consistency models, replication, load balancing
+- Containers, security basics, observability, back-of-envelope estimation
+
 ### 01 — System Design Framework
 - Structured approach to system design interviews
 - Requirements gathering: functional vs non-functional
@@ -87,7 +95,7 @@ System design, infrastructure, and scaling patterns for senior engineers. Covers
 ## Prerequisites
 - Experience deploying and operating production services
 - Basic familiarity with cloud providers (AWS/GCP/Azure)
-- Understanding of HTTP, TCP/IP, DNS fundamentals
+- Read [Module 00: Computing Fundamentals](00-computing-fundamentals.md) to ensure networking, databases, and distributed systems basics are solid
 
 ## Status
 **Scaffolded** — module outlines complete, content to be written.

@@ -8,6 +8,14 @@ Interview strategy, behavioral questions, and common technical topics for senior
 
 ## Modules
 
+### 00 — [Before You Start](00-before-you-start.md)
+- Senior/staff interview landscape and what changes at each level
+- Self-assessment: technical skills inventory and behavioral story inventory
+- Building your career narrative and identifying your "superpower"
+- Company research framework
+- Pipeline management and interview logistics
+- Recommended study order across all courses
+
 ### 01 — Interview Strategy
 - Understanding the hiring loop: phone screen → technical → system design → behavioral → team match
 - Researching companies effectively (product, tech stack, culture, challenges)
@@ -86,7 +94,7 @@ Practice exercises and past interview projects:
 
 ## Prerequisites
 - Active job search or upcoming interviews
-- Technical skills from other courses in this repo
+- Start with [Module 00: Before You Start](00-before-you-start.md) for self-assessment and study planning
 
 ## Status
 **Scaffolded** — module outlines complete, content to be written. Plant watering exercise migrated.

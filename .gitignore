@@ -54,6 +54,9 @@ go.work
 .DS_Store
 Thumbs.db
 
+# Cheat sheet PDFs (generated)
+cheat-sheets/out/
+
 # Coverage
 htmlcov/
 .coverage

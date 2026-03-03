@@ -1,0 +1,111 @@
+\documentclass[8pt]{article}
+
+% Page geometry — tight margins for maximum content
+\usepackage[
+  letterpaper,
+  margin=0.5in,
+  top=0.4in,
+  bottom=0.5in
+]{geometry}
+
+% Two-column layout
+\usepackage{multicol}
+\setlength{\columnsep}{0.3in}
+
+% Font and encoding
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% Compact spacing
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{parskip}
+
+% Code blocks
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{framed}
+\usepackage[utf8]{inputenc}
+
+% Footer
+\usepackage{fancyhdr}
+
+% Tables (for tabular env from lua filter)
+\usepackage{booktabs}
+
+% Hyperlinks (disable colored boxes)
+\usepackage[hidelinks]{hyperref}
+
+% Remove paragraph indent, minimal paragraph skip
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt plus 1pt}
+
+% Compact section headings
+\titleformat{\section}
+  {\normalfont\bfseries\normalsize}
+  {}{0em}{}[\vspace{-4pt}\titlerule\vspace{2pt}]
+\titlespacing*{\section}{0pt}{6pt}{2pt}
+
+\titleformat{\subsection}
+  {\normalfont\bfseries\small}
+  {}{0em}{}
+\titlespacing*{\subsection}{0pt}{4pt}{1pt}
+
+% Compact lists
+\setlist{nosep, leftmargin=1.2em, topsep=1pt}
+\setlist[itemize]{label=\textbullet}
+
+% Code style
+\definecolor{codebg}{gray}{0.95}
+\definecolor{codetext}{gray}{0.15}
+
+\lstset{
+  basicstyle=\ttfamily\scriptsize\color{codetext},
+  backgroundcolor=\color{codebg},
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  framerule=0.2pt,
+  rulecolor=\color{gray},
+  xleftmargin=2pt,
+  xrightmargin=2pt,
+  aboveskip=3pt,
+  belowskip=3pt,
+  tabsize=2,
+}
+
+% Footer setup
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{\footnotesize $title$ — Cheat Sheet}
+
+% Pandoc compatibility
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Shaded environment for pandoc code blocks
+\definecolor{shadecolor}{gray}{0.95}
+\newenvironment{Shaded}{%
+  \vspace{2pt}%
+  \begin{snugshade}%
+  \scriptsize
+}{%
+  \end{snugshade}%
+  \vspace{2pt}%
+}
+
+% Begin document
+\begin{document}
+\begin{center}
+  {\large\bfseries $title$}
+\end{center}
+\vspace{-4pt}
+
+\begin{multicols}{2}
+$body$
+\end{multicols}
+
+\end{document}
