@@ -17,68 +17,37 @@ Interview strategy, behavioral questions, and common technical topics for senior
 - Recommended study order across all courses
 
 ### 01 — Interview Strategy
-- Understanding the hiring loop: phone screen → technical → system design → behavioral → team match
-- Researching companies effectively (product, tech stack, culture, challenges)
-- Managing your interview pipeline (timing, pacing, leverage)
-- Salary negotiation fundamentals (levels, bands, equity)
-- Remote vs on-site interview differences
+- [01 – Interview Pipeline and Preparation](./01-strategy/01-interview-pipeline-and-preparation.md)
+- [02 – Negotiation and Compensation](./01-strategy/02-negotiation-and-compensation.md)
 
 ### 02 — Behavioral Interview Mastery
-- STAR method refined: situation, task, action, **results with metrics**
-- Building your story bank (8-12 prepared narratives)
-- Common behavioral themes:
-  - Conflict resolution and difficult conversations
-  - Leading without authority / cross-functional influence
-  - Handling ambiguity and making decisions with incomplete information
-  - Failure, learning, and growth
-  - Mentorship and growing other engineers
-  - Shipping under pressure / trade-off decisions
-- Tailoring stories to the company's values
+- [01 – Behavioral Interview Fundamentals](./02-behavioral/01-behavioral-interview-fundamentals.md)
+- [02 – Behavioral Mastery](./02-behavioral/02-behavioral-mastery.md)
 
 ### 03 — Technical Communication
-- Explaining complex systems to non-technical stakeholders
-- Whiteboarding effectively (structure, pacing, engagement)
-- Thinking out loud: narrating your problem-solving process
-- Asking clarifying questions (requirements, constraints, scale)
-- Handling "I don't know" gracefully
+- [01 – Communication Fundamentals](./03-technical-communication/01-communication-fundamentals.md)
+- [02 – Technical Presentation and Documentation](./03-technical-communication/02-technical-presentation-and-documentation.md)
 
 ### 04 — Questions to Ask Interviewers
-- Engineering culture: "How do you handle tech debt prioritization?"
-- Team dynamics: "What does the on-call rotation look like?"
-- Growth: "What does the path from senior to staff look like here?"
-- Product: "How do engineers influence product direction?"
-- Process: "Walk me through how a feature goes from idea to production"
-- Red flags to watch for in interviewer responses
+- [01 – Questions to Ask Framework](./04-questions-to-ask/01-questions-to-ask-framework.md)
+- [02 – Red Flags and Strategic Questions](./04-questions-to-ask/02-red-flags-and-strategic-questions.md)
 
 ### 05 — Common Technical Questions (Language-Agnostic)
-- Data structures and algorithms refresher (senior-level focus)
-- Big-O analysis: time and space complexity
-- Concurrency: threads vs processes, deadlocks, race conditions
-- Networking: HTTP/HTTPS, TCP/UDP, WebSockets, DNS
-- Operating systems: processes, memory, file systems
-- Security: OWASP top 10, auth patterns, encryption basics
+- [01 – Foundational Technical Concepts](./05-common-technical/01-foundational-technical-concepts.md)
+- [02 – Security and Distributed Systems](./05-common-technical/02-security-and-distributed-systems.md)
+- [03 – Advanced Technical Deep Dive](./05-common-technical/03-advanced-technical-deep-dive.md)
 
 ### 06 — Coding Interview Patterns
-- Sliding window, two pointers, BFS/DFS
-- Dynamic programming (top-down vs bottom-up)
-- Graph algorithms (shortest path, topological sort)
-- Tree traversals and manipulations
-- Hash maps for O(1) lookups
-- Time management during live coding
+- [01 – Core Coding Patterns](./06-coding-patterns/01-core-coding-patterns.md)
+- [02 – Pattern Optimization and Edge Cases](./06-coding-patterns/02-pattern-optimization-and-edge-cases.md)
 
 ### 07 — Take-Home & Live Coding Projects
-- Structuring a take-home submission (README, tests, clean commits)
-- Time management: scope appropriately for the time limit
-- What reviewers actually look for (hint: not cleverness)
-- Live pair programming: collaboration over performance
-- Practice projects and exercises (see `projects/` directory)
+- [01 – Take-Home Submission Guide](./07-take-home-live-coding/01-take-home-submission-guide.md)
+- [02 – Live Coding and Submission Excellence](./07-take-home-live-coding/02-live-coding-and-submission-excellence.md)
 
 ### 08 — Negotiation & Closing
-- Understanding total compensation (base, equity, bonus, benefits)
-- Researching market rates (levels.fyi, Glassdoor, Blind)
-- Competing offers and leverage
-- Counter-offer strategies
-- Evaluating offers beyond compensation (growth, team, product, culture)
+- [01 – Compensation Research and Fundamentals](./08-negotiation/01-compensation-research-and-fundamentals.md)
+- [02 – Negotiation Strategy and Execution](./08-negotiation/02-negotiation-strategy-and-execution.md)
 
 ---
 
@@ -97,4 +66,4 @@ Practice exercises and past interview projects:
 - Start with [Module 00: Before You Start](00-before-you-start.md) for self-assessment and study planning
 
 ## Status
-**Scaffolded** — module outlines complete, content to be written. Plant watering exercise migrated.
+**Complete** — all modules fully written and content-named.
