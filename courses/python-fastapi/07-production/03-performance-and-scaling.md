@@ -279,6 +279,20 @@ Use rolling deployments in Kubernetes: set `maxSurge: 1` and `maxUnavailable: 0`
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` apply performance and scaling concepts from this module and the broader production module:
+
+- **Exercise 2: Structured Logging Middleware** -- Uses `time.perf_counter()` for high-precision request timing, the same technique described in the "Profiling Middleware (Slow Request Detection)" section above. The middleware pattern of timing requests and logging duration is the foundation for identifying slow endpoints in production.
+
+- **Exercise 5: Request Rate Metrics Collector** -- Builds an in-memory metrics collector that tracks per-endpoint request count, average response time, and error rate. This is the manual equivalent of the Prometheus Counter/Histogram patterns, and directly supports the observability practices discussed in the interview questions about monitoring production FastAPI services.
+
+- **Exercise 3: Graceful Shutdown with In-Flight Request Tracking** -- Implements connection draining, which is critical for zero-downtime deployments discussed in the interview question about rolling updates. The drain timeout pattern prevents the indefinite hangs that can cause pod SIGKILLs during scaling events.
+
+See `examples.py` sections 4 (Request Logging Middleware with timing) and 7 (Metrics Collection) for complete reference implementations.
+
+---
+
 ## Key Takeaways
 
 - `tracemalloc` is built-in and sufficient for finding most memory leaks; `objgraph` helps visualize reference graphs for stubborn leaks.

@@ -557,3 +557,31 @@ app.post('/transfer', async (req, res) => {
 ```
 
 **18. Error swallowing in `.catch` chains**: `.catch(err => console.log(err))` logs but continues as if nothing happened. Callers think the operation succeeded. Fix: re-throw after logging, or return a Result type.
+
+## Related Reading
+
+This file brings together system design, code review, and live coding — all drawing on concepts from the full course:
+
+- **System design template** uses the scaling patterns from [08 – Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md), the caching strategies from [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md), and the background job architecture from [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#bullmq-queue-setup).
+- **Real-time collaboration design** combines WebSocket patterns from [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#websocket-scaling-with-redis-adapter) with the Redis Pub/Sub for cross-instance broadcasting.
+- **Rate limiter design** implements the sliding window algorithm from [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#sliding-window-with-sorted-set) and the HTTP 429 responses from [03 – HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md).
+- **Multi-tenant SaaS design** uses `AsyncLocalStorage` from [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md) and the tenant isolation patterns from [06 – Advanced Patterns and Multi-Tenancy](../06-database-patterns/03-advanced-patterns-and-multi-tenancy.md).
+- **Code review red flags** check for the antipatterns addressed throughout the course: N+1 queries from [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md), missing auth from [05 – JWT and OAuth2](../05-auth-security/01-jwt-and-oauth2.md), silent error handling from [09 – Clean Architecture and DDD](../09-architecture-patterns/01-clean-architecture-and-ddd.md#error-handling-architecture), and memory leaks from [08 – Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md#memory-leaks).
+- **Circuit breaker live coding** implements the resilience pattern tested in [07 – Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md#chaos-testing).
+- **Cursor pagination live coding** implements the pagination approach from [03 – Pagination, Filtering, and Bulk Operations](../03-rest-api-design/02-pagination-filtering-and-bulk-operations.md).
+- **LRU cache live coding** is the in-memory counterpart to the Redis cache patterns in [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#cache-aside-lazy-loading) — know when each is appropriate.
+- **Production gotchas (connection pool exhaustion, race conditions, missing await)** are the real-world failure modes that the testing strategies in [07 – Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md) are designed to catch.
+
+## Practice Suggestions
+
+1. **Run a mock system design interview**: Set a 25-minute timer and design one of the systems from this module (real-time collaboration, rate limiter, file processing pipeline, or multi-tenant SaaS). Practice the 6-step template: clarify requirements (2 min), high-level architecture (3 min), data model (3 min), API design (3 min), deep dive (10 min), scaling and reliability (5 min). Record yourself and review for gaps.
+
+2. **Build every live coding pattern from memory**: Without referencing the course, implement the middleware chain, circuit breaker, job queue, cursor pagination, and LRU cache. Time yourself — you should be able to implement any of these in under 15 minutes. Focus on getting the core logic right first, then add edge cases (error handling, boundary conditions).
+
+3. **Create a code review exercise bank**: Take the three code review exercises from this module and write 5 more of your own. Each should contain 3-5 bugs spanning different categories (performance, security, reliability, architecture). Practice identifying all bugs within 5 minutes — in a real interview, you will need to spot them quickly.
+
+4. **Practice the "10x traffic" scaling response**: For your most recent project (or a side project), write out the immediate (hours), short-term (days), and medium-term (weeks) responses to a 10x traffic increase. Be specific — which endpoints would you cache first? What are your current connection pool limits? Where are your N+1 queries? This exercise prepares you for the most common system design follow-up.
+
+5. **Build a complete production-ready API**: Combine everything from the course into one project — a REST API with JWT auth, Zod validation, Drizzle ORM with migrations, Redis caching, BullMQ background jobs, structured logging, OpenTelemetry tracing, Vitest integration tests with test containers, and graceful shutdown. This is the project you can reference in every interview answer.
+
+6. **Conduct a blameless postmortem on a past bug**: Pick a real bug you have encountered (or a hypothetical one). Write a postmortem covering: timeline of events, root cause analysis (5 whys), contributing factors (missing tests, missing monitoring, missing validation), and action items with owners. Practice presenting this — incident response questions are common in senior/staff interviews.

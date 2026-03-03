@@ -673,3 +673,16 @@ Serverless (Lambda, Vercel)?
 ```
 
 **Use both**: PgBouncer between your app instances and PostgreSQL, plus application-level pooling within each instance. PgBouncer handles the cross-instance connection management; the application pool handles local connection reuse.
+
+---
+
+## Related Reading
+
+- **Prisma type generation** — the generated types use advanced TypeScript patterns (conditional types, mapped types) covered in [TypeScript Advanced — Advanced Type Patterns](../01-typescript-advanced/02-advanced-type-patterns.md#7-how-prisma-types-work-deep-dive)
+- **Connection pooling** — pool exhaustion is a common cause of latency under load, explored further in [Performance — Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md) and [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md)
+- **Prisma middleware** (soft deletes, performance monitoring) — audit logging middleware connects to [Auth & Security — Advanced Security and Secrets](../05-auth-security/03-advanced-security-and-secrets.md) (structured audit logging)
+- **Zero-downtime migrations** — the expand/contract pattern is the same strategy used for API versioning in [REST API Design — Pagination, Filtering, and Bulk Operations](../03-rest-api-design/02-pagination-filtering-and-bulk-operations.md) (backward compatibility strategies)
+- **Raw queries** — parameterized queries are essential for SQL injection prevention covered in [Auth & Security — Session Management and Validation](../05-auth-security/02-session-management-and-validation.md#4-input-validation)
+- For query optimization, transactions, and indexing, continue to [Queries, Transactions, and Optimization](02-queries-transactions-and-optimization.md)
+- For resolving N+1 in GraphQL resolvers with DataLoader, see [GraphQL — Advanced GraphQL Patterns](../04-graphql/02-advanced-graphql-patterns.md#1-dataloader-and-the-n1-problem)
+- For testing database code, see [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md)

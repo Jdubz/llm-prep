@@ -364,6 +364,20 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
 
 ---
 
+## Practice Exercises
+
+Work through these exercises in `exercises.py` to practice the concepts from this file:
+
+- **Exercise 2 (`TestCreateItem`)** — Practice integration testing with `httpx.AsyncClient`. POST JSON payloads, check 201/422/409 status codes, and verify Pydantic validation error structure (`response.json()["detail"]`). Covers: POST requests, validation error assertions, duplicate detection (409).
+
+- **Exercise 3 (`TestWeatherEndpoint`)** — Practice `app.dependency_overrides` to replace an external service (`WeatherService`) with a fake class. Build a `FakeWeatherService`, wire it into the app, create your own `AsyncClient`, and clean up overrides. Covers: dependency override pattern, inline client creation, fake service classes.
+
+- **Exercise 4 (`TestWebSocketChat`)** — Practice WebSocket testing using `TestClient(exercise_app)` with `websocket_connect()`. Send and receive JSON messages, handle the welcome message protocol, and test ping/pong. Covers: `TestClient` for sync WS tests, `send_json`/`receive_json`, multi-message sequences.
+
+See also `examples.py` sections 5, 7, and 9 for working reference implementations of these patterns.
+
+---
+
 ## Key Takeaways
 
 - `app.dependency_overrides` lets you swap any dependency with a test double — use it in fixtures.

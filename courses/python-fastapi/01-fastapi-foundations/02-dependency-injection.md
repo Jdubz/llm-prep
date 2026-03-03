@@ -266,6 +266,22 @@ Express equivalent is scattered across `process.on('SIGTERM', ...)` and module-l
 
 ---
 
+---
+
+## Practice Exercises
+
+The concepts in this document are tested in `exercises.py` in the same directory:
+
+- **Exercise 2** (Dependency Chain): Build `get_app_config` and `get_book_store` as a chained
+  dependency using `Depends()` and the yield pattern from the sections above.
+- **Exercise 3** (CRUD Router): Inject the book store dependency into route handlers using
+  `Depends(get_book_store)` in handler function signatures.
+
+Also see `examples.py` section 2 for a complete 4-level dependency chain
+(`get_settings` -> `get_db` -> `get_current_user` -> `require_admin`).
+
+---
+
 ## Key Takeaways
 
 - `Depends` replaces most Express middleware patterns with explicit, typed, testable functions.

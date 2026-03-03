@@ -77,6 +77,14 @@ async def authenticate_user(session: AsyncSession, email: str, password: str) ->
 
 ## JWT Handling with python-jose
 
+> **Exercise note:** Exercise 1 in `exercises.py` implements JWT creation and
+> verification manually (using `hmac`, `hashlib`, and `base64` from the stdlib)
+> rather than using python-jose. This is intentional -- building JWT by hand
+> teaches you the internals: base64url encoding, HMAC-SHA256 signing, and the
+> `header.payload.signature` structure. Production code should use
+> **python-jose** or **PyJWT** as shown below, which handle edge cases, key
+> rotation, and multiple algorithms.
+
 ```bash
 pip install "python-jose[cryptography]" passlib[bcrypt]
 ```
@@ -352,6 +360,16 @@ CORS spec. The browser rejects it. List specific origins when using credentials.
 | Third-party integration | OAuth2 Authorization Code | Server-side session |
 | Microservices (internal) | mTLS or signed JWT | Certificate/service mesh |
 | CLI tool | OAuth2 Device Code or API key | OS credential store |
+
+---
+
+## Practice Exercises
+
+These exercises are in `exercises.py`. Complete them to test the concepts from this module.
+
+- **Exercise 1 (JWT Token Creation):** Implement `create_jwt()`, `decode_jwt()`, `create_access_token()`, and `create_refresh_token()` manually using `hmac`, `hashlib`, and `base64` -- tests the JWT structure and signing concepts from the "JWT Handling" section above.
+- **Exercise 2 (Auth Dependency Chain):** Build the three-layer dependency chain (`get_current_user` -> `get_active_user` -> `require_role()`) -- tests the "Dependency-Based Auth" patterns from this file.
+- **Exercise 5 (Token Refresh):** Implement the `/auth/token/refresh` endpoint with token rotation and JTI-based revocation -- tests the "Token Refresh with Rotation" flow from this file.
 
 ---
 

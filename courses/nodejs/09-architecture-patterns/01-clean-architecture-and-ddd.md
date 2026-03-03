@@ -432,3 +432,13 @@ Yes, sparingly. One `index.ts` per feature module as its public API. No nested b
 **Q: "How do you structure error handling?"**
 
 Abstract `AppError` base with `statusCode`, `code`, and `isOperational` flag. Operational errors return structured responses. Programmer errors log and return 500. All async handlers wrapped in error boundaries. Global error middleware as the catch-all.
+
+## Related Reading
+
+- **Clean architecture layers and ports/adapters** use the TypeScript interface patterns from [01 – Conditional and Mapped Types](../01-typescript-advanced/01-conditional-and-mapped-types.md) and the branded types from [01 – Advanced Type Patterns](../01-typescript-advanced/02-advanced-type-patterns.md#branded-types) for domain value objects like `OrderId` and `Money`.
+- **Use cases as the application layer** orchestrate the database operations covered in [06 – Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md) and [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md#transaction-isolation-levels) — the repository adapter is where your ORM code lives.
+- **Dependency injection and composition root** directly enable the testability patterns in [07 – Vitest and Unit Testing](../07-testing/01-vitest-and-unit-testing.md#dependency-injection-preferred) — DI makes mocking trivial without `vi.mock`.
+- **Error handling architecture** extends the error response patterns in [03 – HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md) and the GraphQL error handling in [04 – Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md).
+- **Feature-based project structure** informs how you organize the REST routes from [03 – API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md) and the GraphQL resolvers from [04 – Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md#resolver-patterns).
+- **Domain events in entities** lead into the event-driven patterns in [09 – Event-Driven and Async Patterns](./02-event-driven-and-async-patterns.md) and the BullMQ queue setup in [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#bullmq-queue-setup).
+- **Value objects and entities** use the TypeScript class patterns from [00 – TypeScript and Node.js Fundamentals](../00-ts-node-fundamentals.md#typescript-essentials) and benefit from the security validation in [05 – Session Management and Validation](../05-auth-security/02-session-management-and-validation.md#input-validation-with-zod).

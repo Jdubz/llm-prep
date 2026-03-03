@@ -374,6 +374,19 @@ class ContinualFineTuner:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 5: Training Cost and GPU Requirements Calculator** -- Calculate memory requirements using the bytes-per-param formulas, select GPUs from the reference tables, estimate training time using tokens-per-second throughput, and determine whether full FT, LoRA, or QLoRA is feasible for given hardware. Directly practices "Key Numbers Reference" tables and "Training Infrastructure at Scale" concepts.
+- **Exercise 6: LoRA Configuration Designer** -- Design LoRA configs using the "LoRA-Specific Parameters" table (rank ranges, alpha convention, target modules). Also practices QLoRA decisions informed by the "Fine-Tuning Method Comparison" table.
+
+See also `examples.py` for reference implementations:
+- Section 4 "TRAINING CONFIGURATION BUILDER" -- complete GPU selection, memory estimation, and training config generation
+- Section 7 "COST ESTIMATOR" -- training time and cost calculations with GPU throughput data
+
+---
+
 ## Interview Q&A: Advanced Fine-Tuning
 
 **Q: Explain DeepSpeed ZeRO and when you would use each stage.**

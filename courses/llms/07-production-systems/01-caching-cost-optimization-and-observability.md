@@ -594,6 +594,22 @@ async def llm_call_with_retry(
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file. Each exercise references specific sections above and relevant patterns in `examples.py`.
+
+- **Exercise 1: SSE Streaming Parser with Tool Call Support [2]** — Implement a streaming parser that handles both content tokens and tool calls from an SSE stream. Practices the SSE format, `[DONE]` sentinel, and tool-call fragment reassembly from the "Streaming" section above. Reference: `examples.py` Section 1 (`stream_sse_response`, `collect_streamed_tool_calls`).
+
+- **Exercise 2: Response Cache with Semantic Similarity [3]** — Build a two-tier cache with exact-match (hash-based) and semantic similarity (embedding cosine distance) lookups. Practices the caching strategies, TTL management, and the Caching Decision Tree from the "Caching Strategies" section. Reference: `examples.py` Section 2 (`ResponseCache` with `_make_key`, `get`, `put`).
+
+- **Exercise 3: Cost Monitoring System with Anomaly Detection [2]** — Track LLM costs by feature with anomaly detection against trailing averages. Practices the cost formula `(tokens * price) / 1M`, per-feature aggregation, and alert thresholds from the "Cost Optimization" and "Observability" sections. Reference: `examples.py` Section 3 (`CostTracker` with `record`, `check_alerts`).
+
+- **Exercise 5: Dual Rate Limiter (RPM + TPM) [2]** — Build a token-bucket rate limiter enforcing both requests-per-minute and tokens-per-minute limits. Practices the rate limiting patterns, refill-rate math, and provider tier limits from the "Rate Limiting" section. Reference: `examples.py` Section 5 (`TokenBucketRateLimiter` with `_refill`, `try_acquire`).
+
+- **Exercise 6: Observability Pipeline [3]** — Build a complete metrics pipeline with per-call capture, alert rules, dashboard aggregations, and cost/latency breakdowns. Practices the full LLMCallLog structure, dashboard metrics table, and distributed tracing concepts from the "Observability" section. Reference: `examples.py` Sections 3 and 7 (`CostTracker`, `LLMLogger`).
+
+---
+
 ## Interview Q&A: Caching, Cost, Observability
 
 **Q: How do you optimize LLM costs in production?**

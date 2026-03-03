@@ -496,6 +496,18 @@ async def get_response_with_degradation(
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file. Each exercise references specific sections above and relevant patterns in `examples.py`.
+
+- **Exercise 4: Model Router with Confidence-Based Escalation [3]** — Implement a cascade router that tries a cheap model first and escalates on low confidence. Practices the latency-vs-cost tradeoff thinking from the "Latency Optimization" hierarchy and the cascade architecture mentioned in the "Latency Optimization Checklist" (high effort). Reference: `examples.py` Section 4 (`ModelRouter` with `classify`, `select_model`). Also see `03-advanced-production-patterns.md` "Cascade Pattern" for the full architecture diagram.
+
+- **Exercise 5: Dual Rate Limiter (RPM + TPM) [2]** — Build a rate limiter that enforces both RPM and TPM limits with priority support. The retry-with-backoff patterns from the "Error Handling and Reliability" section complement rate limiting: when `try_acquire` returns False, the caller should back off. Reference: `examples.py` Section 5 (`TokenBucketRateLimiter`) and Section 6 (`call_with_retry_and_fallback`).
+
+- **Exercise 6: Observability Pipeline [3]** — The alert rules in this exercise (error rate, P95 latency, cache hit rate) directly implement the metrics and thresholds described in the "Error Handling and Reliability" section's Error Classification table and the circuit breaker state machine. Reference: `examples.py` Section 7 (`LLMLogger`) and Section 8 (`CircuitBreaker`).
+
+---
+
 ## Interview Q&A: Latency, Reliability, and Error Handling
 
 **Q: How do you approach latency optimization for LLM applications?**

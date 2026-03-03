@@ -676,6 +676,21 @@ class RAGTrace:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 4: Retrieval Evaluation** [2] -- Implements the evaluation metrics from "RAGAS: RAG Evaluation Framework." You will compute recall@K, precision@K, MRR, and hit rate across a test set -- the same metrics described in "Four Core Metrics" (context precision, context recall). Directly applies "Running RAGAS" and "Building an Evaluation Dataset."
+- **Exercise 6: Context Window Packing** [3] -- Addresses the "Lost in the Middle" failure mode from "RAG Failure Modes and Debugging." Packing chunks efficiently prevents stuffing too many irrelevant chunks into the prompt.
+- **Exercise 3: Hybrid Search with RRF** [2] -- Applies query transformation concepts: hybrid search compensates for the vocabulary mismatch problem described in "Query Transformation" (query rewriting, HyDE).
+
+See also `examples.py`:
+- `evaluate_retrieval()` (Pattern 6) -- reference implementation of recall@K, precision@K, MRR, hit_rate
+- `evaluate_faithfulness()` (Pattern 6) -- simplified faithfulness scoring (claim extraction + context check)
+- `hyde_retrieve()` (Pattern 5) -- HyDE query transformation from "HyDE (Hypothetical Document Embeddings)"
+
+---
+
 ## Interview Q&A: Advanced RAG
 
 **Q: What are common RAG failure modes and how do you debug them?**

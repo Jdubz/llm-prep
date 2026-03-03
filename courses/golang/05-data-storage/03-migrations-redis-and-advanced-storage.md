@@ -203,6 +203,8 @@ _, err = rdb.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 
 ### Pub/Sub
 
+Redis Pub/Sub provides fire-and-forget messaging between services or components. Unlike channels in Go (which are in-process), Redis Pub/Sub works across processes and machines. The trade-off is that messages are not persisted — if a subscriber is disconnected when a message is published, it misses that message. For durable messaging, use Redis Streams or an external message broker like Kafka. In Go, `pubsub.Channel()` returns a Go channel that you can range over, bridging Redis Pub/Sub into Go's concurrency model.
+
 ```go
 // Publisher
 err := rdb.Publish(ctx, "events:user", `{"event":"signup","id":42}`).Err()
@@ -612,3 +614,31 @@ When you need an atomic read-modify-write operation that cannot be expressed as 
 
 **Q: What are savepoints in PostgreSQL and when would you use them?**
 Savepoints mark a point within a transaction to which you can roll back without aborting the entire transaction. Use them in nested operations where a sub-operation might fail non-fatally and you want to retry or fall back without losing the parent transaction's work.
+
+---
+
+## Related Reading
+
+- **HTTP service integration** — [Module 04: Advanced HTTP Patterns](../04-http-services/03-advanced-http-patterns.md) shows how the database and caching layers from this module integrate into HTTP services with graceful shutdown and connection draining
+- **Integration testing with testcontainers** — [Module 06: Integration and HTTP Testing](../06-testing/02-integration-and-http-testing.md), section 2 (testcontainers-go) covers how to test against real PostgreSQL and Redis containers for the patterns from this module
+- **singleflight for cache stampede prevention** — [Module 02: Advanced Concurrency Patterns](../02-concurrency/03-advanced-concurrency-patterns.md), section 5 covers the `singleflight` pattern used in the caching strategies from section 2
+- **Embedding migrations** — [Module 07: Project Structure and Configuration](../07-production/01-project-structure-and-configuration.md), section 6 (Embedding Assets) shows how to use `//go:embed` to bundle the migration files from section 1 into the binary
+- **Connection pool observability** — [Module 07: Observability and Health](../07-production/02-observability-and-health.md), section 2 (Prometheus Metrics) covers exposing the pool metrics described in section 5 as Prometheus gauges
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the data storage concepts from this module (Database Drivers and ORMs through Migrations, Redis, and Advanced Storage):
+
+1. **sqlc CRUD with migrations** — Set up a PostgreSQL database with goose migrations, write SQL queries for a CRUD resource, and generate type-safe Go code with sqlc. Practice the full cycle: write a migration, write queries in `.sql` files, run `sqlc generate`, and use the generated code in a handler.
+
+2. **Repository pattern with testcontainers** — Define a repository interface for a domain entity, implement it with pgx, and write integration tests using testcontainers-go. Verify that your tests can create, read, update, and delete records against a real PostgreSQL instance.
+
+3. **Keyset pagination** — Implement cursor-based pagination for a table with at least 1000 rows. Write tests that paginate through the entire dataset and verify no rows are skipped or duplicated. Compare performance against offset pagination using benchmarks.
+
+4. **Redis caching layer** — Build a cache-aside layer using go-redis that sits in front of a PostgreSQL repository. Implement cache invalidation on writes. Write a test that verifies the cache is populated on first read, served from cache on second read, and invalidated on update.
+
+5. **Transaction with savepoints** — Write a transaction that performs multiple operations where one sub-operation might fail (e.g., inserting into a table with a unique constraint). Use savepoints to handle the failure without aborting the entire transaction. Test both the success and partial-failure paths.
+
+6. **Connection pool tuning** — Set up a pgxpool with configurable `MaxConns`, `MinConns`, and health check periods. Write a load test that measures query latency under different pool sizes. Export pool stats (acquired, idle, total) and observe how pool sizing affects performance.

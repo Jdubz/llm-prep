@@ -789,6 +789,17 @@ ch := make(chan int, 10)        // holds up to 10 values without blocking
 
 ---
 
+## Related Reading
+
+Now that you have the syntax translation, the following modules go deeper into the concepts introduced here:
+
+- **Structs, interfaces, and error handling** — [Module 01: Types, Interfaces, and Structs](01-go-mental-model/01-types-interfaces-and-structs.md) expands on sections 5–8 above with Go's philosophy of composition over inheritance
+- **Goroutines and channels** — [Module 02: Goroutines and Channels](02-concurrency/01-goroutines-and-channels.md) takes the preview in section 10 and covers the full concurrency model
+- **Packages and modules** — [Module 01: Packages and Modules](01-go-mental-model/02-packages-and-modules.md) deepens section 9 with visibility rules, dependency management, and project layout
+- **Testing** — [Module 06: Table-Driven Tests and Mocking](06-testing/01-table-driven-tests-and-mocking.md) covers Go's testing conventions that differ significantly from Jest/Vitest
+
+---
+
 ## Next Steps
 
 You're now ready for [Module 01: Go Mental Model](01-go-mental-model/README.md). It goes deeper into why Go makes the design choices it does and how to stop writing TypeScript in `.go` files.

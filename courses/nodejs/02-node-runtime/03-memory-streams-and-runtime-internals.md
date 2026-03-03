@@ -354,3 +354,27 @@ setInterval(() => {
 ### Q10: Implement graceful shutdown ensuring in-flight requests complete.
 
 **Answer**: `server.close()` stops new connections. Track sockets in a Set; set aggressive timeouts on idle ones. Drain app state (DB, queues). Hard deadline timer with `.unref()`. Handle SIGTERM + SIGINT. See the graceful shutdown pattern in section 4.2 of file 02.
+
+---
+
+## Related Reading
+
+- **V8 GC algorithms** (Section 1) affect latency spikes discussed in [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md) (memory leak detection, APM tools)
+- **Streams and backpressure** (Section 3) are applied in production in [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (streaming large payloads, SSE) and [REST API Design — Pagination, Filtering, and Bulk Operations](../03-rest-api-design/02-pagination-filtering-and-bulk-operations.md) (streaming bulk exports)
+- **Buffer security** (Section 2) — `crypto.timingSafeEqual()` — connects to [Auth & Security — Advanced Security and Secrets](../05-auth-security/03-advanced-security-and-secrets.md) (timing attacks, constant-time comparison)
+- **Diagnostic tools** (Section 4) — heap snapshots, Clinic.js, `--prof` — are the practical toolkit for the profiling workflows in [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md)
+- **Hidden class optimization** (Section 5) relates to V8 internals covered in [Threading and Process Management — V8 Engine Internals](02-threading-and-process-management.md#5-v8-engine-internals-deep-dive)
+- For the event loop mechanics that all of these runtime internals sit on top of, see [Event Loop and Task Queues](01-event-loop-and-task-queues.md)
+
+---
+
+## Practice Suggestions
+
+These exercises cover the entire Node.js Runtime module (files 01-03):
+
+1. **Event loop visualization**: Write a program that schedules work in every event loop phase (timers, poll via I/O, check via setImmediate, close callbacks, plus nextTick and Promise microtasks). Add `console.log` with timestamps to each callback. Run it and annotate the output with which phase each callback ran in.
+2. **Thread pool saturation lab**: Write a program that issues 20 concurrent `fs.readFile` calls on large files with `UV_THREADPOOL_SIZE=4`. Measure total time. Then set `UV_THREADPOOL_SIZE=16` and compare. Add `dns.lookup` calls to the mix and observe how they compete for thread pool slots.
+3. **Worker thread image processor**: Create a main thread that receives image paths and dispatches them to a pool of 4 worker threads using `SharedArrayBuffer` for the image data. Implement a round-robin dispatcher. Measure throughput versus serial processing.
+4. **Memory leak hunt**: Intentionally create a memory leak (e.g., an unbounded event listener or a growing Map used as a cache without eviction). Monitor with `process.memoryUsage()`. Take two heap snapshots 30 seconds apart using `v8.writeHeapSnapshot()`. Load them in Chrome DevTools, compare, and identify the leaking objects.
+5. **Backpressure stress test**: Create a Readable that generates data at 1GB/s and pipe it through a Transform that adds a 10ms async delay per chunk, then to a file Writable. First implement it incorrectly (ignoring backpressure), observe memory growth. Then fix it with `pipeline()` and verify memory stays flat.
+6. **Graceful shutdown implementation**: Build an HTTP server with a database connection pool and a BullMQ worker. Implement graceful shutdown that stops accepting new connections, waits for in-flight requests (with a 30s hard deadline), drains the queue worker, and closes the database pool. Test by sending SIGTERM during active requests.

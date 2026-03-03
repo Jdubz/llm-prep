@@ -340,6 +340,20 @@ good idea as it leads to stale query results.
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice the concepts from this file. Also see `examples.py` Sections 5-8 for complete working implementations of each pattern.
+
+- **Exercise 2 — Generic CRUD Repository**: Implement `get_by_id`, `list_all`, `create`, `update`, and `delete` using `session.get()`, `select()`, `session.add()`, and `session.delete()`. Practices the Session Management, flush vs commit, and Query Patterns SELECT sections above. See `examples.py` Section 5 (Generic Repository Pattern) for a reference implementation.
+
+- **Exercise 3 — Cursor-Based Pagination**: Implement `paginate_articles()` using `select().where().order_by().limit()` with the "fetch size+1 to detect next page" technique. Practices the Query Patterns SELECT section above. See `examples.py` Section 6b (Cursor-based pagination) for the complete pattern.
+
+- **Exercise 4 — Search with Multiple Filters**: Build a composable search function that dynamically applies `where()`, `or_()`, `join()`, and `selectinload()` based on which filters are non-None. Practices the Query Patterns SELECT and JOINs sections above. See `examples.py` Section 6c (Joins and eager loading) and Section 6d (Aggregation with joins).
+
+- **Exercise 5 — Bulk Insert**: Use the Core `insert().values()` API for multi-row inserts instead of ORM `session.add()` loops. Practices the INSERT / UPDATE / DELETE section above. See `examples.py` Section 8 (Bulk Insert with Core API).
+
+---
+
 ## Key Takeaways
 
 - One session per request: create in a yield dependency, commit on success, rollback on error.

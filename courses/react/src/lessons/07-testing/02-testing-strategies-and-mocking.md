@@ -823,3 +823,21 @@ describe('SearchInput with debounce', () => {
 ```
 
 Note the `advanceTimers: vi.advanceTimersByTime` option passed to `userEvent.setup()`. This is required when fake timers are active so that `userEvent` can advance time between simulated key presses.
+
+---
+
+## Practice
+
+- **Hook isolation test**: Write a `renderHook` test for `src/hooks/useFetch.js`. Test: (1) returns loading state initially, (2) returns data on success, (3) handles fetch error, (4) aborts previous request on URL change (race condition). Use MSW or `vi.fn()` to mock fetch.
+- **E2E with Playwright**: Write a Playwright test for a login flow: navigate to `/login`, fill email and password, submit, assert redirect to dashboard. Use `page.getByRole` queries.
+- **Visual regression**: Set up a Storybook story for a `<Button>` component with all variants. Configure Chromatic or Percy to snapshot each variant.
+- **Fake timers exercise**: Write a test for a component with a 5-second auto-save feature. Use `vi.useFakeTimers()` and `vi.advanceTimersByTime(5000)`. Verify the save callback fires once after 5 seconds, not before.
+- **Debounce test**: Following the "Testing Debounced / Throttled Functions" section, write a test for a search input with 300ms debounce. Verify: (1) no API call during typing, (2) one API call 300ms after last keystroke, (3) correct search term in the request.
+- **Server Component testing**: Write a test that renders a server component by mocking its data dependency. Verify the rendered output matches expected content.
+
+### Related Lessons
+
+- [RTL Fundamentals](01-react-testing-library-fundamentals.md) -- React Testing Library queries, MSW setup, form testing, accessibility testing
+- [Custom Hooks Testing & Advanced](../02-custom-hooks/02-custom-hooks-testing-and-advanced.md) -- `renderHook` patterns, testing hooks with providers, TanStack Query testing
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- understanding re-renders helps write meaningful performance tests
+- [RSC & Suspense](../06-rsc-and-suspense/01-server-components-and-suspense.md) -- server component patterns that require special testing strategies

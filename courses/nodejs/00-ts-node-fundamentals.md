@@ -538,6 +538,29 @@ If any of these gave you pause, review that section before moving on.
 
 ---
 
+## Related Reading
+
+This module is the prerequisite for the entire course. Every subsequent module assumes fluency with the concepts covered here. Specific connections:
+
+- **Closures and scope** (Section 2) underpin how middleware chains work in [REST API Design — HTTP Semantics](03-rest-api-design/01-http-semantics-and-status-codes.md) and how factory patterns are used in [Architecture — Clean Architecture and DDD](09-architecture-patterns/01-clean-architecture-and-ddd.md)
+- **The event loop** (Section 4) is covered in full depth in [Node.js Runtime — Event Loop and Task Queues](02-node-runtime/01-event-loop-and-task-queues.md), including libuv phases, starvation, and `AsyncLocalStorage`
+- **Promises and async patterns** (Section 5) are the foundation for [Node.js Runtime — Threading and Process Management](02-node-runtime/02-threading-and-process-management.md) and queue-based patterns in [Performance — Caching and Redis](08-performance-scaling/01-caching-and-redis.md)
+- **TypeScript essentials** (Section 6) — generics, narrowing, and discriminated unions — are taken much further in [TypeScript Advanced — Conditional and Mapped Types](01-typescript-advanced/01-conditional-and-mapped-types.md)
+- **Error handling patterns** (Section 8) connect directly to [REST API Design — API Design Patterns and Versioning](03-rest-api-design/03-api-design-patterns-and-versioning.md) (RFC 9457 error format) and [Architecture — Clean Architecture and DDD](09-architecture-patterns/01-clean-architecture-and-ddd.md) (error handling architecture)
+- **Streams** (Section 9) are explored deeply in [Node.js Runtime — Memory, Streams, and Runtime Internals](02-node-runtime/03-memory-streams-and-runtime-internals.md) and applied in [Performance — Caching and Redis](08-performance-scaling/01-caching-and-redis.md) (streaming large payloads, SSE)
+- **Testing fundamentals** (Section 10) are the basis for everything in [Testing — Vitest and Unit Testing](07-testing/01-vitest-and-unit-testing.md)
+
+## Practice Suggestions
+
+These exercises reinforce the fundamentals and help you identify any gaps before moving to advanced modules:
+
+1. **Event loop prediction**: Write 10 snippets mixing `setTimeout`, `setImmediate`, `process.nextTick`, `Promise.resolve().then()`, and synchronous code. Predict the output order, then run them to verify. Get comfortable explaining _why_ each ordering occurs.
+2. **Prototype chain exploration**: Create a 3-level class hierarchy. Use `Object.getPrototypeOf()` and `hasOwnProperty()` to walk the chain manually. Override a method at each level and verify lookup order.
+3. **Closure memory exercise**: Create a closure that captures a large array. Use `process.memoryUsage()` to observe heap growth. Then null out the reference and force GC (`--expose-gc` flag) to verify the closure's captured scope is released.
+4. **Promise combinators**: Build a `fetchWithFallback(urls: string[])` that tries each URL in sequence (not parallel) and returns the first successful response. Then build a `fetchWithTimeout(url, ms)` using `Promise.race`.
+5. **Custom error hierarchy**: Implement `AppError`, `NotFoundError`, `ValidationError`, and `AuthorizationError` with proper `instanceof` checks, status codes, and error codes. Write a central Express error handler that switches on error type.
+6. **Stream pipeline**: Build a CLI tool that reads a large CSV from stdin, filters rows based on a column value, transforms a field, and writes JSON to stdout — all using `pipeline()` with Transform streams. Verify it handles backpressure by piping through `pv` (pipe viewer).
+
 ## Next Steps
 
 You're ready for [Module 01: TypeScript Advanced Patterns](01-typescript-advanced/README.md) — conditional types, mapped types, template literals, branded types, and type-level programming.

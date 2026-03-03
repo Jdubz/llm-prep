@@ -552,3 +552,19 @@ Initial HTML shell includes Suspense fallbacks. Chunks stream as inline `<script
 ### Q8: What is the RSC payload?
 
 The Flight payload is a line-delimited streaming format representing the component tree. Unlike HTML, it preserves component boundaries, props, and client component references. During navigation, React fetches the RSC payload (not HTML) and reconciles with the existing tree for SPA-like transitions.
+
+---
+
+## Practice
+
+- **Server vs Client classification**: Take 5 components from a real app and classify each as "server" or "client." For each, explain why: Does it use hooks? Event handlers? Browser APIs? Does it only render data?
+- **Suspense boundary design**: Draw the component tree for a dashboard with a header, sidebar, main content area, and a comments section. Decide where to place `<Suspense>` boundaries to maximize progressive loading without over-fragmenting.
+- **Streaming SSR experiment**: If you have a Next.js App Router project, add a `<Suspense>` boundary around a slow data-fetching component. Observe the HTML streaming in the Network tab -- the shell loads first, then the content swaps in.
+- **Error + Suspense composition**: Build a component tree where a server component fetches data that might fail. Wrap it in both `<Suspense>` (for loading) and an error boundary (for errors). Verify that the error boundary catches fetch failures while Suspense handles the loading state.
+- **`use()` hook exercise**: Fetch data in a server component and pass the promise as a prop to a client component. Use the `use()` hook to unwrap the promise inside a Suspense boundary.
+
+### Related Lessons
+
+- [RSC Advanced Features & Patterns](02-rsc-advanced-features-and-patterns.md) -- Next.js App Router, caching, Flight protocol, PPR, server actions, migration guide
+- [Performance: Tools & Advanced Patterns](../03-performance/02-performance-tools-and-advanced-patterns.md) -- code splitting, selective hydration, streaming SSR from a performance perspective
+- [State Management Fundamentals](../05-state-management/01-state-management-fundamentals.md) -- how server state and client state differ, and why RSC changes the data-fetching paradigm

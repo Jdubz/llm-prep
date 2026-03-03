@@ -220,6 +220,17 @@ Read-through caching with write-through invalidation. Read-after-write consisten
 
 ---
 
+## Related Reading
+
+- [Module 03: Caching Patterns and Redis Basics](01-caching-patterns-and-redis-basics.md) -- the foundational patterns and Redis architecture that this module builds on
+- [Module 03: Cache Invalidation and Performance](02-cache-invalidation-and-performance.md) -- invalidation strategies that pair with the stampede prevention and consistency mechanisms covered here
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- Redis Streams and advanced data structures used in multi-tier caching architectures
+- [Module 05: Load Balancing Fundamentals](../05-load-balancing/01-load-balancing-fundamentals.md) -- consistent hashing for cache key distribution and the connection between cache sharding and load balancing
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- deploying Redis clusters on Kubernetes using StatefulSets, and managing persistent volumes for cache durability
+- [Module 08: SLOs, Alerting, and Incident Response](../08-observability/02-slos-alerting-and-incident-response.md) -- defining SLOs for cache availability and using burn rate alerts when cache hit rates drop
+
+---
+
 ## Key Takeaways
 
 1. **Redis's data structure encodings are automatic and size-driven.** Understanding listpack vs skiplist vs hashtable helps you tune memory usage with the right threshold settings.

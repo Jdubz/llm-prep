@@ -381,6 +381,22 @@ Range: −1 to 1. For normalized vectors, cosine similarity and dot product are 
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` directly practice concepts from this file:
+
+- **Exercise 1: Multi-Model Cost Estimator** -- Practices token counting using tiktoken (see "Tokenization" section above) and understanding how tokens translate to cost. Also requires understanding that context windows are measured in tokens (see "Context Windows and Memory").
+
+- **Exercise 3: Context Window Truncation Strategies** -- Directly applies the context window concepts from this file: managing conversation history within token limits, the "lost in the middle" phenomenon (see "Interview Q&A" below), and token-level text splitting. The `truncate_keep_recent()` function mirrors the sliding window approach described in "Context Windows and Memory." The `split_into_chunks()` function requires working with tiktoken's encode/decode at the token level.
+
+- **Exercise 4: Embedding Similarity Search** -- Implements the cosine similarity formula from the "Embeddings" section and builds a semantic search system. The `diversity_rerank()` function (MMR) goes beyond this file's content but builds on the similarity concepts covered here.
+
+- **Exercise 5: Parameter Configuration Designer** -- Requires understanding every parameter in the "Key Parameters for Generation" section: temperature, top-p, frequency/presence penalties, max tokens, and stop sequences. Each sub-function asks you to choose appropriate values for a specific task type.
+
+See also `examples.py` sections 1 (Token Counting), 3 (Context Window Management), 4 (Parameter Tuning), 5 (Embedding Similarity), and 7 (Token Budget Planner) for runnable reference implementations.
+
+---
+
 ## Interview Q&A: Transformer Architecture
 
 **Q: How do transformers differ from RNNs?**

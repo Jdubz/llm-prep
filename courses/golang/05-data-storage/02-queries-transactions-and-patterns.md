@@ -103,6 +103,8 @@ func (r *UserRepo) BulkInsert(ctx context.Context, users []User) error {
 
 ### CTE (Common Table Expressions)
 
+CTEs (the `WITH` keyword) break complex queries into named, readable sub-queries. Each CTE is like a temporary view that exists only for the duration of the query. They are especially useful in Go because sqlc can generate type-safe code from CTE queries just like regular queries. CTEs also make it easier to aggregate data from multiple tables without nested subqueries.
+
 ```sql
 -- name: GetUserStats :one
 WITH user_posts AS (
@@ -129,6 +131,8 @@ WHERE u.id = $1;
 ```
 
 ### JSON Aggregation
+
+PostgreSQL's `json_agg` and `json_build_object` let you return nested data structures in a single query, avoiding the N+1 problem. In Go, this is particularly useful because you can scan the JSON column directly into a `json.RawMessage` or a typed struct slice. The `FILTER (WHERE p.id IS NOT NULL)` clause prevents a JSON array containing a single `null` entry when the LEFT JOIN finds no matches. The `COALESCE(..., '[]')` ensures the result is always a valid JSON array rather than SQL NULL.
 
 ```sql
 -- name: GetUserWithPosts :one
@@ -537,3 +541,13 @@ func TestGetUser(t *testing.T) {
     mockStore.AssertExpectations(t)
 }
 ```
+
+---
+
+## Related Reading
+
+- **HTTP handlers consuming repositories** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md), section 6 shows the HTTP handlers that call the repository interfaces defined in section 3
+- **Error handling in handlers** — [Module 04: Request Handling and Validation](../04-http-services/02-request-handling-and-validation.md), section 1 shows how HTTP handlers translate the sentinel errors from section 3 into HTTP status codes
+- **Context propagation** — [Module 02: Synchronization and Context](../02-concurrency/02-synchronization-and-context.md), section 3 (context.Context) explains the context cancellation mechanism that powers the context-aware transactions in section 2
+- **Mock generation and testing** — [Module 06: Table-Driven Tests and Mocking](../06-testing/01-table-driven-tests-and-mocking.md), section 3 (Mocking Strategies) expands on the manual mocks and mockery code generation from section 5
+- **DI patterns at scale** — [Module 08: Patterns and Composition](../08-advanced-patterns/02-patterns-and-composition.md), section 4 (Dependency Injection) covers Wire and fx for when the manual DI in section 4 becomes unwieldy

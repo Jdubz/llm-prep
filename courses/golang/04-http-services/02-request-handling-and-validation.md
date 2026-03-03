@@ -502,3 +502,13 @@ func (h *HealthHandler) ReadinessHandler(w http.ResponseWriter, r *http.Request)
     json.NewEncoder(w).Encode(map[string]string{"status": "ready"})
 }
 ```
+
+---
+
+## Related Reading
+
+- **JSON encoding/decoding foundations** — [Module 03: HTTP and JSON](../03-stdlib/01-http-and-json.md), section 2 (encoding/json) covers the marshal/unmarshal mechanics that underpin the request decoding and response encoding in this file
+- **Health checks in production** — [Module 07: Observability and Health](../07-production/02-observability-and-health.md), section 4 (Health Checks) expands the health check handler from section 6 with Kubernetes liveness, readiness, and startup probes
+- **Error handling patterns** — [Module 07: Project Structure and Configuration](../07-production/01-project-structure-and-configuration.md), section 3 (Error Handling in Production) shows how the `AppError` and `ErrorHandler` middleware from section 1 scale to production services
+- **Repository pattern for data** — [Module 05: Queries, Transactions, and Patterns](../05-data-storage/02-queries-transactions-and-patterns.md), section 3 (Repository Pattern) shows the store interfaces that handlers validate input for and pass data to
+- **Validation with struct tags** — [Module 08: Reflection and Advanced Abstractions](../08-advanced-patterns/03-reflection-and-advanced-abstractions.md), section 1 explains the reflection mechanism behind struct tag validation libraries

@@ -520,3 +520,27 @@ Redis-backed sliding window or token bucket. Key per client (IP or API key). Use
 - V8 optimizes for monomorphic code. Consistent object shapes and types lead to faster execution. Avoid `delete`, dynamic property addition, and megamorphic call sites.
 - OpenTelemetry is the future of observability. Vendor-agnostic instrumentation that works with any backend. Auto-instrumentation covers HTTP, database, and cache calls.
 - Monitor the four golden signals: latency, throughput, errors, and saturation. Event loop delay is the Node.js-specific saturation metric.
+
+## Related Reading
+
+- **Profiling commands and clinic.js** diagnose the bottlenecks introduced by the runtime concepts in [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md) and [02 – Memory, Streams, and Runtime Internals](../02-node-runtime/03-memory-streams-and-runtime-internals.md#v8-garbage-collection).
+- **Memory leak debugging (closures, listeners, timers)** relates to the stream lifecycle management in [02 – Memory, Streams, and Runtime Internals](../02-node-runtime/03-memory-streams-and-runtime-internals.md#streams-and-backpressure) and the event listener patterns in [09 – Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md#eventemitter-patterns).
+- **WeakRef and FinalizationRegistry** are advanced memory patterns that complement the caching strategies in [08 – Caching and Redis](./01-caching-and-redis.md#cache-aside-lazy-loading) for local in-memory caches.
+- **OpenTelemetry and distributed tracing** are the observability layer for the microservices and event-driven systems in [09 – Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md#distributed-tracing) and [09 – Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md).
+- **APM tools and custom metrics** monitor the database queries optimized in [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md) and the Redis operations in [08 – Caching and Redis](./01-caching-and-redis.md).
+- **Event loop monitoring with `monitorEventLoopDelay`** is the production measurement of the event loop phases described in [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md#event-loop-phases).
+- **HTTP/2 server implementation** builds on the HTTP semantics in [03 – HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md) and the connection management discussed in [08 – Clustering and Scaling](./02-clustering-and-scaling.md#http-keep-alive-and-connection-pooling).
+
+## Practice Suggestions
+
+1. **Profile a real API under load**: Start a Node.js API, use k6 to generate sustained load, and run `clinic doctor` followed by `clinic flame` to identify CPU hotspots. Practice reading flame graphs — look for wide, flat stacks (indicating hot functions) and deep recursive stacks (indicating potential stack overflow risks).
+
+2. **Hunt a memory leak**: Intentionally introduce a memory leak (unbounded Map cache, event listener not removed, or closure retaining a large buffer) into a test server. Take three heap snapshots (baseline, under load, after forced GC), load them in Chrome DevTools, and use the comparison view to identify the growing objects. Practice following the retainer tree to the root cause.
+
+3. **Set up OpenTelemetry end-to-end**: Configure the OpenTelemetry Node SDK with auto-instrumentation for HTTP, Express/Fastify, pg, and ioredis. Export traces to Jaeger (run locally with Docker). Make several API requests and explore the trace waterfall to see how request time is distributed across database queries, cache lookups, and external API calls.
+
+4. **Implement custom application metrics**: Using OpenTelemetry or StatsD, add custom metrics to a test API: request latency histograms per endpoint, database query duration, cache hit/miss ratio, and event loop delay. Set up a Grafana dashboard (Docker) and create alerts for p95 latency exceeding 500ms and error rate exceeding 1%.
+
+5. **Reproduce and fix V8 deoptimizations**: Write functions that trigger deoptimizations (type changes, hidden class transitions, megamorphic call sites). Run with `--trace-deopt` to confirm the deoptimization, then fix the code and verify optimization with `--trace-opt`. Measure the performance difference with a microbenchmark.
+
+6. **Configure production-ready `--max-old-space-size`**: Deploy a Node.js app in a Docker container with a 2GB memory limit. Set `--max-old-space-size` to 75% of the container limit (1536MB). Run a soak test (sustained load for 30+ minutes) monitoring RSS and heap usage to verify memory stabilizes without OOM kills.

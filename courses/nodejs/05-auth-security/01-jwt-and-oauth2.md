@@ -565,4 +565,17 @@ class APIKeyService {
     return { key: fullKey, keyId, keyPrefix };
   }
 }
+
+**When to use API keys vs OAuth2 access tokens:** API keys are appropriate for server-to-server integrations where a human user is not involved and you want simple, long-lived credentials with explicit scope control. OAuth2 access tokens are the right choice when a user is involved (delegation), when tokens should be short-lived, or when you need standardized flows (OIDC). Many APIs support both — OAuth2 for user-context operations, API keys for webhook endpoints and background automation.
+
+---
+
+## Related Reading
+
+- **JWT token revocation** (Section 3) — the Redis blocklist strategy connects to [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (Redis data structures, TTL-based expiry)
+- **RS256 vs HS256** (Section 1.5) — the distributed signing concern ties into [Architecture — Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md) (service-to-service authentication)
+- **OAuth2 flows** (Section 4) — the auth routes and middleware patterns connect to [REST API Design — HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md) (status codes 401 vs 403) and [GraphQL — Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md) (resolver-level authorization)
+- **Token verification middleware** — for TypeScript typing of `req.user` via module augmentation, see [TypeScript Advanced — Advanced Type Patterns](../01-typescript-advanced/02-advanced-type-patterns.md#3-declaration-merging-and-module-augmentation)
+- **API key hashing with Argon2** (Section 7) — password hashing connects to [Database Patterns — Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md) (storing hashed credentials)
+- For session management, CSRF protection, and input validation, continue to [Session Management and Validation](02-session-management-and-validation.md)
 ```

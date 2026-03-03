@@ -419,6 +419,8 @@ func pipeline(ctx context.Context, input []string) ([]Result, error) {
 
 ### Semaphore with Buffered Channel
 
+A buffered channel makes an elegant semaphore: sending to the channel "acquires" a slot, and receiving "releases" it. When the buffer is full, the next send blocks — naturally limiting concurrency to the buffer size. This is simpler than using a `sync.WaitGroup` with a counter because the channel handles the blocking automatically.
+
 ```go
 sem := make(chan struct{}, maxConcurrent)
 var wg sync.WaitGroup
@@ -435,6 +437,8 @@ wg.Wait()
 ```
 
 ### Bounded Parallelism (preserving order)
+
+The semaphore pattern above processes items concurrently but does not guarantee result order matches input order. When order matters (e.g., pagination results, ordered transformations), use an indexed result channel: each goroutine sends its result tagged with the original index, and the collector reassembles results in order.
 
 ```go
 func boundedParallel(ctx context.Context, items []Item, limit int) ([]Result, error) {
@@ -884,6 +888,34 @@ Bugs: (1) No synchronization — returns before goroutines finish, (2) In Go < 1
 13. **Your service is leaking goroutines in production.** How do you detect this, and what are the common causes? Cover: `runtime.NumGoroutine()`, pprof goroutine profile, common causes (forgotten context cancellation, blocked channel operations, missing `wg.Done()`).
 
 14. **You need to process 10,000 items as fast as possible but your downstream service rate-limits you to 100 concurrent requests.** Design the solution. Cover: worker pool or semaphore pattern, context cancellation, error handling strategy.
+
+---
+
+## Related Reading
+
+- **Concurrency in HTTP middleware** — [Module 04: Advanced HTTP Patterns](../04-http-services/03-advanced-http-patterns.md) applies worker pools and rate limiting from this file to HTTP service architectures
+- **singleflight for caching** — [Module 05: Migrations, Redis, and Advanced Storage](../05-data-storage/03-migrations-redis-and-advanced-storage.md), section 2 (Caching Patterns) shows `singleflight` preventing cache stampedes in real storage layers
+- **Testing concurrent code** — [Module 06: Benchmarking, Profiling, and Advanced Testing](../06-testing/03-benchmarking-profiling-and-advanced-testing.md), section 5 (Testing Concurrent Code) covers race detector usage, `goleak`, and deterministic testing for the patterns in this file
+- **GC and memory model** — [Module 01: Advanced Go Internals](../01-go-mental-model/03-advanced-go-internals.md), section 3 (Garbage Collector) explains the runtime that underpins the GMP scheduler described in section 1
+- **Interview concurrency puzzles** — [Module 09: Interview Essentials](../09-interview-prep/01-interview-essentials.md), section 6 tests your ability to implement the worker pool, fan-out/fan-in, and rate limiter patterns from this file
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the concurrency concepts from this module (Goroutines and Channels through Advanced Concurrency Patterns):
+
+1. **Build a pipeline** — Implement a three-stage pipeline: a generator that produces integers, a stage that squares them, and a stage that filters odd results. Connect them with channels and add context cancellation. Verify that all goroutines exit cleanly using `goleak` in a test.
+
+2. **Worker pool with error handling** — Build a generic worker pool that processes URL fetches with bounded concurrency (e.g., 5 workers for 100 URLs). Collect results and errors, and support cancellation via context. Write a test that cancels mid-flight and verifies no goroutine leaks.
+
+3. **Rate limiter** — Implement a token bucket rate limiter using channels. Write a benchmark that measures throughput under different rate limits and a test that verifies requests are throttled correctly.
+
+4. **Detect and fix a data race** — Write a program with an intentional data race (e.g., concurrent map writes). Run it with `go run -race` to see the detector output. Fix it using three different approaches: `sync.Mutex`, `sync/atomic`, and channel-based ownership. Benchmark all three.
+
+5. **singleflight deduplication** — Build a function that simulates expensive computation (using `time.Sleep`). Wrap it with `singleflight` and write a test that fires 100 concurrent requests for the same key, verifying the computation only runs once.
+
+6. **Graceful shutdown orchestration** — Build a program with a background worker goroutine, a periodic ticker, and a simulated HTTP server. Implement ordered graceful shutdown: stop accepting new work, drain in-flight operations, then exit. Test with `SIGINT` simulation.
 
 ---
 

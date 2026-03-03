@@ -718,3 +718,20 @@ const isStale = value !== deferred;
 - Returns a deferred version of the value that lags behind
 - Use when you receive data as a prop (don't control the setter)
 - Combine with `useMemo` to avoid recomputing with stale inputs
+
+---
+
+## Practice
+
+- **Profile a re-render problem**: Build a parent component with 5 child components. Add `console.log` to each child's render. Trigger a state change in the parent and observe which children re-render. Fix it with `React.memo`, then with composition (`children` prop).
+- **Memoization decision exercise**: For each of these scenarios, decide whether to use `useMemo`, `useCallback`, `React.memo`, or nothing: (1) a sorted list derived from props, (2) an `onClick` handler passed to a native `<button>`, (3) a config object passed to a `React.memo`-wrapped chart component, (4) a string concatenation.
+- **`startTransition` experiment**: Build a search input that filters a large list (1000+ items). Without `startTransition`, observe input lag. Add `startTransition` around the filter state update and compare.
+- **Walk the memoization flowchart**: Use the flowchart in this file on a real component in your codebase. Document your decision at each branch.
+- **Key-reset pattern**: Build a form that resets all internal state when a `userId` prop changes, using the `key` prop. Compare with a `useEffect`-based reset approach.
+
+### Related Lessons
+
+- [Hooks & State Management](../01-hooks-deep-dive/01-hooks-and-state-management.md) -- `useMemo`, `useCallback`, `useRef` fundamentals that this lesson builds on
+- [Performance Tools & Advanced Patterns](02-performance-tools-and-advanced-patterns.md) -- React Profiler, code splitting, virtualization, Fiber architecture, concurrent rendering
+- [React Internals: Fiber & Rendering](../08-react-internals/01-react-fiber-and-rendering.md) -- the render phase, commit phase, and reconciliation algorithm behind re-renders
+- [React Internals: Re-renders & Optimization](../08-react-internals/02-re-renders-and-optimization.md) -- the 6 re-render triggers and concurrent features from an internals perspective

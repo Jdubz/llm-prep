@@ -382,3 +382,20 @@ You want to negotiate for remote work flexibility but the role is listed as hybr
 6. **Understand what you are being offered.** RSUs, ISOs, NSOs, and 409A valuations are not interchangeable. Know the difference before you sign.
 
 7. **Leveling up externally is often your best comp reset.** The title and level you negotiate matter as much as the initial offer because they set your base for all future compensation.
+
+---
+
+## Practice
+
+- Research your target compensation on levels.fyi for three companies at your target level. Note the P25, P50, and P75 for each and identify where your current compensation falls.
+- Practice the salary expectation deflection scripts above with a friend playing the recruiter role. Do at least three rounds until your response feels natural, not rehearsed.
+- Walk through each negotiation role-play scenario in this guide. Write out your response, then practice delivering it verbally.
+- Calculate the real value of a startup equity offer using the framework above. Apply the liquidity, preferred-vs-common, risk, and dilution discounts. Compare the result to a public company RSU offer.
+
+---
+
+## Cross-References
+
+- **[Module 08 — Negotiation & Closing](../08-negotiation/):** This overview introduces negotiation concepts that Module 08 covers in full depth. Module 08 provides detailed scripts, counter-offer strategies, advanced equity negotiation tactics, and the complete negotiation timeline. Read this file first for the foundation, then Module 08 for execution.
+- **[Module 01 — Interview Pipeline](01-interview-pipeline-and-preparation.md):** Pipeline management directly affects negotiation leverage. The timing strategies in the companion file (clustering on-sites, managing multiple processes) create the competing offers that are your strongest negotiation tool.
+- **[Module 04 — Questions to Ask Interviewers](../04-questions-to-ask/):** Several questions in Module 04 help you gather compensation intelligence during interviews -- asking about level expectations, career paths, and evaluation criteria all inform your negotiation position.

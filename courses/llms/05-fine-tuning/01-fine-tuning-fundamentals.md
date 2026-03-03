@@ -414,6 +414,23 @@ Level 5: Human evaluation
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Approach Selection** -- Apply the decision tree from "When to Fine-Tune" to classify scenarios as prompt engineering, RAG, fine-tuning, or distillation. Directly practices the approach comparison table and anti-pattern awareness.
+- **Exercise 2: Data Preparation Pipeline** -- Build a full data cleaning, validation, deduplication, formatting, and splitting pipeline. Practices the data formats (OpenAI chat, Alpaca), the data quality checklist, and train/val/test splitting.
+- **Exercise 3: Synthetic Data Generation Pipeline Design** -- Design prompts and quality checks for generating training data with a teacher model. Practices the synthetic data generation pattern and its risks/mitigations.
+- **Exercise 5: Training Cost and GPU Requirements Calculator** -- Calculate VRAM needs, training time, and cost using the memory formulas from "Fine-Tuning Approaches" and the GPU/cost tables.
+- **Exercise 6: LoRA Configuration Designer** -- Select rank, alpha, target modules, dropout, and QLoRA based on constraints. Directly practices LoRA parameter selection from "LoRA (Low-Rank Adaptation)" and "QLoRA".
+
+See also `examples.py` for reference implementations:
+- Section 1 "DATA PREPARATION PIPELINE" -- complete data cleaning, formatting, dedup, and splitting code
+- Section 6 "FINE-TUNING DECISION ENGINE" -- full decision tree implementation
+- Section 7 "COST ESTIMATOR" -- training cost and GPU selection logic
+
+---
+
 ## Interview Q&A: Fine-Tuning Fundamentals
 
 **Q: When would you fine-tune vs. use RAG vs. prompt engineering?**

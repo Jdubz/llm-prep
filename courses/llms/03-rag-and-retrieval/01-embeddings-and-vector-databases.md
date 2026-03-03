@@ -257,6 +257,20 @@ Stores the HNSW-like graph on disk rather than RAM. Enables billion-scale search
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Basic RAG Pipeline** [1] -- Uses embeddings and cosine similarity to build the core retrieve step. You will embed documents, compute similarity scores, and return ranked results. Applies concepts from "Similarity Metrics" and "Cosine Similarity" above.
+- **Exercise 3: Hybrid Search with RRF** [2] -- Combines vector similarity ranking with keyword ranking. Applies the cosine similarity metric from this file alongside BM25-style keyword scoring.
+- **Exercise 5: Multi-Tenant Metadata Schema** [3] -- Designs metadata for a vector database. Directly applies concepts from "Vector Databases" and "Extended Feature Comparison" (which DBs support which filtering modes).
+
+See also `examples.py`:
+- `InMemoryVectorStore` (Pattern 1) -- demonstrates embedding, storing, and searching with metadata filtering
+- `cosine_similarity()`, `dot_product()`, `euclidean_distance()` -- all three similarity metrics implemented
+
+---
+
 ## Interview Q&A: Embeddings and Vector Databases
 
 **Q: What are embeddings and how do they enable semantic search?**

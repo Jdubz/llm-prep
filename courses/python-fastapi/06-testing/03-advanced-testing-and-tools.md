@@ -329,6 +329,18 @@ Transaction rollback (not truncation). Parallel with `pytest-xdist`. Session-sco
 
 ---
 
+## Practice Exercises
+
+Work through these exercises in `exercises.py` to practice the concepts from this file:
+
+- **Exercise 5 (`test_valid_item_creation`, `test_invalid_item_creation`)** — Practice parametrized testing for validation edge cases. These exercises connect to the "Parametrize" syntax from `01-pytest-fixtures-and-basics.md` but apply it to boundary-value testing: minimum/maximum valid values, type errors, missing fields. This is the manual version of what Hypothesis and Schemathesis do automatically.
+
+- **All exercises** — After completing exercises 1-5, consider how property-based testing (Hypothesis) could replace your hand-written parametrize lists. For example, Exercise 5b's invalid payloads are exactly the kind of edge cases Schemathesis would auto-generate from your OpenAPI schema.
+
+See also `examples.py` section 6 (test_create_user_validation) for a complete parametrized validation test.
+
+---
+
 ## Key Takeaways
 
 - Property-based testing (Hypothesis) finds edge cases you wouldn't think to test manually.

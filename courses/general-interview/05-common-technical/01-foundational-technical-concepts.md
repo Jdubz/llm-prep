@@ -402,3 +402,21 @@ The key to technical questions at the senior level is not just knowing the answe
 4. The **alternatives** — what else you considered
 
 This framing signals that you do not just memorize — you think.
+
+---
+
+## Practice
+
+- For each data structure in the decision framework, write a one-paragraph explanation as if you were answering an interview question. Include: what it is, when to use it, the key trade-off, and one alternative you considered.
+- Pick three interview questions from the Q&A section above and practice answering them out loud with a timer (target: 60-90 seconds each). Record yourself and check: did you cover the what, the trade-offs, the when, and the alternatives?
+- Explain the "What happens when you type a URL" question to a non-technical friend. Then explain it to an engineer. Notice how the depth and vocabulary change -- this is the layered explanation model from Module 03 in action.
+- Draw the networking layers from memory on a whiteboard or piece of paper, including one protocol example per layer and one key concept. Practice until you can do it in under 2 minutes.
+
+---
+
+## Cross-References
+
+- **[Module 06 — Coding Patterns](../06-coding-patterns/):** The data structure knowledge here is the foundation for the coding patterns in Module 06. When Module 06 says "reach for a hash map" or "use a heap," the justification comes from the decision frameworks in this file. Study them together.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** Knowing the answer is not enough -- you must communicate it clearly. Module 03's layered explanation model, trade-off voicing, and "I don't know" handling techniques are essential for presenting the technical knowledge from this guide.
+- **[Module 05 — Security and Distributed Systems](02-security-and-distributed-systems.md):** This companion file builds on the networking and OS fundamentals here with security patterns and distributed systems concepts. Read this file first for the foundation.
+- **[Module 05 — Advanced Technical Deep Dive](03-advanced-technical-deep-dive.md):** The advanced file covers Bloom filters, skip lists, B-trees, LSM trees, QUIC, CRDTs, and other topics that build on the foundational knowledge here. Read this file first, then advance.

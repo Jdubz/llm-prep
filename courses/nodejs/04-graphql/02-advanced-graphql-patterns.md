@@ -361,3 +361,18 @@ HTTP request -> context factory -> `requestDidStart` -> parse (cached) -> valida
 ### 8.3 Graceful Shutdown
 
 `ApolloServerPluginDrainHttpServer` stops accepting new requests and waits for in-flight ones. For subscriptions, add a `drainServer` hook that calls `serverCleanup.dispose()`.
+
+**Common mistake with graceful shutdown and subscriptions:** Teams often forget that `ApolloServerPluginDrainHttpServer` only handles HTTP requests, not WebSocket connections. If you have subscriptions, you must separately drain WebSocket connections via `serverCleanup.dispose()` — otherwise, connected clients experience abrupt disconnections during deployments. Pair this with a `connection_terminate` message to give clients a chance to reconnect.
+
+---
+
+## Related Reading
+
+- **DataLoader and N+1** (Section 1) — the N+1 problem is the GraphQL version of the same pattern in [Database Patterns — Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md) (N+1 detection, query optimization)
+- **DataLoader event loop batching** (Section 1.4) relies on `process.nextTick` covered in [Node.js Runtime — Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md) (microtask queue, nextTick behavior)
+- **Federation entity resolvers** (Section 3) — subgraph boundaries map to DDD bounded contexts discussed in [Architecture — Clean Architecture and DDD](../09-architecture-patterns/01-clean-architecture-and-ddd.md)
+- **Server-side caching with Redis** (Section 6.3) — the Redis caching layer in front of DataLoader connects to [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (cache-aside pattern, TTL guidelines)
+- **Custom directives** (Section 2.4) — the `@auth` directive pattern is related to field-level authorization in [Auth & Security — JWT and OAuth2](../05-auth-security/01-jwt-and-oauth2.md)
+- **Real-time alternatives** (Section 7) — SSE and streaming connect to [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (Server-Sent Events pattern)
+- **Graceful shutdown** (Section 8.3) ties into the Node.js process lifecycle in [Node.js Runtime — Threading and Process Management](../02-node-runtime/02-threading-and-process-management.md#4-process-lifecycle-and-graceful-shutdown)
+- For testing GraphQL APIs, see [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md)

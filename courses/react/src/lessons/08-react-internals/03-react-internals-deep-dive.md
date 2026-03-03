@@ -862,3 +862,21 @@ createElement('div', null, 'Hello');
 createElement(Fragment, null, child1, child2);
 // equivalent to JSX: <>{child1}{child2}</>
 ```
+
+---
+
+## Practice
+
+- **Fiber node structure**: Draw the fiber node for a `<Counter>` function component. Label `tag`, `type`, `memoizedState` (hook linked list), `stateNode`, `child`, `sibling`, `return`, `alternate`, `flags`, and `lanes`.
+- **Work loop trace**: For a simple update (click increments a counter), trace through the work loop: `performUnitOfWork` -> `beginWork` (processes component, returns child) -> `completeWork` (bubbles flags) -> commit phase. Identify where each phase starts and ends.
+- **Lane model exercise**: Given three simultaneous updates -- `flushSync(setA)`, `setB()` inside an event handler, and `startTransition(() => setC())` -- determine which lane each is assigned and the order React processes them.
+- **Suspense internals**: Explain what happens internally when a component inside a `<Suspense>` boundary throws a Promise: (1) React catches the thrown Promise, (2) renders the fallback, (3) subscribes to the Promise, (4) re-renders the subtree when the Promise resolves.
+- **createElement without JSX**: Rewrite a small component tree (3-4 elements with nesting) using `createElement` instead of JSX. Compare the output object structure to the fiber tree React creates from it.
+- **Effect flags drill**: For each of these operations, identify which flag(s) are set on the fiber: (1) mounting a new component, (2) updating props, (3) adding a `useEffect`, (4) attaching a ref.
+
+### Related Lessons
+
+- [Fiber & Rendering](01-react-fiber-and-rendering.md) -- higher-level view of virtual DOM, Fiber architecture, reconciliation, hydration, batching
+- [Re-renders & Optimization](02-re-renders-and-optimization.md) -- re-render triggers, concurrent features, scheduler, priority lanes
+- [Hooks Internals & Advanced Patterns](../01-hooks-deep-dive/02-hooks-internals-and-advanced-patterns.md) -- hook linked list on fiber nodes, rules of hooks, closure traps
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- practical implications of the rendering phases and reconciliation for optimization

@@ -392,6 +392,21 @@ def execute_tool_safely(name: str, raw_args: dict) -> dict:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Build a Complete Agent Loop** [core] -- Implements the tool execution loop from "Executing Tool Calls: OpenAI." You will detect tool calls in the LLM response, execute them, append results to message history, and loop. Directly applies the `while True` pattern from this section.
+- **Exercise 3: Design Tool Schemas for a Customer Service Agent** [design] -- Applies "Tool Schema Design" (OpenAI format) and "Tool Design Best Practices." You will write descriptions that guide the model (when to use, when not to use) and design parameter schemas with enums, required fields, and constraints from "Parameter Design Rules."
+- **Exercise 5: Build a Tool Call Validator** [safety] -- Implements the validation pattern from "Tool Call Validation." You will check required parameters, validate enum values, enforce integer min/max, and detect unknown parameters -- all the checks shown in the Pydantic example.
+
+See also `examples.py`:
+- `agent_loop()` (Example 1) -- the async agent loop pattern with tool execution
+- `CUSTOMER_SERVICE_TOOLS` (Example 2) -- three complete tool schemas in OpenAI format
+- `validate_tool_call()` and `safe_execute_tool()` (Example 6) -- validation + permission + execution
+
+---
+
 ## Interview Q&A: Function Calling and Tool Use
 
 **Q: How does function calling / tool use work?**

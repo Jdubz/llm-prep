@@ -674,3 +674,17 @@ describe('UserService', () => {
   });
 });
 ```
+
+**Common mistake with factory patterns:** Teams often create overly complex factory hierarchies with deep nesting and many required relationships. A good factory should produce a valid domain object with minimal input. Use `overrides` for the fields that matter in each test, and let the factory generate sensible defaults for everything else.
+
+---
+
+## Related Reading
+
+- **Transaction isolation levels** (Transactions section) — serializable isolation is needed for the double-spend prevention patterns discussed in [Architecture — Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md) (saga pattern, event sourcing)
+- **Saga pattern** (Distributed Transactions) — the saga compensation pattern is explored in full architectural context in [Architecture — Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md)
+- **EXPLAIN ANALYZE and indexing** (Query Optimization) — query performance directly affects API latency discussed in [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md)
+- **N+1 and DataLoader** (Query Optimization) — the DataLoader pattern is the GraphQL solution covered in [GraphQL — Advanced GraphQL Patterns](../04-graphql/02-advanced-graphql-patterns.md#1-dataloader-and-the-n1-problem)
+- **Read replicas** (Complex Queries section) — read/write splitting with `AsyncLocalStorage` uses the context propagation pattern from [Node.js Runtime — Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md#7-async_hooks-and-asynclocalstorage)
+- **Database testing** — transaction rollback isolation and factory patterns connect to [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md) (test containers, database testing patterns)
+- **Cursor pagination queries** — the keyset `WHERE (a, b) < ($1, $2)` pattern powers the cursor pagination in [REST API Design — Pagination, Filtering, and Bulk Operations](../03-rest-api-design/02-pagination-filtering-and-bulk-operations.md)

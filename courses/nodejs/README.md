@@ -85,5 +85,17 @@ Expert-level Node.js and TypeScript course for engineers with 10+ years of TypeS
 - Production Node.js experience
 - Review [Module 00: TS & Node Fundamentals](00-ts-node-fundamentals.md) to ensure the basics are sharp
 
+## Related Reading
+
+Start with [Module 00: TS & Node Fundamentals](00-ts-node-fundamentals.md) — it is the prerequisite for every other module in this course. If you are coming from a frontend-heavy TypeScript background, pay special attention to the [Event Loop](00-ts-node-fundamentals.md#4-the-event-loop) and [Streams](00-ts-node-fundamentals.md#9-nodejs-core-concepts) sections before tackling Modules 02 and 08.
+
+Modules are designed to be studied in order, but the cross-references within each file let you jump between related topics. Key dependency chains:
+
+- **Type system depth**: Module 00 (fundamentals) -> Module 01 (advanced TS) -> Module 06 (database types) -> Module 09 (architecture types)
+- **API design**: Module 03 (REST) <-> Module 04 (GraphQL) — study both to compare trade-offs
+- **Runtime to production**: Module 02 (runtime internals) -> Module 08 (performance) -> Module 09 (architecture)
+- **Security across layers**: Module 05 (auth/security) touches Module 03 (REST routes), Module 04 (GraphQL auth), and Module 06 (user models)
+- **Testing everything**: Module 07 references patterns from all prior modules — study it last for maximum context
+
 ## Status
 **Content complete** — all modules written.

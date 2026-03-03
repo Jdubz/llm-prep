@@ -586,3 +586,13 @@ await pipeline(source, transform, sink);
 ```
 
 **Interview key point:** Always use `pipeline()` or `.pipe()` instead of manually reading and writing. They handle backpressure, error propagation, and cleanup.
+
+## Related Reading
+
+- **Cache-aside and write-through patterns** are the caching layer for the database queries covered in [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md) — cache invalidation must align with your transaction boundaries.
+- **Redis session caching and stateless design** directly supports the session management strategies in [05 – Session Management and Validation](../05-auth-security/02-session-management-and-validation.md) and the horizontal scaling requirements in [08 – Clustering and Scaling](./02-clustering-and-scaling.md#stateless-design).
+- **Rate limiting with Redis sorted sets** complements the rate limiting middleware discussed in [05 – Advanced Security and Secrets](../05-auth-security/03-advanced-security-and-secrets.md#rate-limiting-and-brute-force-protection) and the HTTP 429 response patterns in [03 – HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md).
+- **BullMQ queue setup and dead letter queues** are the production implementation of the background job patterns referenced in [09 – Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md#message-brokers).
+- **WebSocket scaling with Redis adapter** solves the multi-instance broadcasting problem discussed in [08 – Clustering and Scaling](./02-clustering-and-scaling.md#sticky-sessions) and tested in [07 – Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md#testing-websocket-handlers).
+- **Streaming and backpressure for large payloads** builds on the stream fundamentals in [02 – Memory, Streams, and Runtime Internals](../02-node-runtime/03-memory-streams-and-runtime-internals.md#streams-and-backpressure) and is tested using the patterns in [07 – Vitest and Unit Testing](../07-testing/01-vitest-and-unit-testing.md#streams).
+- **CDN and surrogate key invalidation** extends the Cache-Control headers covered in [03 – API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md#etag-and-conditional-requests).

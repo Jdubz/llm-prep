@@ -376,6 +376,16 @@ header for mobile. Support both in backend.
 
 ---
 
+## Practice Exercises
+
+These exercises are in `exercises.py`. Complete them to test the concepts from this module.
+
+- **Exercise 5 (Token Refresh with Rotation):** Implement the `/auth/token/refresh` endpoint with JTI-based revocation -- tests the "Token Revocation Strategies" concepts from this file, specifically the in-memory blocklist variant of the Redis blocklist pattern.
+- **Exercise 1 (JWT Internals):** The manual JWT implementation in Exercise 1 gives you the foundation to understand OIDC token verification (this file's "OIDC Integration" section) -- both use the same header.payload.signature structure.
+- **Exercise 4 (API Key Hashing):** The `generate_api_key()` and `get_api_key_user()` exercise covers the secure key storage pattern referenced in the "Custom Authentication Backends" section of this file.
+
+---
+
 ## Key Takeaways
 
 - OIDC delegates identity management to an IdP; verify tokens against the IdP's JWKS endpoint.

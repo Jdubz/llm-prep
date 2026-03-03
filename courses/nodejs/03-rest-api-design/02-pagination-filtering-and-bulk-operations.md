@@ -287,3 +287,17 @@ Validate actual responses conform to your OpenAPI spec using `jest-openapi` or `
 ### 7.4 Snapshot Testing
 
 Catches unintended response shape changes but is brittle. Remove volatile fields (`createdAt`, `updatedAt`) before snapshotting. Pair with contract tests for cross-service guarantees.
+
+**Common mistake with snapshot testing for APIs:** Teams often snapshot entire response bodies including auto-generated IDs and timestamps, then spend effort maintaining snapshot files that change on every test run. Instead, use `toMatchObject` with explicit field assertions for the fields that matter, and only snapshot the structural shape (field names and types) separately.
+
+---
+
+## Related Reading
+
+- **Cursor pagination** (Section 1.2) requires careful index design — see [Database Patterns — Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md) for composite indexing strategies that make keyset pagination efficient
+- **Filtering with LHS brackets** (Section 2.1) needs input validation to prevent SQL injection — see [Auth & Security — Session Management and Validation](../05-auth-security/02-session-management-and-validation.md) (input validation with Zod, SQL injection prevention)
+- **Bulk operations** (Section 3) — atomic batch inserts use database transactions covered in [Database Patterns — Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md) (transaction patterns, isolation levels)
+- **Contract testing with Pact** (Section 7.2) is explored in full depth in [Testing — Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md) (consumer-driven contracts, CI integration)
+- **API testing strategies** (Section 7) — the testing pyramid for APIs maps to the framework patterns in [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md) (supertest, MSW, database testing)
+- **PATCH patterns** (Section 4) — JSON Merge Patch vs JSON Patch — complement the versioning and backward compatibility discussion in [API Design Patterns and Versioning](03-api-design-patterns-and-versioning.md)
+- For GraphQL pagination (Relay connections), see [GraphQL — Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md)

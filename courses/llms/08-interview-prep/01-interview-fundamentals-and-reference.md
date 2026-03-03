@@ -472,6 +472,24 @@ Cross-encoder reranking (20 passages):   50-200ms
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file. Each exercise references specific sections above and relevant patterns in `examples.py`.
+
+- **Exercise 1: Build a Basic RAG Pipeline (15 min)** — Implement chunking, cosine similarity, and top-K retrieval from scratch. Practices the RAG pipeline architecture from the "RAG" section (ingestion: chunk -> embed -> store; query: embed -> search -> top-K). Reference: `examples.py` Example 1 (`SimpleRAGPipeline` with `chunk_text`, `cosine_similarity`, `ingest`, `retrieve`).
+
+- **Exercise 2: Implement an Agent Loop (15 min)** — Build a tool-calling agent loop with tool execution and iteration limits. Practices the agent loop design from the "Agents and Tool Use" section (function calling protocol, error handling, max iterations, message history management). Reference: `examples.py` Example 2 (`AgentLoop` with `run`, `_execute_tool`).
+
+- **Exercise 3: Design an Eval Suite (20 min)** — Define test cases and implement multiple scoring functions (length, keyword, LLM-as-judge). Practices eval-driven development from the "Prompt Engineering" section (test sets, baseline measurement, systematic optimization) and the evaluation approach from the "Production and Deployment" section. Reference: `examples.py` Example 3 (`EvalPipeline` with `JUDGE_PROMPT`, `_run_single`, `run`).
+
+- **Exercise 4: Debug a Broken Prompt Chain (10 min)** — Find and fix 5 bugs in a two-step prompt chain. Practices correct message roles, data flow between chain steps, JSON parsing, and the prompt chaining concept from the "Prompt Engineering" section. Reference: `examples.py` Example 1 (`query` method for multi-step prompting) and Example 3 (JSON parsing with fallback).
+
+- **Exercise 5: Code Review (10 min)** — Identify 8+ problems in production LLM integration code. Practices recognizing anti-patterns from the "Red Flags and Anti-Patterns" section (prompt injection, missing observability, no validation, no error handling). Reference: `examples.py` Example 5 (`ModelRouter` with cost tracking and budget management).
+
+- **Exercise 6: Streaming Chat with Memory (20 min)** — Build conversation memory with max-turns truncation and a streaming response generator. Practices streaming concepts from the "Production and Deployment" 30-second answers and memory management patterns. Reference: `examples.py` Example 6 (`ConversationMemory` with summarization) and Example 4 (`StreamingHandler` with text buffer assembly).
+
+---
+
 ## Buzzword Decoder
 
 Accurate definitions for overloaded terms:

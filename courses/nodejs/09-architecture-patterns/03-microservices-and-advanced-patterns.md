@@ -261,3 +261,28 @@ This is a 3-6 month project. Phase 1: Foundation (choose Turborepo vs Nx, set up
 **Q: "A team wants to rewrite a service from scratch. How do you evaluate this?"**
 
 Apply the strangler fig mindset. Ask: What edge cases are encoded in the existing system? How long will it realistically take? Can the business survive running two systems? Is the old technology actually dead (no security patches, can't hire)? Can we extract one bounded context at a time instead? The only valid case for a full rewrite is a system small enough to complete in under 3 months with genuinely dead technology.
+
+## Related Reading
+
+- **Modular monolith structure** uses the feature-based organization from [09 – Clean Architecture and DDD](./01-clean-architecture-and-ddd.md#project-structure-conventions) and the TypeScript project references described in [01 – Advanced Type Patterns](../01-typescript-advanced/02-advanced-type-patterns.md).
+- **Microservices extraction criteria** require the independent scaling capabilities covered in [08 – Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md) and the stateless design principles in [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#stateless-design-rule).
+- **Inter-service communication (HTTP, gRPC, message queues)** builds on REST API design from [03 – HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md), the gRPC comparison in [08 – Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md#grpc-vs-rest-for-internal-services), and the event-driven patterns in [09 – Event-Driven and Async Patterns](./02-event-driven-and-async-patterns.md).
+- **Vertical slice architecture** is an alternative to the layered approach in [09 – Clean Architecture and DDD](./01-clean-architecture-and-ddd.md#the-layers) — use it when feature independence matters more than shared domain logic.
+- **Strangler fig pattern** uses the API versioning strategies from [03 – API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md#api-versioning-strategies) to manage the migration surface.
+- **Contract testing for inter-service APIs** is the quality gate described in [07 – Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md#contract-testing-with-pact) — consumer-driven contracts prevent breaking changes across service boundaries.
+- **Monorepo tooling (Turborepo, Nx)** manages the shared TypeScript code using the configuration patterns from [00 – TypeScript and Node.js Fundamentals](../00-ts-node-fundamentals.md) and the module resolution patterns from [02 – Threading and Process Management](../02-node-runtime/02-threading-and-process-management.md).
+- **Platform team responsibilities** include maintaining the security middleware from [05 – Advanced Security and Secrets](../05-auth-security/03-advanced-security-and-secrets.md), the observability stack from [08 – Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md#opentelemetry-vendor-agnostic), and the database migration patterns from [06 – Advanced Patterns and Multi-Tenancy](../06-database-patterns/03-advanced-patterns-and-multi-tenancy.md).
+
+## Practice Suggestions
+
+1. **Build a modular monolith with enforced boundaries**: Create a Node.js application with 3 feature modules (e.g., orders, inventory, payments). Enforce boundaries using TypeScript project references so that modules can only communicate through explicitly exported interfaces. Verify that direct cross-module imports cause compilation errors.
+
+2. **Implement an event-driven saga**: Build a 3-step order placement saga (reserve inventory, charge payment, create shipment) with compensating transactions. Implement both the orchestration pattern (central coordinator) and the choreography pattern (event-based). Intentionally fail the 2nd step and verify that the 1st step is compensated.
+
+3. **Practice the strangler fig migration**: Take a simple Express CRUD API (the "legacy" system) and migrate one endpoint at a time to a new Fastify service. Use an HTTP proxy to route traffic between the two systems. Verify that the proxy transparently switches between old and new implementations.
+
+4. **Extract a module into a separate service**: Starting from your modular monolith, identify one module to extract. Replace direct function calls with HTTP or message queue communication. Add contract tests (Pact) to verify the new service fulfills the same contract. Measure the latency impact of the extraction.
+
+5. **Set up a monorepo with Turborepo**: Create a monorepo with an API app, a worker app, and shared packages (domain, database, config). Configure Turborepo for affected-only builds and remote caching. Verify that changing a shared package only rebuilds the consuming apps, and measure CI time savings versus a full rebuild.
+
+6. **Design and write an RFC for a technical decision**: Pick a real decision (e.g., "should we adopt GraphQL for our new API?"). Write a one-page RFC with problem statement, options (including "do nothing"), trade-off analysis with concrete criteria (migration cost, team familiarity, performance implications), and a recommendation. Practice presenting it as you would in a staff-level architecture review.

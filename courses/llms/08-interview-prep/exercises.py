@@ -138,6 +138,20 @@ SAMPLE_DOCUMENTS = [
 # ===========================================================================
 # Exercise 1: Build a Basic RAG Pipeline
 # Time limit: 15 minutes
+#
+# READ FIRST:
+#   01-interview-fundamentals-and-reference.md
+#     -> "### RAG" section — walk-through of a RAG pipeline architecture
+#        (ingestion: parse -> chunk -> embed -> store; query: embed query
+#        -> similarity search -> top-K -> assemble prompt -> generate).
+#     -> "### RAG" in 30-Second Answers — chunking, hybrid search, reranking.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Example 1 "RAG Pipeline from Scratch" — SimpleRAGPipeline with
+#        chunk_text() (overlap logic), cosine_similarity() (dot/norm formula),
+#        ingest() and retrieve() methods showing the full flow.
+#
 # ===========================================================================
 
 def exercise_1_rag_pipeline():
@@ -157,10 +171,26 @@ def exercise_1_rag_pipeline():
         cosine_similarity(vec_a, vec_b) -> float
         rag_retrieve(docs, query, embed_fn, top_k=3) -> list of str
 
-    Hints (use only if stuck):
+    Hints:
     - Cosine similarity = dot(a,b) / (|a| * |b|)
-    - Chunk by slicing text[start:start+chunk_size], advancing by (chunk_size - overlap)
-    - Store (doc_id, chunk_text, embedding) tuples for retrieval
+      Step-by-step:
+        dot_product = sum(x * y for x, y in zip(a, b))
+        norm_a = math.sqrt(sum(x * x for x in a))
+        norm_b = math.sqrt(sum(x * x for x in b))
+        return dot_product / (norm_a * norm_b)  # handle zero norms
+    - Chunk by slicing text[start:start+chunk_size], advancing by (chunk_size - overlap):
+        chunks = []
+        start = 0
+        while start < len(text):
+            chunks.append(text[start:start+chunk_size].strip())
+            start += chunk_size - overlap
+    - rag_retrieve pattern:
+        1. chunks = chunk_documents(docs)
+        2. embedded_chunks = [(doc_id, text, embed_fn(text)) for doc_id, text in chunks]
+        3. query_vec = embed_fn(query)
+        4. scored = [(text, cosine_similarity(query_vec, emb)) for _, text, emb in embedded_chunks]
+        5. scored.sort(key=lambda x: x[1], reverse=True)
+        6. return [text for text, _ in scored[:top_k]]
     """
 
     # YOUR CODE HERE
@@ -186,6 +216,21 @@ def exercise_1_rag_pipeline():
 # ===========================================================================
 # Exercise 2: Implement an Agent Loop
 # Time limit: 15 minutes
+#
+# READ FIRST:
+#   01-interview-fundamentals-and-reference.md
+#     -> "### Agents and Tool Use" — how function calling works (schema ->
+#        model outputs structured request -> your code executes -> return
+#        result), agent loop design, key considerations (error handling,
+#        max iterations, guardrails), and the ReAct pattern.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Example 2 "Agent Loop with Tool Execution" — AgentLoop class with
+#        run() method showing the while loop pattern, _execute_tool() with
+#        error handling (unknown tool, TypeError, generic Exception), and
+#        the max_iterations guard with summary request on exhaust.
+#
 # ===========================================================================
 
 def exercise_2_agent_loop():
@@ -213,10 +258,27 @@ def exercise_2_agent_loop():
         run_agent(user_message: str, max_iterations: int = 5) -> tuple[str, list[dict]]
 
     Hints:
-    - Parse the LLM response to check if it contains a tool call
-    - Use try/except around JSON parsing -- not every response is a tool call
-    - Keep a message history that includes tool results
-    - Return (final_text_response, list_of_tool_calls_made)
+    - Core loop pattern:
+        messages = [Message(role="user", content=user_message)]
+        tool_calls_made = []
+        for _ in range(max_iterations):
+            response = agent_mock_llm(messages)
+            messages.append(response)
+            # Try to parse as tool call:
+            try:
+                parsed = json.loads(response.content)
+                if "tool" in parsed and "args" in parsed:
+                    tool_name = parsed["tool"]
+                    tool_args = parsed["args"]
+                    handler = tool_handlers.get(tool_name)
+                    result = handler(**tool_args) if handler else "Unknown tool"
+                    tool_calls_made.append({"tool": tool_name, "args": tool_args, "result": result})
+                    messages.append(Message(role="tool", content=result))
+                    continue
+            except (json.JSONDecodeError, KeyError):
+                pass  # Not a tool call — treat as final response
+            return response.content, tool_calls_made
+        return messages[-1].content, tool_calls_made
     """
 
     # Provided tools
@@ -306,6 +368,25 @@ def exercise_2_agent_loop():
 # ===========================================================================
 # Exercise 3: Design and Implement an Eval Suite
 # Time limit: 20 minutes
+#
+# READ FIRST:
+#   01-interview-fundamentals-and-reference.md
+#     -> "### Production and Deployment" — "How do you evaluate?" in the
+#        30-Second Answers (offline test set, LLM-as-judge, user feedback).
+#     -> "### Prompt Engineering" — "How do you systematically optimize
+#        prompts?" (eval-driven development, test sets of 20-50 cases,
+#        baseline-then-iterate approach).
+#   02-system-design-and-scenarios.md
+#     -> "STEP 5: EVALUATION" in the System Design Framework — offline
+#        evals, online metrics, and feedback loops.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Example 3 "Eval Pipeline with LLM-as-Judge" — EvalPipeline class
+#        with JUDGE_PROMPT template (score 0-1 with JSON output),
+#        _run_single() running the system under test then the judge,
+#        run() aggregating by category into an EvalReport.
+#
 # ===========================================================================
 
 def exercise_3_eval_suite():
@@ -338,9 +419,24 @@ def exercise_3_eval_suite():
         run_eval(summarize_fn, test_cases, judge_fn) -> dict
 
     Hints:
-    - For keyword_score, extract words > 4 chars from the reference as "keywords"
-    - For length_score, use 1.0 - abs(len(summary) - len(reference)) / max(len(reference), 1)
-    - The judge_fn has the same signature as mock_llm
+    - length_score formula:
+        return max(0.0, 1.0 - abs(len(summary) - len(reference)) / max(len(reference), 1))
+    - keyword_score step-by-step:
+        ref_keywords = {w.lower() for w in reference.split() if len(w) > 4}
+        if not ref_keywords: return 1.0
+        summary_lower = summary.lower()
+        found = sum(1 for kw in ref_keywords if kw in summary_lower)
+        return found / len(ref_keywords)
+    - llm_judge_score pattern:
+        prompt = f"Score this summary 0-1.\\nReference: {reference}\\nSummary: {summary}\\n"
+                 f"Respond JSON: {{\"score\": 0.0, \"reasoning\": \"...\"}}"
+        response = judge_fn([Message(role="user", content=prompt)])
+        parsed = json.loads(response.content)  # try/except for safety
+        return (parsed.get("score", 0.0), parsed.get("reasoning", ""))
+    - run_eval aggregation:
+        For each test case: generate summary, compute scores, track per-category.
+        Return {"total": N, "passed": count(score>0.6), "average_score": mean,
+                "by_category": {cat: {"total": ..., "passed": ..., "avg": ...}}}
     """
 
     # YOUR CODE HERE
@@ -372,6 +468,23 @@ def exercise_3_eval_suite():
 # ===========================================================================
 # Exercise 4: Debug a Broken Prompt Chain
 # Time limit: 10 minutes
+#
+# READ FIRST:
+#   01-interview-fundamentals-and-reference.md
+#     -> "### Prompt Engineering" — prompt chaining (breaking complex tasks
+#        into focused steps), structured output (JSON), and the importance
+#        of correct message roles (system vs user vs assistant).
+#     -> "## Red Flags and Anti-Patterns" -> "### Prompt Engineering
+#        Anti-Patterns" — monolithic prompts, not parsing output.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Example 1 "RAG Pipeline from Scratch" — SimpleRAGPipeline.query()
+#        shows a two-step chain: retrieve context, then generate with
+#        system + user messages in the correct roles.
+#     -> Example 3 "Eval Pipeline" — _run_single() shows JSON parsing
+#        of LLM output with try/except and fallback handling.
+#
 # ===========================================================================
 
 def exercise_4_debug_prompt_chain():
@@ -392,11 +505,17 @@ def exercise_4_debug_prompt_chain():
     - Step 2: Generate a summary that mentions the extracted entities
     - Return a dict with 'entities' (list) and 'summary' (str)
 
-    Hint: Read the code carefully. Think about:
-    - Message roles
-    - How data flows between steps
-    - JSON parsing
-    - What the function should return
+    Hints -- the 5 bugs and how to fix them:
+    1. BUG 1: System instruction uses role="user" instead of role="system".
+       Fix: Change to Message(role="system", content="Extract key entities...")
+    2. BUG 2: The input text is sent as role="assistant" instead of role="user".
+       Fix: Change to Message(role="user", content=text)
+    3. BUG 3: The JSON response is not parsed — entities is a raw string.
+       Fix: entities = json.loads(extraction_response.content).get("entities", [])
+    4. BUG 4: Step 2 passes entities as the user content instead of original text.
+       Fix: Message(role="user", content=text)  — pass the original text
+    5. BUG 5: Returns {"result": ...} instead of {"entities": ..., "summary": ...}.
+       Fix: return {"entities": entities, "summary": summary_response.content}
     """
 
     def broken_prompt_chain(
@@ -436,6 +555,23 @@ def exercise_4_debug_prompt_chain():
 # ===========================================================================
 # Exercise 5: Code Review — Find Problems in Production LLM Integration
 # Time limit: 10 minutes
+#
+# READ FIRST:
+#   01-interview-fundamentals-and-reference.md
+#     -> "## Red Flags and Anti-Patterns" — all sections: architecture,
+#        prompt engineering, RAG, agent, and production anti-patterns.
+#     -> "### Prompt Engineering" -> prompt injection defense (delimiters,
+#        instruction hierarchy, input validation).
+#     -> "### Production and Deployment" -> observability, cost optimization,
+#        reliability/failover answers.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Example 5 "Model Router with Cost Tracking" — shows proper
+#        cost estimation, usage logging, and budget management.
+#     -> Example 2 "Agent Loop" — _execute_tool() demonstrates error
+#        handling patterns (try/except with structured error returns).
+#
 # ===========================================================================
 
 def exercise_5_code_review():
@@ -456,6 +592,16 @@ def exercise_5_code_review():
     - Cost concerns
     - Observability gaps
     - Correctness bugs
+
+    Specific areas to examine:
+    1. Prompt: Is the ticket text safely delimited from instructions?
+    2. Messages: Should there be a system message separating instructions from data?
+    3. Error handling: What if the LLM call throws an exception (timeout, rate limit)?
+    4. Output parsing: Is the raw string cleaned/validated against known categories?
+    5. Validation: Does the result get checked against the allowed category list?
+    6. Missing entirely: No retry logic, no timeout, no cost tracking
+    7. Injection: Raw user content is interpolated into the prompt (f-string)
+    8. Observability: No logging of request/response, latency, model, or cost
     """
 
     # -- START of code to review --
@@ -505,6 +651,24 @@ def exercise_5_code_review():
 # ===========================================================================
 # Exercise 6: Build a Streaming Chat Endpoint with Conversation Memory
 # Time limit: 20 minutes
+#
+# READ FIRST:
+#   01-interview-fundamentals-and-reference.md
+#     -> "### Production and Deployment" -> "How do you handle streaming?"
+#        (SSE, buffer for JSON, tool calls, backpressure).
+#   02-system-design-and-scenarios.md
+#     -> "## Design 1: RAG-Powered Customer Support System" — conversation
+#        memory management section with summarization strategy.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Example 6 "Conversation Memory with Summarization" —
+#        ConversationMemory class with add_turn(), _update_summary(),
+#        get_messages() (always keeps system prompt, trims to budget),
+#        and get_stats().
+#     -> Example 4 "Streaming Response Handler" — StreamingHandler with
+#        process_chunk(), text buffer assembly, and tool call reconstruction.
+#
 # ===========================================================================
 
 def exercise_6_streaming_chat():
@@ -544,10 +708,44 @@ def exercise_6_streaming_chat():
                   llm_fn, stream_chunks: list[str]) -> str
 
     Hints:
-    - A generator that yields values AND returns a value uses 'return value'
-      at the end. The caller gets the return value from StopIteration.value
-    - For error handling, check if any chunk starts with "ERROR:"
-    - Keep the implementation clean and simple. This is an interview.
+    - ConversationMemory pattern:
+        def __init__(self, system_prompt, max_turns=20):
+            self._system = system_prompt
+            self._turns = []          # list of Message
+            self._max_turns = max_turns
+
+        def add(self, role, content):
+            self._turns.append(Message(role=role, content=content))
+            while len(self._turns) > self._max_turns:
+                self._turns.pop(0)    # drop oldest non-system turn
+
+        def get_messages(self):
+            return [Message(role="system", content=self._system)] + self._turns
+
+    - stream_response pattern (generator with return value):
+        def stream_response(chunks):
+            buffer = []
+            for chunk in chunks:
+                if chunk.startswith("ERROR:"):
+                    return "".join(buffer)  # stop on error
+                if chunk:  # skip empty strings
+                    buffer.append(chunk)
+                    yield chunk
+            return "".join(buffer)
+
+    - chat_turn ties it together:
+        memory.add("user", user_input)
+        # Use stream_chunks if provided, otherwise call LLM:
+        if stream_chunks:
+            gen = stream_response(stream_chunks)
+            full = ""
+            try:
+                while True: full_chunk = next(gen)
+            except StopIteration as e: full = e.value
+            # Or simply: for _ in gen: pass; full = ...
+        response_text = full or "..."
+        memory.add("assistant", response_text)
+        return response_text
     """
 
     # YOUR CODE HERE

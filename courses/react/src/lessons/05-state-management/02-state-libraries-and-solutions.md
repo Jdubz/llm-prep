@@ -621,3 +621,20 @@ START: What kind of state is this?
 | Forgetting to cancel queries before optimistic update | Background refetch overwrites optimistic data | Always call `queryClient.cancelQueries()` in `onMutate` |
 | Putting server data in Zustand | Manual loading/error/stale management, no caching | Use TanStack Query -- it handles the cache lifecycle |
 | Redux for a small app | Boilerplate overhead with no benefit | Zustand or Jotai for small-to-medium apps |
+
+---
+
+## Practice
+
+- **Zustand basics**: Create a Zustand store for a shopping cart with `items`, `addItem`, `removeItem`, and `total` (derived). Use selectors to prevent the item count badge from re-rendering when items change but count does not.
+- **TanStack Query**: Fetch a paginated list from a public API (e.g., JSONPlaceholder). Configure `staleTime`, implement optimistic updates for a mutation, and verify background refetch on window focus.
+- **Jotai atoms**: Build a todo app using Jotai. Create atoms for the todo list and derived atoms for `completedCount` and `pendingCount`. Verify that components subscribing to `completedCount` do not re-render when a pending todo's text changes.
+- **Decision tree walkthrough**: Use the decision tree from this lesson on a real project. For each piece of state, trace through the tree and document which tool you would choose and why.
+- **Library comparison**: Implement the same counter with persistence in (1) Context + `useReducer`, (2) Zustand, and (3) Jotai. Compare the amount of code, re-render behavior, and testing ergonomics.
+
+### Related Lessons
+
+- [State Management Fundamentals](01-state-management-fundamentals.md) -- `useState`, `useReducer`, Context, state colocation, URL state, form state
+- [Advanced State Patterns](03-advanced-state-patterns.md) -- XState, optimistic updates, CRDTs, Zustand internals
+- [Hooks & State Management](../01-hooks-deep-dive/01-hooks-and-state-management.md) -- the hook primitives that state libraries wrap
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- re-render cost of Context vs selector-based stores

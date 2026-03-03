@@ -303,3 +303,12 @@ close(done) // all workers see this immediately
 ```
 
 Closing a channel broadcasts to all receivers. This is why `chan struct{}` is used for signaling — it carries no data, only the signal.
+
+---
+
+## Related Reading
+
+- **Synchronization primitives** — [Synchronization and Context](02-synchronization-and-context.md) covers `sync.Mutex`, `sync.WaitGroup`, `sync.Once`, and `context.Context` that you will use alongside channels
+- **HTTP middleware concurrency** — [Module 04: Advanced HTTP Patterns](../04-http-services/03-advanced-http-patterns.md), section 1 (Graceful Shutdown) shows how goroutines and channels coordinate server lifecycle
+- **Testing concurrent code** — [Module 06: Benchmarking, Profiling, and Advanced Testing](../06-testing/03-benchmarking-profiling-and-advanced-testing.md), section 5 (Testing Concurrent Code) covers the race detector, `goleak`, and patterns for deterministic concurrency tests
+- **Interview concurrency puzzles** — [Module 09: Interview Essentials](../09-interview-prep/01-interview-essentials.md), section 6 (Concurrency Puzzles) provides deadlock detection and worker pool exercises using the primitives from this file

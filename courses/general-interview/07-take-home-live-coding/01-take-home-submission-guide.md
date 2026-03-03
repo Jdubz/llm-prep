@@ -737,3 +737,32 @@ A portfolio project is NOT a tutorial follow-along. It demonstrates independent 
 - **Do not research while coding** — if you need to look up an API, fine. If you need a tutorial, you picked the wrong tool.
 - **Test as you go** — do not write everything, then debug everything
 - **Take breaks** — a 5-minute walk solves more bugs than an hour of staring
+
+---
+
+## Practice
+
+### Plant Watering Project
+
+The [`plant-watering/`](../projects/plant-watering/) project in this course is a real take-home exercise from a company interview. Use it to practice the principles in this guide:
+
+1. **Timed practice:** Set a 60-90 minute timer and complete the core implementation plus at least one bonus task. Practice the time allocation framework from this guide -- plan first, build second, test third, polish last.
+2. **README writing:** After completing the code, write a submission-quality README following the template in this guide. Include setup instructions, architecture notes, assumptions, and trade-offs.
+3. **Git history:** Practice clean commit strategy. Your history should read like a story: initial setup, core implementation, tests passing, bonus features, polish.
+4. **Self-review:** Before looking at the provided solution, run through the "Before You Submit Checklist" above against your own work. Identify gaps.
+
+The project tests the exact submission criteria discussed in this guide: working code, readability, meaningful tests, error handling, and clean structure. Treat it as a dress rehearsal for your next real take-home.
+
+### Additional Exercises
+
+- Take any LeetCode medium problem and reframe it as a take-home: write a README, structure the project, add tests, and clean up your git history before considering it "submitted."
+- Review an open-source project's README and evaluate it against the criteria in this guide. What would you add? What would you cut?
+
+---
+
+## Cross-References
+
+- **[Module 06 — Coding Patterns](../06-coding-patterns/):** The coding patterns and data structure choices you make in a take-home draw from the same knowledge base as live coding interviews. Module 06's pattern recognition and edge case checklists are directly applicable to take-home code quality.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** The follow-up review discussion after a take-home submission is a communication exercise. Module 03 covers how to explain architecture decisions, walk through code, and justify technology choices -- all skills tested in the review conversation.
+- **[Module 02 — Behavioral Interview Mastery](../02-behavioral/):** Your take-home submission often becomes the basis for behavioral questions ("Walk me through a technical decision you made"). Module 02's STAR framework applies to discussing your take-home choices.
+- **[Plant Watering Project](../projects/plant-watering/):** A concrete take-home exercise from a real interview. Practice the principles from this guide against a real problem.

@@ -394,3 +394,20 @@ Step 5: Read the room
 5. **Genuine curiosity is visible.** Ask questions you actually care about. Authenticity builds rapport.
 
 6. **Skip questions whose answers are obvious.** Never ask something you could have found with 5 minutes of research.
+
+---
+
+## Practice
+
+- For a company you are actively interviewing with (or a target company), select 5-7 questions from this guide tailored to the specific round (recruiter, peer, manager, VP). Write them down and rank them by priority -- which ones would you ask if you only had time for two?
+- Practice the quick decision framework above with a mock scenario: you just finished a technical round with a peer engineer, you have 5 minutes for questions, and two of your prepared questions were already answered during the interview. Which do you ask? Practice adapting on the fly.
+- For each category (engineering culture, team dynamics, growth, product, process, role-specific), identify your top concern about a target company. Map that concern to the most effective question from this guide.
+
+---
+
+## Cross-References
+
+- **[Module 01 — Interview Strategy](../01-strategy/):** The company research framework in Module 01 informs which questions to ask. Thorough research lets you ask specific, informed questions rather than generic ones. Skip questions whose answers are in the engineering blog.
+- **[Module 04 — Red Flags and Strategic Questions](02-red-flags-and-strategic-questions.md):** This companion file covers interpreting answers, detecting red flags, evaluating engineering maturity with DORA metrics, and asking staff-level questions. Read this framework guide first for the question bank, then the red flags guide for the interpretive layer.
+- **[Module 02 — Behavioral Interview Mastery](../02-behavioral/):** The rapport-building moments at the end of behavioral rounds are ideal for asking questions. Module 02's advice on reading the interviewer helps you pick the right question for the right moment.
+- **[Module 08 — Negotiation & Closing](../08-negotiation/):** Several questions here (career path, evaluation process, level expectations) gather information that strengthens your negotiation position later. Ask these during interviews so you have data for the offer stage.

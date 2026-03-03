@@ -228,3 +228,29 @@ Both are client-side directives evaluated by the GraphQL engine at execution tim
 **Q: A DataLoader batch function returns results in a different order than the input keys. What breaks?**
 
 Everything. DataLoader relies on position-based mapping — result[i] must correspond to keys[i]. Out-of-order results cause wrong data to be returned for wrong keys, often silently. Always sort results and map by key before returning.
+
+---
+
+## Related Reading
+
+- **GraphQL vs REST decision framework** (Section 6) — for the REST side of this comparison, see [REST API Design — API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md#7-graphql-vs-rest-decision-framework)
+- **Persisted queries and security** (Section 1) — API security patterns extend those in [Auth & Security — Advanced Security and Secrets](../05-auth-security/03-advanced-security-and-secrets.md) (injection prevention, rate limiting)
+- **Performance monitoring** (Section 5) — OpenTelemetry integration connects to [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md) (distributed tracing, APM tools)
+- **Query complexity and cost analysis** (Section 1.2) relate to rate limiting strategies in [Auth & Security — Session Management and Validation](../05-auth-security/02-session-management-and-validation.md) (rate limiting algorithms)
+- **GraphQL over HTTP spec** (Section 3) — status code semantics connect to [REST API Design — HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md)
+- **Batched queries and HTTP/2** (Section 4) — HTTP/2 multiplexing is covered in [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md)
+- For database optimization behind GraphQL resolvers, see [Database Patterns — Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md)
+- For testing GraphQL APIs, see [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md)
+
+---
+
+## Practice Suggestions
+
+These exercises cover the entire GraphQL module (files 01-03):
+
+1. **Build a federated schema**: Create two subgraphs (users and orders) with Apollo Federation. The orders subgraph extends the `User` entity with an `orders` field. Use `__resolveReference` with DataLoader. Deploy with Apollo Router and verify cross-subgraph queries work.
+2. **DataLoader implementation from scratch**: Implement a minimal DataLoader class that batches `.load()` calls within a tick using `process.nextTick`, maintains a per-instance cache, and enforces the batch contract (same length, same order). Test with intentionally out-of-order database results.
+3. **Query cost analysis**: Implement a cost analysis plugin that assigns costs to fields (1 for scalars, 10 for objects, cost * `first` argument for connections). Reject queries exceeding a budget of 1000. Test with deeply nested queries and large pagination requests.
+4. **Mutation error handling pattern**: Implement a mutation that uses union return types for domain errors (`ValidationError | NotFoundError | Success`). Write client-side TypeScript that exhaustively handles all union members. Then implement the same mutation with the errors-array pattern and compare the client-side ergonomics.
+5. **Subscription with Redis PubSub**: Replace the in-memory PubSub with `graphql-redis-subscriptions`. Run two server instances and verify that a mutation on one instance triggers a subscription update on the other. Implement graceful shutdown that properly drains WebSocket connections.
+6. **Performance audit**: Take an existing GraphQL API (or build one) and add field-level tracing via an Apollo Server plugin. Identify the slowest resolvers. Add Redis caching in front of DataLoader for the slowest fields. Measure the improvement in p95 latency.

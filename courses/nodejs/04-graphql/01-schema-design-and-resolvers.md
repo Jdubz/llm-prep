@@ -362,3 +362,17 @@ union CreateUserResult = CreateUserSuccess | ValidationError | NotFoundError
 Resolver returns `{ __typename: 'ValidationError', message, field }` or `{ __typename: 'CreateUserSuccess', user }`. Unexpected errors still bubble to top-level.
 
 **Pragmatic approach:** unions for domain errors, top-level for infrastructure. Be consistent.
+
+**Common mistake with error handling:** Teams often mix both approaches inconsistently — some mutations use union return types, others throw errors that land in the top-level `errors` array. This forces clients to check two places for every mutation. Pick one pattern for domain errors and enforce it across the entire schema. If you choose unions, establish a shared `interface Error { message: String! }` that all error types implement.
+
+---
+
+## Related Reading
+
+- **Relay connection pagination** (Section 5) is the GraphQL equivalent of cursor pagination in [REST API Design — Pagination, Filtering, and Bulk Operations](../03-rest-api-design/02-pagination-filtering-and-bulk-operations.md) — both use keyset-based cursors, but the Relay spec adds `edges` and `pageInfo` structure
+- **Code-first schema definition** (Section 6) uses the TypeScript type system patterns from [TypeScript Advanced — Conditional and Mapped Types](../01-typescript-advanced/01-conditional-and-mapped-types.md) (generics, mapped types) for type-safe schema builders like Pothos
+- **Resolver context** (Section 2.2) — the auth user in context connects to [Auth & Security — JWT and OAuth2](../05-auth-security/01-jwt-and-oauth2.md) (token verification, middleware patterns)
+- **Subscription transport** (Section 4) — WebSocket scaling connects to [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (Redis adapter for multi-instance WebSocket)
+- **Input validation** (Section 1.4) — for Zod-based input validation beyond schema types, see [Auth & Security — Session Management and Validation](../05-auth-security/02-session-management-and-validation.md)
+- For DataLoader, N+1 solutions, and federation that build on these resolver patterns, continue to [Advanced GraphQL Patterns](02-advanced-graphql-patterns.md)
+- For the REST alternative and comparison framework, see [REST API Design — API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md#7-graphql-vs-rest-decision-framework)

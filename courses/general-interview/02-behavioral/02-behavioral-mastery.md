@@ -414,3 +414,21 @@ A story that runs 8-10 minutes is too long, no matter how good it is. The interv
 6. **The first 90 seconds set the trajectory.** Invest in rapport and first impression. The rest of the interview is colored by those opening moments.
 
 7. **Never fight the format.** Behavioral rounds are not a formality. At the senior/staff level, they often carry more weight than the technical rounds.
+
+---
+
+## Practice
+
+- If you are interviewing at Amazon, map each of your 8-12 stories to specific Leadership Principles. Ensure every LP has at least two stories that can address it. Practice delivering two stories per LP without repeating any story within a single mock interview loop.
+- Practice handling curveball questions by having a friend ask you five unexpected questions (hypothetical, values-based, or abstract). Give yourself 10 seconds to think, then answer with structure: 2-3 organized points grounded in specific experience.
+- Do a mock behavioral interview on video. Watch it back and evaluate your body language: Are you making eye contact (or looking at the camera)? Are your hand gestures natural? Are you leaning slightly forward? Are you nodding when listening?
+- For your top-choice company, research their specific values and prepare two stories tailored to their culture. Practice the "angle adjustment" -- take the same base story and shift emphasis to match the company's priorities.
+
+---
+
+## Cross-References
+
+- **[Module 02 — Behavioral Interview Fundamentals](01-behavioral-interview-fundamentals.md):** This mastery guide assumes you have read the fundamentals guide and built your story bank. If you have not completed the STAR exercises and story bank template, go back to the fundamentals file first.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** The rapport-building and audience-reading skills in this guide overlap with Module 03's communication fundamentals. Module 03 goes deeper on explaining technical decisions, which is a frequent follow-up in behavioral rounds when your story involves an architecture choice.
+- **[Module 01 — Interview Strategy](../01-strategy/):** Company research (covered in Module 01) feeds directly into tailoring your stories per company values. The more you know about a company's culture and challenges, the better you can angle your stories.
+- **[Module 04 — Questions to Ask Interviewers](../04-questions-to-ask/):** The rapport-building micro-moments described here create opportunities to ask insightful questions. Module 04's per-round question guidance helps you capitalize on the connection you build during behavioral rounds.

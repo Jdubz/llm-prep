@@ -321,3 +321,21 @@ Before moving to Module 01:
 ## Next Steps
 
 Start with [Module 02: Behavioral Interview Mastery](02-behavioral-mastery/) — building your story bank takes the most practice time, so start early. Then come back to [Module 01: Interview Strategy](01-interview-strategy/) for the tactical framework.
+
+---
+
+## Practice
+
+- Complete the self-assessment checklists above before moving to any other module. Be honest -- the value of this exercise is in identifying gaps, not feeling good.
+- Write out your 2-minute career narrative and practice delivering it out loud three times. Record yourself on the third attempt and listen back.
+- Draft your "superpower" statement. Test it with a trusted colleague: does it ring true? Would they describe you the same way?
+- Fill in the company research template for one target company. Time yourself -- aim for 30-45 minutes.
+
+---
+
+## Cross-References
+
+- **[Module 01 — Interview Strategy](./01-strategy/):** Expands on the pipeline management and interview logistics introduced here. Start with Module 00 for self-assessment, then move to Module 01 for tactical execution.
+- **[Module 02 — Behavioral Interview Mastery](./02-behavioral/):** The behavioral story inventory in this module feeds directly into Module 02's story bank. Complete your inventory here first, then use Module 02 to refine each story into STAR format.
+- **[Module 03 — Technical Communication](./03-technical-communication/):** Your career narrative and "superpower" statement are communication exercises. Module 03 covers the broader communication skills you will use in every interview round.
+- **[Module 08 — Negotiation & Closing](./08-negotiation/):** The company research framework here (business model, revenue, competitors) feeds directly into negotiation preparation. Understanding the business helps you negotiate from a position of knowledge.

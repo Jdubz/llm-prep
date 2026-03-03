@@ -357,6 +357,18 @@ ruff check app/ --fix && ruff format app/  # Lint + format
 
 ---
 
+## Practice Exercises
+
+Work through these exercises in `exercises.py` to practice the concepts from this file:
+
+- **Exercise 1 (`TestListItems`)** — Uses the `seeded_client` async fixture (which itself depends on `seeded_db`). Practice making GET requests with `httpx.AsyncClient`, passing query parameters, and asserting status codes and JSON response bodies. Covers: fixture injection, async test functions, `params={}` for query strings.
+
+- **Exercise 5 (`test_valid_item_creation`, `test_invalid_item_creation`)** — Practice `@pytest.mark.parametrize` with `pytest.param(..., id="...")` for data-driven tests. Fill in the parametrize lists and write assertions for both valid (201) and invalid (422) payloads. Covers: parametrize decorator syntax, Pydantic validation error structure.
+
+See also `examples.py` sections 2-4 and 6 for working reference implementations of these patterns.
+
+---
+
 ## Key Takeaways
 
 - Fixtures are composable, dependency-injected, and replace `beforeEach`/`afterEach` with a single function.

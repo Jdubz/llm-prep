@@ -412,6 +412,14 @@ uvloop helps when the bottleneck is event loop I/O overhead. If your bottleneck 
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice the concepts from this file. See also `examples.py` for fully working reference implementations.
+
+- **Exercise 1: Convert Synchronous Code to Async** -- Convert a blocking sequential fetch loop into concurrent async code using `asyncio.gather` and `await`. Practices the core async/await syntax and the difference between sync and async execution. *(Also see: `examples.py` Example 1 -- Parallel HTTP Fetching with Semaphore)*
+
+---
+
 ## Key Takeaways
 
 - Python async is **opt-in** — sync libraries block the loop. Opposite of Node.js.

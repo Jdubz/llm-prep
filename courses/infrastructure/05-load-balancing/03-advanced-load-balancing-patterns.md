@@ -561,3 +561,15 @@ DNS Weighted Routing:
    Use L4 load balancing (UDP) for game state updates -- low latency is critical. Consistent hashing on game session ID to ensure all players in a session hit the same server. WebSocket connections for lobby/chat use L7 with sticky sessions. Health checks must be aggressive (1-2s interval) since game servers under load can degrade quickly. Circuit breakers on matchmaking service calls with graceful fallback (queue players rather than error). DNS-based routing for region selection at connection time.
 
 4. **What is the difference between active and passive health checks?** Active: LB probes backends. Passive: LB monitors real traffic responses.
+
+---
+
+## Related Reading
+
+- [Module 05: Load Balancing Fundamentals](01-load-balancing-fundamentals.md) -- the core algorithms (round-robin, consistent hashing, least-connections) and health check patterns that these advanced configurations build on
+- [Module 05: Circuit Breakers and Retry Strategies](02-circuit-breakers-and-retry-strategies.md) -- resilience patterns that work alongside load balancing; service mesh implementations of circuit breakers and retries
+- [Module 00: Computing Fundamentals](../00-computing-fundamentals.md) -- the networking fundamentals (TCP, TLS, HTTP versions) that underpin the protocol deep dives in this module
+- [Module 03: Cache Invalidation and Performance](../03-caching/02-cache-invalidation-and-performance.md) -- CDN caching strategies (Cache-Control headers, stale-while-revalidate) that work alongside the CDN architecture covered here
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- Kubernetes Ingress controllers (nginx, Traefik) implement L7 load balancing, and MetalLB provides bare-metal L4 load balancing
+- [Module 06: Kubernetes Advanced Patterns](../06-containers-orchestration/03-kubernetes-advanced-patterns.md) -- service mesh (Istio, Linkerd) provides L7 load balancing with mTLS, traffic splitting, and observability built in
+- [Module 08: Advanced Observability](../08-observability/03-advanced-observability.md) -- RUM and synthetic monitoring measure the end-user experience of your global load balancing architecture across regions

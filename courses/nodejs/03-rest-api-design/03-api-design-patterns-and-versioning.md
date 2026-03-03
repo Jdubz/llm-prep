@@ -396,3 +396,29 @@ export function problemDetailsPlugin(app: FastifyInstance): void {
 5. **GraphQL and REST are complementary.** REST for public/inter-service; GraphQL for flexible frontend consumption.
 6. **Contract testing (Pact)** is the most valuable testing strategy for microservice architectures.
 7. **Study production APIs** (Stripe, GitHub, Twilio). Their trade-offs under real constraints are more instructive than theoretical purity.
+
+---
+
+## Related Reading
+
+- **GraphQL vs REST** (Section 7) — for the GraphQL side of this comparison, see [GraphQL — Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md) and [GraphQL — Performance and Alternatives](../04-graphql/03-graphql-performance-and-alternatives.md) (GraphQL vs tRPC vs REST)
+- **OpenAPI and code generation** (Section 4) — TypeBox and Zod schemas use the TypeScript type system covered in [TypeScript Advanced — Conditional and Mapped Types](../01-typescript-advanced/01-conditional-and-mapped-types.md)
+- **API gateway patterns** (Section 5) — gateway architecture is part of the broader microservices discussion in [Architecture — Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md) (strangler fig, modular monolith)
+- **Error response design** (Section 3) — the `ApiError` class connects to error handling architecture in [Architecture — Clean Architecture and DDD](../09-architecture-patterns/01-clean-architecture-and-ddd.md) and error handling fundamentals in [Module 00 — Error Handling Patterns](../00-ts-node-fundamentals.md#8-error-handling-patterns)
+- **Multi-tenant SaaS API design** (Section 8.3) — database-level multi-tenancy is covered in [Database Patterns — Advanced Patterns and Multi-Tenancy](../06-database-patterns/03-advanced-patterns-and-multi-tenancy.md)
+- **Backend for Frontend** (Section 5.2) — BFF is an architecture pattern explored in [Architecture — Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md)
+- For authentication and authorization on these APIs, see [Auth & Security — JWT and OAuth2](../05-auth-security/01-jwt-and-oauth2.md)
+- For testing these API patterns, see [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md) and [Testing — Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md) (contract testing)
+
+---
+
+## Practice Suggestions
+
+These exercises cover the entire REST API Design module (files 01-03):
+
+1. **Design a production API from scratch**: Model an e-commerce API with products, orders, line items, customers, and payments. Define all endpoints, methods, status codes, and error formats. Implement cursor pagination for order history and idempotency keys for payment creation. Write the OpenAPI spec using Fastify + TypeBox or Hono + Zod.
+2. **Implement ETag-based concurrency control**: Build a resource endpoint that returns ETags. Implement `If-Match` for PUT (return 412 on conflict) and `If-None-Match` for GET (return 304 on cache hit). Test with concurrent updates from two clients.
+3. **Build a versioned API with deprecation**: Create `/v1/users` and `/v2/users` with a breaking change (e.g., rename `name` to `displayName`). Implement the expand/contract pattern with both fields returned during transition. Add `Deprecation` and `Sunset` headers on v1. Write a compatibility layer that transforms v1 requests to v2 internally.
+4. **Contract testing exercise**: Set up two services (order-service and payment-service) with Pact. Write consumer contracts in order-service. Verify them in payment-service. Break a contract intentionally and observe the `can-i-deploy` check fail.
+5. **Bulk operation with partial failure**: Implement `POST /users/bulk` that accepts up to 100 users. Return 207 Multi-Status with per-item results. Handle the case where 3 out of 5 succeed and 2 fail validation. Decide between atomic (all-or-nothing) and partial (best-effort) semantics and document the trade-offs.
+6. **Rate limiting implementation**: Build a Redis-backed sliding window rate limiter for your API. Implement per-API-key and per-IP limits. Return proper `RateLimit-*` headers and `Retry-After` on 429. Test under load to verify accuracy.

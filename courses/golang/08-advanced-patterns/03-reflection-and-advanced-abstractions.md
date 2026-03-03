@@ -182,3 +182,31 @@ Manual DI in `main()` is explicit, readable, and requires no magic. The dependen
 
 **Q: How do Go design patterns differ from OOP design patterns?**
 Go's composition model is different — interfaces are implicit, embedding provides delegation, and first-class functions replace many patterns that require classes in OOP. The strategy pattern in Go is often just a function type, not an interface. The observer pattern uses channels instead of callback registration. The decorator pattern uses function wrapping or interface wrapping rather than class hierarchies. The key principle: do not force OOP patterns into Go. Learn the idiomatic equivalents that leverage Go's specific strengths.
+
+---
+
+## Related Reading
+
+- **Interface internals** — [Module 01: Advanced Go Internals](../01-go-mental-model/03-advanced-go-internals.md), section 4 (Interface Internals) explains the two-word runtime representation (type pointer + data pointer) that reflection inspects in section 1
+- **Generics vs reflection** — [Generics and Code Generation](01-generics-and-code-generation.md), section 1 covers the type parameter approach that has replaced many pre-1.18 reflection use cases
+- **Struct tags in ORMs** — [Module 05: Database Drivers and ORMs](../05-data-storage/01-database-drivers-and-orms.md) shows GORM and Ent using the struct tag processing from section 1 to map fields to database columns
+- **Struct tags in JSON** — [Module 03: HTTP and JSON](../03-stdlib/01-http-and-json.md), section 2 (encoding/json) shows `json:"name"` tags that `encoding/json` processes using the reflection patterns from section 1
+- **Plugin architecture** — [Module 04: Advanced HTTP Patterns](../04-http-services/03-advanced-http-patterns.md) shows how the middleware decorator pattern relates to the plugin extensibility model in section 2
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the advanced patterns from this module (Generics and Code Generation through Reflection and Advanced Abstractions):
+
+1. **Generic data structure** — Implement a generic `OrderedMap[K comparable, V any]` that maintains insertion order. Implement `Set`, `Get`, `Delete`, and `Range` methods. Write table-driven tests and a benchmark comparing it to a standard `map`.
+
+2. **Functional options library** — Build a reusable HTTP client using the functional options pattern. Include `WithTimeout`, `WithRetry`, `WithBaseURL`, and `WithHeader` options. Validate options in the constructor and return errors for invalid configurations. Write tests for each option in isolation.
+
+3. **Code generator** — Write a custom code generator using `go/ast` and `go/parser` that reads struct definitions and generates constructor functions (e.g., `NewUser(name string, email string) *User`). Integrate it with `//go:generate` and test that the generated code compiles.
+
+4. **Cobra CLI tool** — Build a CLI tool with Cobra that has at least three subcommands. Use persistent flags for global config and local flags per subcommand. Implement shell completion and write tests using the buffer-based approach from Module 06.
+
+5. **Reflection-based struct differ** — Write a function that compares two structs of the same type and returns a list of field names that differ. Use `reflect` to iterate fields and compare values. Write tests with various struct types and benchmark against a hand-written comparison function.
+
+6. **DI wiring exercise** — Create a small application with three layers (handler, service, repository) where each layer depends on interfaces. Wire them manually in `main()`. Then refactor to use Google Wire and compare the generated code to your manual wiring. Verify both approaches produce identical behavior with integration tests.

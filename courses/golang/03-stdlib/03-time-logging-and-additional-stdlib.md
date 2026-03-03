@@ -815,6 +815,34 @@ func (r *CountingReader) Read(p []byte) (int, error) {
 
 ---
 
+## Related Reading
+
+- **slog in production** — [Module 07: Observability and Health](../07-production/02-observability-and-health.md), section 1 (Structured Logging with slog) extends the slog basics from section 2 with production handlers, log levels, and OpenTelemetry integration
+- **time in HTTP services** — [Module 04: Advanced HTTP Patterns](../04-http-services/03-advanced-http-patterns.md), section 1 (Graceful Shutdown) uses `time.Duration` and `time.Ticker` for shutdown timeouts and connection draining
+- **errgroup for concurrency** — [Module 02: Advanced Concurrency Patterns](../02-concurrency/03-advanced-concurrency-patterns.md) covers the broader concurrency patterns that `errgroup` from section 10 fits into
+- **regexp in validation** — [Module 04: Request Handling and Validation](../04-http-services/02-request-handling-and-validation.md), section 3 shows regex-based validation in HTTP request handling
+- **embed for deployment** — [Module 07: Project Structure and Configuration](../07-production/01-project-structure-and-configuration.md), section 6 (Embedding Assets) shows how `embed.FS` from section 7 is used to bundle migrations, templates, and static files into production binaries
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the standard library concepts from this module (HTTP and JSON through Time, Logging, and Additional Stdlib):
+
+1. **Build an HTTP JSON API from scratch** — Using only `net/http` and `encoding/json` (no frameworks), build a CRUD API for a resource (e.g., bookmarks). Implement proper Content-Type headers, status codes, and error responses. Use `json.NewDecoder` for request bodies and `json.NewEncoder` for responses.
+
+2. **io.Reader pipeline** — Build a chain of `io.Reader` wrappers: one that counts bytes read, one that logs each line, and one that transforms content (e.g., uppercase). Compose them together and verify with tests that each stage works independently and in combination.
+
+3. **Structured logging middleware** — Write HTTP middleware that uses `slog` to log each request with method, path, status code, duration, and request ID. Use `slog.With` to add request-scoped context. Test that log output contains the expected fields.
+
+4. **Time zone handling** — Write a function that accepts a time string in one timezone and converts it to another. Use Go's reference time (`Mon Jan 2 15:04:05 MST 2006`) for parsing. Write table-driven tests covering edge cases: DST transitions, UTC offsets, and the zero value.
+
+5. **Custom regexp validator** — Build a struct field validator that uses `regexp` to validate fields like email, phone number, and URL. Since Go's regexp uses RE2 (no backtracking), verify that your patterns perform consistently even on adversarial input.
+
+6. **database/sql integration** — Connect to a SQLite database using `database/sql`, create a table, insert rows, and query them. Practice the `QueryRow` / `Query` / `Exec` patterns with proper error handling and `defer rows.Close()`. Compare this to the pgx approach in Module 05.
+
+---
+
 ## Further Reading
 
 - [Go Standard Library Documentation](https://pkg.go.dev/std)

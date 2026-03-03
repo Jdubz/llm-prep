@@ -505,3 +505,21 @@ A $250K offer in San Francisco and a $200K offer in Austin are not $50K apart. A
 Every dollar you negotiate now compounds over your career. A $20K increase in TC today, maintained over 10 years, is $200K+ in earnings. Spend the time.
 
 The best negotiating position is having alternatives. Interview in parallel. Collect offers in the same window. Be enthusiastic and specific. Get everything in writing.
+
+---
+
+## Practice
+
+- Rehearse the "Never Give a Number First" scripts with a friend playing the recruiter. Practice all three variants (direct, redirect, pressed hard). The goal is to make your deflection feel natural, not evasive.
+- Write a counter-offer email for a real or hypothetical offer using the multi-component template from this guide. Include specific numbers for base, equity, and sign-on, each backed by a different justification (market data, competing offer, unvested equity). Have a friend evaluate whether the email is specific enough and whether the tone is collaborative.
+- Walk through the complete negotiation timeline above with a real or hypothetical scenario. Identify the decision points and practice what you would say at each stage.
+- Practice the decline email template. Write a gracious decline for an offer you would genuinely turn down. The goal is to leave the door open for future opportunities without being dishonest about your reasons.
+
+---
+
+## Cross-References
+
+- **[Module 08 — Compensation Research and Fundamentals](01-compensation-research-and-fundamentals.md):** Read the fundamentals guide first. This execution guide assumes you understand total compensation components, equity mechanics, and market research sources. You cannot negotiate effectively without knowing your market value.
+- **[Module 01 — Interview Strategy](../01-strategy/):** The pipeline management and timeline strategies from Module 01 create the leverage used in this guide. Specifically, the advice to cluster on-sites and manage multiple processes simultaneously is what produces the competing offers that make negotiation scripts effective.
+- **[Module 02 — Behavioral Interview Mastery](../02-behavioral/):** Negotiation is a behavioral skill. The active listening, rapport-building, and conflict resolution techniques from Module 02 apply directly to negotiation conversations. The "disagree and commit" framework from Amazon's LPs is relevant when a component is non-negotiable and you need to decide whether to accept.
+- **[Module 04 — Questions to Ask Interviewers](../04-questions-to-ask/):** Information gathered during interviews (level expectations, career paths, team challenges) informs your negotiation position. The role clarity questions from Module 04 are especially important -- understanding the scope of the role helps you negotiate appropriate compensation.

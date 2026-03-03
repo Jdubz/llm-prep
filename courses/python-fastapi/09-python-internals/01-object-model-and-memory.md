@@ -359,6 +359,19 @@ class Point:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` test concepts from this file. Each exercise has self-contained instructions and can be completed independently.
+
+- **Exercise 1 — Reference Counting**: Implement `count_references()` using `sys.getrefcount()`. Tests your understanding of how reference counts work and the +1 offset from the `getrefcount` argument. (See: "Reference Counting (Primary)" section above)
+- **Exercise 2 — Detect Reference Cycle**: Implement `has_reference_cycle()` using `gc.collect()` and `gc.get_referrers()`. Tests your understanding of cyclic GC and how reference cycles evade reference counting. (See: "Cyclic GC (Secondary)" section above)
+- **Exercise 5 — __slots__ MemoryEfficient class**: Implement a 3D vector class using `__slots__` with `__add__`, `__eq__`, and `__hash__`. Tests `__slots__` memory optimization and the `__eq__`/`__hash__` contract. (See: "`__slots__`" and "Dunder Protocols" sections above)
+- **Exercise 6 — Singleton via __new__**: Implement `AppConfig` as a singleton using `__new__` with a `_initialized` guard in `__init__`. Tests the `__new__` vs `__init__` distinction. (See: "`__new__` vs `__init__`" section above)
+- **Exercise 7 — Weak Reference Cache**: Implement `WeakCache` using `weakref.WeakValueDictionary()`. Tests weak reference concepts and auto-cleanup behavior. (See: "Weak References" section above)
+- **Exercise 8 — Fibonacci Iterator**: Implement a class-based iterator using `__iter__` and `__next__`. Tests the iterator dunder protocol. (See: "Dunder Protocols" section above)
+
+---
+
 ## Key Takeaways
 
 - Every Python object is a `PyObject` with a refcount and a type pointer.

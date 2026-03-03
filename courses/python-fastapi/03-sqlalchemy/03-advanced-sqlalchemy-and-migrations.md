@@ -400,6 +400,16 @@ rename UUID column, set as new PK.
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` reinforce concepts from this file and the earlier modules. Also see `examples.py` Section 8 (Bulk Insert with Core API) for the Core vs ORM performance pattern.
+
+- **Exercise 5 — Bulk Insert**: Uses the Core `insert().values()` API instead of ORM loops. Directly practices the "Common Optimization Patterns" item 3 from the Query Optimization and Performance section above, demonstrating when to drop from ORM to Core for performance.
+
+The remaining exercises (1-4 in `exercises.py`) practice foundational patterns covered in `01-models-relationships-and-schema.md` and `02-querying-and-session-management.md`. If you are working through this module in order, complete those exercises before tackling the advanced topics in this file.
+
+---
+
 ## Key Takeaways
 
 - The identity map ensures object identity within a session; one session per request is safe.

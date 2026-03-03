@@ -22,6 +22,10 @@ F = TypeVar("F", bound=Callable[..., Any])
 # EXERCISE 1: Memoize Decorator
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (decorators, closures)
+#   - ../01-fastapi-foundations/01-http-routing-and-decorators.md (decorator patterns in practice)
+#
 # Write a @memoize decorator that caches function results by arguments.
 # If the function is called again with the same args, return the cached
 # result instead of recomputing.
@@ -37,6 +41,33 @@ F = TypeVar("F", bound=Callable[..., Any])
 #   - Build a cache key from args and kwargs: (args, frozenset(kwargs.items()))
 #   - Check if key is in cache before calling the function
 #   - Attach the cache dict to the wrapper: wrapper.cache = cache
+#
+#   @functools.wraps pattern — the standard way to write a decorator:
+#     import functools
+#     def my_decorator(func):
+#         @functools.wraps(func)           # copies __name__, __doc__, etc.
+#         def wrapper(*args, **kwargs):
+#             # ... pre-processing ...
+#             result = func(*args, **kwargs)
+#             # ... post-processing ...
+#             return result
+#         return wrapper
+#
+#   Why functools.wraps matters:
+#   - Without it, decorated_func.__name__ returns "wrapper" instead of
+#     the original function name. This breaks debugging and introspection.
+#
+#   Closure structure for memoize:
+#     def memoize(func):
+#         cache = {}                       # closed over by wrapper
+#         @functools.wraps(func)
+#         def wrapper(*args, **kwargs):
+#             key = (args, frozenset(kwargs.items()))
+#             if key not in cache:
+#                 cache[key] = func(*args, **kwargs)
+#             return cache[key]
+#         wrapper.cache = cache            # expose cache as attribute
+#         return wrapper
 #
 # Expected behavior:
 #   @memoize
@@ -57,6 +88,11 @@ def memoize(func: F) -> F:
 # EXERCISE 2: Retry Decorator
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (decorator factories)
+#   - ../01-fastapi-foundations/01-http-routing-and-decorators.md (parameterized decorators)
+#   - ../02-async-python/02-concurrency-patterns.md (retry patterns in production)
+#
 # Write a @retry decorator factory that retries a function on exception
 # with exponential backoff.
 #
@@ -73,6 +109,34 @@ def memoize(func: F) -> F:
 #   - In the wrapper, loop max_attempts times with try/except
 #   - On each failure, sleep for the current delay, then double it
 #   - On the last attempt, let the exception propagate
+#
+#   Decorator factory pattern (decorator that accepts arguments):
+#   The key insight is three nested functions:
+#
+#     def retry(max_attempts=3, delay=0.1):    # 1. factory — accepts config
+#         def decorator(func):                  # 2. decorator — accepts func
+#             @functools.wraps(func)
+#             def wrapper(*args, **kwargs):     # 3. wrapper — replaces func
+#                 current_delay = delay
+#                 for attempt in range(1, max_attempts + 1):
+#                     try:
+#                         return func(*args, **kwargs)
+#                     except Exception:
+#                         if attempt == max_attempts:
+#                             raise              # re-raise on last attempt
+#                         time.sleep(current_delay)
+#                         current_delay *= 2     # exponential backoff
+#             return wrapper
+#         return decorator
+#
+#   Usage: @retry(max_attempts=3) calls retry() which returns decorator,
+#   which is then applied to the function. This is why you need three layers.
+#
+#   Compare with a simple decorator (no arguments) which has only two layers:
+#     def simple(func):           # decorator — accepts func
+#         def wrapper(*args):     # wrapper — replaces func
+#             ...
+#         return wrapper
 #
 # Expected behavior:
 #   attempt_count = 0
@@ -96,6 +160,10 @@ def retry(max_attempts: int = 3, delay: float = 0.1) -> Callable[[F], F]:
 # EXERCISE 3: Pipe Function
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (higher-order functions)
+#   - ../09-python-internals/01-object-model-and-memory.md (callables)
+#
 # Implement pipe() that composes functions left-to-right. The result of
 # each function is passed as input to the next.
 #
@@ -109,6 +177,27 @@ def retry(max_attempts: int = 3, delay: float = 0.1) -> Callable[[F], F]:
 #   - Use functools.reduce to chain function calls
 #   - reduce(lambda acc, fn: fn(acc), funcs, initial_value)
 #   - Return a lambda or inner function that applies reduce
+#
+#   functools.reduce API:
+#     from functools import reduce
+#     reduce(function, iterable, initial)
+#     # Applies function cumulatively: function(function(initial, item1), item2)
+#
+#   Pattern — function composition with reduce:
+#     def pipe(*funcs):
+#         def piped(x):
+#             return reduce(lambda acc, fn: fn(acc), funcs, x)
+#         return piped
+#
+#   How it works step-by-step for pipe(double, add10, str)(5):
+#     reduce starts with acc=5 (the initial value)
+#     Step 1: acc = double(5)  -> 10
+#     Step 2: acc = add10(10)  -> 20
+#     Step 3: acc = str(20)    -> "20"
+#
+#   Edge cases:
+#   - pipe() with no functions should return an identity function: lambda x: x
+#   - pipe(f) with one function should behave like calling f directly
 #
 # Expected behavior:
 #   transform = pipe(
@@ -129,6 +218,10 @@ def pipe(*funcs: Callable) -> Callable:
 # EXERCISE 4: Partial Application
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (closures, *args/**kwargs)
+#   - ../01-fastapi-foundations/02-dependency-injection.md (partial application in DI)
+#
 # Implement your own partial() function from scratch (don't use
 # functools.partial). It should pre-fill some arguments of a function.
 #
@@ -141,6 +234,24 @@ def pipe(*funcs: Callable) -> Callable:
 # Hints:
 #   - Return an inner function that calls func(*fixed_args + new_args, **merged_kwargs)
 #   - Merge kwargs with: {**fixed_kwargs, **new_kwargs}
+#
+#   How *args and **kwargs work:
+#     def example(*args, **kwargs):
+#         # args is a tuple of positional arguments
+#         # kwargs is a dict of keyword arguments
+#         print(args)     # (1, 2, 3)
+#         print(kwargs)   # {"x": 10, "y": 20}
+#     example(1, 2, 3, x=10, y=20)
+#
+#   Dict merging (later values override earlier):
+#     {**{"a": 1, "b": 2}, **{"b": 3, "c": 4}}  # -> {"a": 1, "b": 3, "c": 4}
+#
+#   Pattern — implementing partial from scratch:
+#     def my_partial(func, *fixed_args, **fixed_kwargs):
+#         def wrapper(*args, **kwargs):
+#             merged_kwargs = {**fixed_kwargs, **kwargs}  # new kwargs override
+#             return func(*fixed_args, *args, **merged_kwargs)
+#         return wrapper
 #
 # Expected behavior:
 #   def add(a, b, c=0):
@@ -160,6 +271,11 @@ def my_partial(func: Callable, *fixed_args: Any, **fixed_kwargs: Any) -> Callabl
 # EXERCISE 5: Validate Decorator
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (decorator factories, inspect)
+#   - ../01-fastapi-foundations/02-dependency-injection.md (runtime type validation)
+#   - ../09-python-internals/03-imports-and-runtime.md (inspect module)
+#
 # Write a @validate decorator factory that type-checks arguments at runtime.
 # This is a simplified version of what Pydantic does under the hood.
 #
@@ -175,6 +291,36 @@ def my_partial(func: Callable, *fixed_args: Any, **fixed_kwargs: Any) -> Callabl
 #   - sig.bind(*args, **kwargs).arguments gives a dict of {param_name: value}
 #   - isinstance(value, expected_type) for the check
 #   - Three layers: validate(**types) -> decorator(func) -> wrapper(*args, **kwargs)
+#
+#   inspect.signature API — mapping positional args to parameter names:
+#     import inspect
+#     def add(x, y, z=0): ...
+#     sig = inspect.signature(add)
+#     bound = sig.bind(1, 2, z=3)        # bind actual call args to params
+#     bound.arguments                     # OrderedDict({"x": 1, "y": 2, "z": 3})
+#
+#   This is how you figure out which parameter name each positional arg
+#   corresponds to, so you can validate by name.
+#
+#   Pattern — three-layer decorator factory with validation:
+#     def validate(**type_hints):            # layer 1: accepts config
+#         def decorator(func):               # layer 2: accepts function
+#             sig = inspect.signature(func)
+#             @functools.wraps(func)
+#             def wrapper(*args, **kwargs):  # layer 3: replaces function
+#                 bound = sig.bind(*args, **kwargs)
+#                 bound.apply_defaults()
+#                 for name, expected_type in type_hints.items():
+#                     if name in bound.arguments:
+#                         value = bound.arguments[name]
+#                         if not isinstance(value, expected_type):
+#                             raise TypeError(
+#                                 f"{name} must be {expected_type.__name__}, "
+#                                 f"got {type(value).__name__}"
+#                             )
+#                 return func(*args, **kwargs)
+#             return wrapper
+#         return decorator
 #
 # Expected behavior:
 #   @validate(x=int, y=int)
@@ -194,6 +340,11 @@ def validate(**type_hints: type) -> Callable[[F], F]:
 # EXERCISE 6: Rate Limiter
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (decorator factories, deque)
+#   - ../05-advanced-api-patterns/02-pagination-filtering-and-bulk-operations.md (rate limiting)
+#   - ../02-async-python/02-concurrency-patterns.md (throttling patterns)
+#
 # Write a rate_limiter decorator factory that limits how often a function
 # can be called within a time window.
 #
@@ -209,6 +360,36 @@ def validate(**type_hints: type) -> Callable[[F], F]:
 #   - Before each call, remove timestamps older than (now - period)
 #   - If len(timestamps) >= max_calls after cleanup, raise RuntimeError
 #   - Otherwise, append the current timestamp and call the function
+#
+#   collections.deque — a double-ended queue:
+#     from collections import deque
+#     d = deque()
+#     d.append(item)       # add to right
+#     d.appendleft(item)   # add to left
+#     d.popleft()           # remove from left (O(1), unlike list.pop(0))
+#     d[0]                  # peek at leftmost
+#     len(d)                # number of items
+#
+#   time.monotonic() vs time.time():
+#   - time.monotonic() cannot go backwards (immune to clock adjustments)
+#   - Always use monotonic for measuring intervals and rate limiting
+#
+#   Pattern — sliding window rate limiter:
+#     def rate_limiter(max_calls=5, period=1.0):
+#         def decorator(func):
+#             timestamps = deque()       # closed over by wrapper
+#             @functools.wraps(func)
+#             def wrapper(*args, **kwargs):
+#                 now = time.monotonic()
+#                 # Evict expired timestamps
+#                 while timestamps and timestamps[0] <= now - period:
+#                     timestamps.popleft()
+#                 if len(timestamps) >= max_calls:
+#                     raise RuntimeError("Rate limit exceeded")
+#                 timestamps.append(now)
+#                 return func(*args, **kwargs)
+#             return wrapper
+#         return decorator
 #
 # Expected behavior:
 #   @rate_limiter(max_calls=2, period=0.1)

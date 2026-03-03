@@ -346,6 +346,15 @@ A: Run `terraform plan` to detect drift. Evaluate if the change was intentional.
 
 A: GitOps inverts the trust model. In traditional CI/CD, the CI server needs credentials to push to the cluster -- a compromised CI server means a compromised cluster. In GitOps, the cluster agent pulls changes from git. No external entity has cluster credentials. All changes go through git (PR review, approvals, audit trail). Drift is automatically corrected.
 
+### Related Reading
+
+- [Module 07: Pipeline Design and Deployment Strategies](01-pipeline-design-and-deployment-strategies.md) -- the CI/CD pipeline stages that Terraform and GitOps integrate into
+- [Module 07: Feature Flags and Migrations](02-feature-flags-and-migrations.md) -- secrets management tools (Vault, AWS Secrets Manager) covered here are also used for feature flag service credentials and database migration secrets
+- [Module 06: Kubernetes Advanced Patterns](../06-containers-orchestration/03-kubernetes-advanced-patterns.md) -- ArgoCD and Flux are covered in both modules; this module focuses on GitOps principles and CI/CD integration, while Module 06 covers Kubernetes-specific patterns (CRDs, operators, service mesh)
+- [Module 06: Docker and Containerization](../06-containers-orchestration/01-docker-and-containerization.md) -- devcontainers and Tilt/Skaffold for inner-loop development rely on Docker fundamentals
+- [Module 09: Compliance and Advanced Security](../09-security/03-compliance-and-advanced-security.md) -- supply chain security (SLSA, Sigstore, SBOM) covered here connects to the broader compliance requirements (SOC 2, GDPR) in Module 09
+- [Module 09: API and Application Security](../09-security/02-api-and-application-security.md) -- SAST, DAST, and SCA scanning integrate into the CI/CD security pipeline described here
+
 ### Key Takeaways
 
 1. **Infrastructure as Code is table stakes**: If it is not in code, it does not exist.

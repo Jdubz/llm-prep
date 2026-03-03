@@ -594,3 +594,21 @@ What is the question asking about?
 6. **Actions speak louder than situations.** Spend 60-70% of your answer on what YOU did and what happened as a result.
 
 7. **Follow-up questions are good.** They mean the interviewer is engaged. Prepare for likely follow-ups on each story.
+
+---
+
+## Practice
+
+- Select three stories from your story bank and write them out in full STAR format. Time yourself delivering each one out loud -- target 2-4 minutes per story.
+- For each story, write down two likely follow-up questions and prepare your responses. Follow-ups often probe the "why" behind your decisions or ask for an alternative perspective.
+- Record yourself delivering your strongest story. Watch it back and evaluate: Did you spend too long on Situation? Did you quantify the Result? Did you use "I" rather than "we" for your specific contributions?
+- Practice pivoting a single story to address three different themes. For example, a story about leading a migration could address Technical Leadership, Handling Ambiguity, and Shipping Under Pressure depending on which elements you emphasize.
+
+---
+
+## Cross-References
+
+- **[Module 03 — Technical Communication](../03-technical-communication/):** Behavioral storytelling is a communication skill. Module 03's guidance on the layered explanation model, thinking out loud, and reading your audience applies directly to how you deliver behavioral answers. Strong behavioral answers use the same "start simple, add depth" approach that Module 03 teaches for system explanations.
+- **[Module 02 — Behavioral Mastery](02-behavioral-mastery.md):** This companion file covers advanced behavioral topics: Amazon Leadership Principles, staff-level expectations, handling curveballs, reading the interviewer, and tailoring stories to company culture. Read this fundamentals guide first, then advance to the mastery guide.
+- **[Module 00 — Before You Start](../00-before-you-start.md):** The behavioral story inventory in Module 00 is your raw material for the story bank built in this module. If you have not completed the inventory yet, go back and do that first.
+- **[Module 04 — Questions to Ask Interviewers](../04-questions-to-ask/):** Your behavioral answers and the questions you ask are both evaluated for seniority level. Module 04 helps you craft questions that reinforce the same leadership signal your behavioral stories demonstrate.

@@ -388,3 +388,31 @@ Go compiles to a single statically linked binary with no runtime dependency. The
 
 **Q: How do you distinguish operational errors from programmer errors?**
 Operational errors are expected (timeouts, validation, not-found) — use sentinel errors and handle explicitly with `errors.Is`/`errors.As`. Programmer errors are bugs (nil pointer, index out of bounds) — these panic, which is intentional in Go. Wrap operational errors with `%w` so callers make decisions based on error type, not string matching.
+
+---
+
+## Related Reading
+
+- **Concurrency and GOMAXPROCS** — [Module 02: Advanced Concurrency Patterns](../02-concurrency/03-advanced-concurrency-patterns.md), section 1 (The GMP Scheduler Model) explains the goroutine scheduling that `GOMAXPROCS` from section 3 controls
+- **HTTP services being deployed** — [Module 04: Advanced HTTP Patterns](../04-http-services/03-advanced-http-patterns.md), section 1 (Graceful Shutdown) covers the HTTP-level shutdown that coordinates with the Kubernetes lifecycle in section 2
+- **Testing in CI** — [Module 06: Integration and HTTP Testing](../06-testing/02-integration-and-http-testing.md), section 6 (CI Integration) shows the test coverage thresholds and CI scripting that complement the Docker and Kubernetes deployment from sections 1–2
+- **GC tuning internals** — [Module 01: Advanced Go Internals](../01-go-mental-model/03-advanced-go-internals.md), section 3 (Garbage Collector) provides the deep background on tri-color mark-and-sweep and `GOGC` that section 3 (Runtime Tuning) configures for production
+- **Build and release** — [Project Structure and Configuration](01-project-structure-and-configuration.md), section 4 (Makefile) and section 5 (Version Injection) cover the build tooling that produces the binaries containerized in section 1
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the production Go concepts from this module (Project Structure and Configuration through Deployment and Scaling):
+
+1. **Production project scaffold** — Create a new Go project with the full `cmd/`/`internal/` layout. Include a `cmd/server/main.go` that loads config from environment variables, wires dependencies, and starts an HTTP server with graceful shutdown. Add a `Makefile` with `build`, `test`, `lint`, and `docker` targets.
+
+2. **Multi-stage Docker build** — Write a `Dockerfile` with a builder stage that uses `CGO_ENABLED=0`, `-ldflags='-s -w'`, and `-trimpath`. The runtime stage should use `gcr.io/distroless/static`. Inject version info via `ldflags` and verify the binary reports the correct version at `/healthz`.
+
+3. **Observability stack** — Add structured logging (`slog` with JSON handler), Prometheus metrics (request count, latency histogram), and a health check endpoint to an existing HTTP service. Write a test that verifies the `/metrics` endpoint exposes the expected metric names.
+
+4. **Graceful shutdown test** — Build an HTTP server that simulates long-running requests. Implement ordered graceful shutdown (stop accepting new connections, drain in-flight, close database, flush telemetry). Write a test that sends a request, triggers SIGTERM, and verifies the request completes within the shutdown timeout.
+
+5. **Kubernetes manifest** — Write a Deployment manifest with liveness, readiness, and startup probes pointed at your health check endpoints. Set resource requests/limits and add `GOMAXPROCS` and `GOMEMLIMIT` as environment variables calculated from the container limits. Test locally with `kind` or `minikube`.
+
+6. **Configuration validation** — Build a `Config` struct that loads from environment variables, validates all fields at startup (port range, required fields, URL format), and returns all errors at once using `errors.Join`. Write table-driven tests that verify every validation rule including the error messages.

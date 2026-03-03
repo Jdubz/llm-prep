@@ -516,3 +516,13 @@ u, err = client.User.
 
 // u.Edges.Posts contains the loaded posts
 ```
+
+---
+
+## Related Reading
+
+- **database/sql foundations** — [Module 03: Testing and IO](../03-stdlib/02-testing-and-io.md), section 4 (database/sql) covers the stdlib database interface that pgx and sqlx build on top of
+- **Repository pattern** — [Queries, Transactions, and Patterns](02-queries-transactions-and-patterns.md), section 3 (Repository Pattern) shows how to abstract the driver-level code from this file behind interfaces for testability
+- **HTTP handler integration** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md), section 6 (Project Structure) shows how database repositories are wired into HTTP handlers via dependency injection in `main()`
+- **Code generation with sqlc** — [Module 08: Generics and Code Generation](../08-advanced-patterns/01-generics-and-code-generation.md), section 2 (Code Generation) covers `go generate` and the broader code generation ecosystem that sqlc is part of
+- **Integration testing** — [Module 06: Integration and HTTP Testing](../06-testing/02-integration-and-http-testing.md), section 2 (testcontainers-go) shows how to test the database code from this file against real PostgreSQL and Redis containers

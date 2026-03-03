@@ -397,4 +397,14 @@ func WithValidation[Req Validatable, Resp any]() Middleware[Req, Resp] {
         }
     }
 }
+
+---
+
+## Related Reading
+
+- **Type system foundations** — [Module 01: Types, Interfaces, and Structs](../01-go-mental-model/01-types-interfaces-and-structs.md), section 4 (Interfaces) and section 7 (Generics Preview) establish the interface and type concepts that generics build on
+- **sqlc as code generation** — [Module 05: Database Drivers and ORMs](../05-data-storage/01-database-drivers-and-orms.md), section 3 (sqlc) is a concrete production use of the `go generate` workflow from section 2
+- **Middleware chains** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md), section 3 (Middleware Pattern) covers the `func(http.Handler) http.Handler` pattern that section 3 (Generic Middleware Chains) generalizes with type parameters
+- **Concurrent generic data structures** — [Module 02: Synchronization and Context](../02-concurrency/02-synchronization-and-context.md) covers the `sync.RWMutex` used to protect the generic `Bus[T]` event system in section 1
+- **Reflection as alternative** — [Reflection and Advanced Abstractions](03-reflection-and-advanced-abstractions.md), section 1 covers when reflection is needed vs when generics from this file are sufficient
 ```

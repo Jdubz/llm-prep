@@ -275,6 +275,16 @@ Adding or removing shards is painful. Plan for it from the beginning.
 
 ---
 
+## Related Reading
+
+- [Module 02: SQL, NoSQL, and Decision Framework](01-sql-nosql-and-decision-framework.md) -- the database selection guide that determines which database you will be indexing and sharding
+- [Module 02: Database Platforms and Scaling](03-database-platforms-and-scaling.md) -- platform-specific details: PostgreSQL EXPLAIN plans and MVCC, DynamoDB partition keys and GSIs, Redis data structures
+- [Module 03: Caching Patterns and Redis Basics](../03-caching/01-caching-patterns-and-redis-basics.md) -- caching is often a better first step than sharding; understand when a cache layer in front of your database eliminates the need for horizontal partitioning
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- Kafka's partition model is conceptually similar to database sharding, using partition keys for ordered, parallel processing
+- [Module 05: Load Balancing Fundamentals](../05-load-balancing/01-load-balancing-fundamentals.md) -- consistent hashing, covered in the sharding section here, is also a core load balancing algorithm
+
+---
+
 ## Key Takeaways
 
 1. **Indexes are the highest-leverage optimization.** Before sharding, before caching, before adding servers -- check your indexes. Most performance problems are missing or suboptimal indexes.

@@ -30,12 +30,35 @@ from starlette.middleware.base import BaseHTTPMiddleware
 # EXERCISE 1: Health Check Endpoint with Database Verification
 # ============================================================================
 #
+# READ FIRST:
+#   02-configuration-logging-and-observability.md -> "Health Checks and Readiness Probes"
+#   01-docker-and-deployment.md -> "Kubernetes Deployment" (probe YAML config)
+#
+# ALSO SEE:
+#   examples.py -> Section 2: "HEALTH CHECK ENDPOINTS" for a complete
+#   working implementation with liveness + readiness + dependency checks.
+#
 # Build health check endpoints that Kubernetes or a load balancer can use
 # to determine whether this instance should receive traffic.
 #
 # Key concepts:
 #   - Liveness: "Is the process alive?" (fast, no dependency checks)
+#     A liveness probe answers "is the process stuck or deadlocked?"
+#     If liveness fails, the orchestrator RESTARTS the container.
+#     It must be trivially fast -- just return {"status": "alive"}.
+#     NEVER check databases, caches, or external services here.
+#     If you do, a database outage would restart all your pods,
+#     which makes the problem worse (thundering herd on reconnect).
+#
 #   - Readiness: "Can it handle requests?" (checks DB, cache, etc.)
+#     A readiness probe answers "should this pod receive traffic?"
+#     If readiness fails, the load balancer REMOVES the pod from
+#     the pool (but does NOT restart it). This is correct behavior:
+#     the pod stays up and retries when the dependency recovers.
+#     Check each critical dependency (DB, cache, etc.) with a
+#     lightweight query (e.g., "SELECT 1") and aggregate results.
+#     Return 200 if ALL checks pass, 503 if ANY check fails.
+#
 #   - Return 503 when not ready so the load balancer routes around us.
 # ============================================================================
 
@@ -106,13 +129,48 @@ async def readiness_check() -> tuple[dict[str, Any], int]:
 # EXERCISE 2: Structured Logging Middleware
 # ============================================================================
 #
+# READ FIRST:
+#   02-configuration-logging-and-observability.md -> "Structured Logging with structlog"
+#   02-configuration-logging-and-observability.md -> "Request ID Propagation"
+#
+# ALSO SEE:
+#   examples.py -> Section 1: "STRUCTURED LOGGING" for the JSONFormatter and
+#   setup_logging patterns.
+#   examples.py -> Section 4: "REQUEST/RESPONSE LOGGING MIDDLEWARE" for a
+#   complete working middleware with request ID, timing, and active request
+#   tracking.
+#
 # Build middleware that logs every request with structured data:
 #   method, path, status code, and duration in milliseconds.
 #
 # Key concepts:
-#   - Use contextvars for request ID propagation across async boundaries
-#   - Time requests with time.perf_counter() for high precision
-#   - Produce JSON-formatted log output for log aggregators
+#   - Use contextvars for request ID propagation across async boundaries.
+#     Python's `contextvars` module is the async-safe equivalent of Node.js
+#     AsyncLocalStorage. A ContextVar value set in one coroutine is visible
+#     to all coroutines spawned from it, but NOT to unrelated requests.
+#     Pattern:
+#       request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
+#       request_id_var.set("abc-123")   # set for this request
+#       request_id_var.get()            # read from any downstream async code
+#
+#   - Time requests with time.perf_counter() for high precision.
+#     time.perf_counter() uses the highest-resolution clock available
+#     (monotonic, not affected by system clock changes). Pattern:
+#       start = time.perf_counter()
+#       # ... do work ...
+#       duration_ms = (time.perf_counter() - start) * 1000
+#
+#   - Produce JSON-formatted log output for log aggregators.
+#     In production, structlog or a custom logging.Formatter produces
+#     one JSON object per log line. Log aggregators (Datadog, ELK,
+#     CloudWatch) parse JSON natively. The stdlib approach:
+#       logging.config.dictConfig({
+#           "formatters": {"json": {"()": "myapp.JSONFormatter"}},
+#           "handlers": {"stdout": {"formatter": "json", "class": "logging.StreamHandler"}},
+#           "root": {"handlers": ["stdout"], "level": "INFO"},
+#       })
+#     Or with structlog (see MD file for full setup):
+#       structlog.configure(processors=[...JSONRenderer()])
 # ============================================================================
 
 # Context variable for propagating request ID through async call chains.
@@ -178,6 +236,17 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 # EXERCISE 3: Graceful Shutdown with In-Flight Request Tracking
 # ============================================================================
 #
+# READ FIRST:
+#   01-docker-and-deployment.md -> "Graceful Shutdown" for the lifespan pattern
+#   01-docker-and-deployment.md -> "Kubernetes Deployment" for how
+#   terminationGracePeriodSeconds interacts with graceful shutdown
+#
+# ALSO SEE:
+#   examples.py -> Section 3: "GRACEFUL SHUTDOWN WITH LIFESPAN EVENTS" for
+#   a complete lifespan context manager with connection draining.
+#   examples.py -> Section 4: "REQUEST/RESPONSE LOGGING MIDDLEWARE" shows
+#   _active_requests tracking integrated into the middleware.
+#
 # When a container receives SIGTERM, we must:
 #   1. Stop accepting new requests
 #   2. Wait for in-flight requests to complete (up to a timeout)
@@ -185,9 +254,28 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 #   4. Exit cleanly
 #
 # Key concepts:
-#   - FastAPI lifespan context manager for startup/shutdown
-#   - Track active request count atomically
-#   - Drain with a timeout to prevent hanging forever
+#   - FastAPI lifespan context manager for startup/shutdown.
+#     The lifespan replaces the old @app.on_event("startup") / "shutdown"
+#     decorators. It is an async context manager:
+#       @asynccontextmanager
+#       async def app_lifespan(app: FastAPI):
+#           # STARTUP: initialize DB pools, warm caches, etc.
+#           yield
+#           # SHUTDOWN: drain requests, close pools, flush buffers
+#     Pass it to FastAPI: FastAPI(lifespan=app_lifespan)
+#
+#   - Track active request count atomically.
+#     Use a simple counter (increment before call_next, decrement in
+#     a try/finally after). In CPython, += and -= on ints are atomic
+#     under the GIL. For multi-process setups, each worker tracks its
+#     own count independently.
+#
+#   - Drain with a timeout to prevent hanging forever.
+#     During shutdown, poll active_requests in a loop (e.g., every 0.1s).
+#     If it doesn't reach 0 within a timeout (e.g., 10s), log a warning
+#     and proceed with shutdown. In Kubernetes, set
+#     terminationGracePeriodSeconds > your drain timeout so K8s doesn't
+#     SIGKILL the pod before graceful shutdown finishes.
 # ============================================================================
 
 @dataclass
@@ -262,14 +350,52 @@ class RequestTrackingMiddleware(BaseHTTPMiddleware):
 # EXERCISE 4: Configuration Class with Validation
 # ============================================================================
 #
+# READ FIRST:
+#   02-configuration-logging-and-observability.md -> "Configuration Management
+#   with pydantic-settings" for the full BaseSettings pattern with env loading,
+#   secrets, and the singleton get_settings() function.
+#
+# ALSO SEE:
+#   examples.py -> Section 5: "CONFIGURATION MANAGEMENT WITH PYDANTIC
+#   BASESETTINGS" for a complete AppSettings class with Field constraints
+#   and the singleton pattern.
+#
 # Build a typed, validated configuration class using pydantic BaseModel.
 # This is the Python equivalent of dotenv + zod validation in Node.js.
 #
 # Key concepts:
-#   - Type-safe configuration with automatic validation
-#   - Default values for optional settings
-#   - Constraints via Field(...) for bounds and patterns
-#   - Singleton pattern so config is loaded once
+#   - Type-safe configuration with automatic validation.
+#     pydantic validates types and constraints at instantiation time.
+#     If any value is invalid, you get a clear ValidationError listing
+#     every failing field -- the app never starts in a broken state.
+#
+#   - Default values for optional settings.
+#     Fields with a default are optional (callers don't need to supply them).
+#     Fields WITHOUT a default are required -- omitting them raises an error.
+#
+#   - Constraints via Field(...) for bounds and patterns.
+#     Examples of Field() validators you will use:
+#       port: int = Field(default=8000, ge=1, le=65535)
+#       environment: str = Field(default="development",
+#                                pattern="^(development|staging|production)$")
+#       jwt_secret: str = Field(min_length=32)
+#       workers: int = Field(default=1, ge=1, le=32)
+#     ge = greater-or-equal, le = less-or-equal, min_length = minimum string
+#     length, pattern = regex the value must match.
+#
+#   - Singleton pattern so config is loaded once.
+#     Use a module-level variable to cache the config instance:
+#       _config: ServiceConfig | None = None
+#       def get_config() -> ServiceConfig:
+#           global _config
+#           if _config is None:
+#               _config = ServiceConfig(...)
+#           return _config
+#     In production with pydantic-settings, use @lru_cache instead:
+#       from functools import lru_cache
+#       @lru_cache
+#       def get_settings() -> Settings:
+#           return Settings()  # loads from env vars automatically
 # ============================================================================
 
 class ServiceConfig(BaseModel):
@@ -315,12 +441,35 @@ class ServiceConfig(BaseModel):
 # EXERCISE 5: Request Rate Metrics Collector
 # ============================================================================
 #
+# READ FIRST:
+#   02-configuration-logging-and-observability.md -> "Prometheus Metrics" for
+#   production-grade Counter/Histogram/Gauge patterns.
+#   02-configuration-logging-and-observability.md -> "Key Metrics to Track"
+#   for what to monitor (the RED method: Rate, Errors, Duration).
+#   03-performance-and-scaling.md -> "Profiling Middleware" for timing patterns.
+#
+# ALSO SEE:
+#   examples.py -> Section 7: "METRICS COLLECTION" for a complete
+#   MetricsCollector class with record(), snapshot(), and the MetricsMiddleware
+#   that wires it into every request.
+#
 # Build a simple in-memory metrics collector that tracks:
 #   - Request count per (method, path)
 #   - Total and average response time per (method, path)
 #   - Error count (status >= 500)
 #
-# For production, swap this with prometheus_client or OpenTelemetry metrics.
+# Implementation guide:
+#   - Use a dict keyed by (method, path) tuples mapping to EndpointMetric
+#     dataclass instances. defaultdict(EndpointMetric) makes this easy --
+#     missing keys auto-create a zeroed-out metric.
+#   - record() updates the metric for a given endpoint: bump count, add
+#     duration, and conditionally bump error_count if status >= 500.
+#   - get_summary() aggregates across all endpoints: sum up total_requests
+#     and total_errors, compute uptime from the start time, and return a
+#     list of per-endpoint stats.
+#   - In production, replace this with prometheus_client (Counter, Histogram,
+#     Gauge) or OpenTelemetry metrics -- they handle concurrent access,
+#     aggregation, and export to monitoring backends (Prometheus, Datadog).
 # ============================================================================
 
 @dataclass

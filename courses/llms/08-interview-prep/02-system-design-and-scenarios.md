@@ -1093,6 +1093,22 @@ Key points: comprehensive evals make migration a measurable decision, abstract t
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file. Each exercise references specific sections above and relevant patterns in `examples.py`.
+
+- **Exercise 1: Build a Basic RAG Pipeline (15 min)** — Directly implements the RAG architecture described in "Design 1: RAG-Powered Customer Support System" (document ingestion, chunking, embedding, retrieval, context assembly). The design walkthrough's retrieval pipeline and chunk sizing discussion inform how to approach this exercise. Reference: `examples.py` Example 1 (`SimpleRAGPipeline`).
+
+- **Exercise 2: Implement an Agent Loop (15 min)** — Practices the agent loop pattern described in "Design 4: Multi-Agent Research Assistant" (tool execution, error handling, iteration limits, message history). The design's orchestrator pattern and tool definitions inform the exercise structure. Reference: `examples.py` Example 2 (`AgentLoop`).
+
+- **Exercise 3: Design an Eval Suite (20 min)** — Implements STEP 5 (EVALUATION) from the System Design Interview Framework. The eval approaches described in each design walkthrough (automated test cases, quality scoring, category-level analysis) directly inform the exercise requirements. Reference: `examples.py` Example 3 (`EvalPipeline`).
+
+- **Exercise 5: Code Review (10 min)** — Applies STEP 4 (PRODUCTION CONCERNS) from the Framework. The production concerns discussed in every design walkthrough (reliability, observability, cost tracking, security) are exactly the categories of problems to identify. Reference: `examples.py` Example 5 (`ModelRouter` with cost tracking).
+
+- **Exercise 6: Streaming Chat with Memory (20 min)** — Combines streaming (discussed in "Design 1" and "Design 2" as critical for user-facing chat) with conversation memory management (discussed in "Design 1" under context window management and summarization strategy). Reference: `examples.py` Examples 4 and 6 (`StreamingHandler`, `ConversationMemory`).
+
+---
+
 ## Framework Recap: Use This in Any LLM System Design Interview
 
 ```

@@ -646,3 +646,13 @@ test('GET /users returns 200', async () => {
 ```
 
 Coverage tells you what code runs. Mutation testing (see Module 03) tells you if your assertions would catch a real bug.
+
+## Related Reading
+
+- **Testing philosophy and the integration-heavy approach** connects directly to how you design REST APIs — see [03 – HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md) for the endpoints you will be testing and which status codes to assert against.
+- **Vitest configuration and pool options** are relevant when running database integration tests — see [06 – Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md#drizzle-orm) for the ORMs whose queries you will be testing with `pool: 'forks'`.
+- **Mocking strategies and dependency injection** align with the DI patterns in [09 – Clean Architecture and DDD](../09-architecture-patterns/01-clean-architecture-and-ddd.md#dependency-injection), where the composition root makes mocking trivial.
+- **Testing async code (streams, events, timers)** relies on the runtime concepts covered in [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md) and [02 – Memory, Streams, and Runtime Internals](../02-node-runtime/03-memory-streams-and-runtime-internals.md#streams-and-backpressure).
+- **Snapshot testing with Zod schema validation** uses the same validation approach covered in [03 – Pagination, Filtering, and Bulk Operations](../03-rest-api-design/02-pagination-filtering-and-bulk-operations.md#input-validation-with-zod) and [05 – Session Management and Validation](../05-auth-security/02-session-management-and-validation.md#input-validation-with-zod).
+- **Test data factories with Fishery** relate to the factory patterns discussed in [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md#seeding-and-factory-patterns).
+- **TypeScript fundamentals** like generics and type narrowing that appear in test utilities are covered in [00 – TypeScript and Node.js Fundamentals](../00-ts-node-fundamentals.md#typescript-essentials) and [01 – Conditional and Mapped Types](../01-typescript-advanced/01-conditional-and-mapped-types.md).

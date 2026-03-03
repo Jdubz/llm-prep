@@ -399,6 +399,17 @@ Start with SaaS (low effort, immediate value). Instrument with OpenTelemetry fro
 
 A: Incremental rollout. Deploy OTel Collector as DaemonSet. Start with auto-instrumentation (covers 80% of useful data). Add manual spans for the top 3-5 user-facing request flows. Implement tail-based sampling (100% errors, 100% slow, 5% baseline). Verify W3C traceparent propagation across all inter-service communication. Expand gradually.
 
+### Related Reading
+
+- [Module 08: Logging, Metrics, and Tracing](01-logging-metrics-and-tracing.md) -- the three pillars and instrumentation fundamentals that the OTel Collector receives, processes, and exports
+- [Module 08: SLOs, Alerting, and Incident Response](02-slos-alerting-and-incident-response.md) -- SLO-based alerting consumes the metrics that flow through the Collector; incident response relies on the observability platform described here
+- [Module 03: Caching Patterns and Redis Basics](../03-caching/01-caching-patterns-and-redis-basics.md) -- cache hit rates are a key metric flowing through the observability pipeline; Redis is often used for real-time dashboards
+- [Module 04: Message Queue Operations](../04-message-queues/03-message-queue-operations-and-patterns.md) -- Kafka is used as the log transport in many observability architectures; consumer lag monitoring is a key observability use case
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- CDN and global load balancing architectures require RUM and synthetic monitoring to measure end-user experience across regions
+- [Module 06: Kubernetes Advanced Patterns](../06-containers-orchestration/03-kubernetes-advanced-patterns.md) -- the OTel Collector DaemonSet and Gateway deployment patterns run on Kubernetes; service mesh telemetry feeds into the observability platform
+- [Module 07: Infrastructure and GitOps](../07-cicd/03-infrastructure-and-gitops.md) -- the observability platform itself should be deployed via GitOps (ArgoCD) for reproducibility and auditability
+- [Module 09: Compliance and Advanced Security](../09-security/03-compliance-and-advanced-security.md) -- observability data may contain sensitive information; the Collector's attribute processor can hash or delete PII before export
+
 ### Key Takeaways
 
 1. **The OTel Collector is the control plane for telemetry**: Decouples instrumentation from backends, enables filtering, sampling, routing.

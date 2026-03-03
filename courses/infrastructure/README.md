@@ -76,6 +76,16 @@ System design, infrastructure, and scaling patterns for senior engineers. Covers
 
 ---
 
+## How to Use This Course
+
+Each module file includes a **Related Reading** section at the end that cross-references other modules covering connected concepts. These links help you trace how a concept introduced in one module (e.g., consistent hashing in Module 02) appears in different contexts throughout the course (load balancing in Module 05, Redis Cluster in Module 03).
+
+Module 10 (Classic System Design Problems) includes **Practice** sections that connect each design problem to the specific modules providing its building blocks, with hands-on exercises for estimation, scaling analysis, and failure scenario walkthroughs.
+
+**Recommended approach:** Work through modules sequentially for a first pass, then use the cross-references to revisit topics from different angles as you encounter them in design problems.
+
+---
+
 ## Prerequisites
 - Experience deploying and operating production services
 - Basic familiarity with cloud providers (AWS/GCP/Azure)

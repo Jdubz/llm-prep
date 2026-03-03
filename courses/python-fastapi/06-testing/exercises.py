@@ -155,7 +155,23 @@ def build_item(**overrides) -> dict:
 # =============================================================================
 # EXERCISE 1: Test GET /items/ (list, filter, 404)
 # =============================================================================
+# READ FIRST: 01-pytest-fixtures-and-basics.md
+#   - "httpx Test Client Templates" for async request patterns
+#   - "Fixtures in Depth" for how seeded_client provides test data
+# ALSO SEE: examples.py section 4 (TestUserCRUD) for GET/list/filter patterns
+#
 # Use `seeded_client` (Keyboard $75, Notebook $4.50, Monitor $350, Pen $1.25).
+#
+# Pattern — making a GET request and checking the response:
+#   response = await seeded_client.get("/items/")
+#   assert response.status_code == 200
+#   data = response.json()  # returns a list of dicts for list endpoints
+#
+# Pattern — passing query parameters:
+#   response = await seeded_client.get("/items/", params={"category": "electronics"})
+#
+# Pattern — checking error detail:
+#   assert response.json()["detail"] == "Item not found"
 
 class TestListItems:
     async def test_list_all_items(self, seeded_client: AsyncClient):
@@ -191,6 +207,29 @@ class TestListItems:
 # =============================================================================
 # EXERCISE 2: Test POST /items/ with validation (valid, invalid, duplicate)
 # =============================================================================
+# READ FIRST: 02-integration-testing-and-mocking.md
+#   - "Integration Testing with httpx.AsyncClient" for POST request patterns
+#   - "Testing Error Responses and Status Codes" (in examples.py section 7)
+# ALSO SEE: examples.py section 4 (test_create_user) for POST + assert pattern
+#
+# Pattern — POST JSON and check the response:
+#   response = await client.post("/items/", json={"name": "Widget", "price": 9.99})
+#   assert response.status_code == 201
+#   data = response.json()
+#   assert data["name"] == "Widget"
+#   assert "id" in data  # UUID was generated server-side
+#
+# Pattern — checking Pydantic 422 validation errors:
+#   response = await client.post("/items/", json={"name": "", "price": 5.0})
+#   assert response.status_code == 422
+#   error_locs = [e["loc"][-1] for e in response.json()["detail"]]
+#   assert "name" in error_locs
+#
+# Pattern — testing duplicate/conflict (409):
+#   first = await client.post("/items/", json={"name": "Widget", "price": 1.0})
+#   assert first.status_code == 201
+#   second = await client.post("/items/", json={"name": "widget", "price": 2.0})
+#   assert second.status_code == 409
 
 class TestCreateItem:
     async def test_create_valid_item(self, client: AsyncClient):
@@ -226,8 +265,36 @@ class TestCreateItem:
 # =============================================================================
 # EXERCISE 3: Override a dependency to mock an external service
 # =============================================================================
+# READ FIRST: 02-integration-testing-and-mocking.md
+#   - "Dependency Overrides for Mocking" for the override pattern
+#   - "Mocking" > "unittest.mock" for AsyncMock / patch alternatives
+# ALSO SEE: examples.py section 5 (test_dependency_override_inline) for inline
+#   override pattern with spy/fake service classes
+#
 # GET /weather/{city} depends on WeatherService (raises RuntimeError if real).
 # Override get_weather_service with a fake, make request, verify response.
+#
+# Pattern — dependency override with a fake service class:
+#   class FakeWeatherService:
+#       async def get_temperature(self, city: str) -> dict:
+#           return {"temperature": 22, "unit": "celsius"}
+#
+#   exercise_app.dependency_overrides[get_weather_service] = lambda: FakeWeatherService()
+#   # Also override get_items_db if needed:
+#   exercise_app.dependency_overrides[get_items_db] = lambda: test_db
+#
+#   transport = ASGITransport(app=exercise_app)
+#   async with AsyncClient(transport=transport, base_url="http://test") as ac:
+#       response = await ac.get("/weather/london")
+#       assert response.json()["temperature"] == 22
+#
+#   exercise_app.dependency_overrides.clear()  # Always clean up!
+#
+# Pattern — city-specific fake (use a dict lookup):
+#   class CityWeatherService:
+#       temps = {"london": 15, "cairo": 35}
+#       async def get_temperature(self, city: str) -> dict:
+#           return {"temperature": self.temps[city], "unit": "celsius"}
 
 class TestWeatherEndpoint:
     async def test_get_weather_success(self, test_db):
@@ -245,8 +312,29 @@ class TestWeatherEndpoint:
 # =============================================================================
 # EXERCISE 4: Test WebSocket endpoint communication
 # =============================================================================
+# READ FIRST: 02-integration-testing-and-mocking.md
+#   - "Testing WebSocket Endpoints" for the TestClient + websocket_connect pattern
+# ALSO SEE: examples.py section 9 (test_websocket_echo, test_websocket_close)
+#
 # Use TestClient(exercise_app) -- httpx has no WS support.
 # /ws/chat sends welcome, echoes messages, responds to ping.
+#
+# Pattern — WebSocket testing with TestClient:
+#   from fastapi.testclient import TestClient
+#
+#   with TestClient(exercise_app) as tc:
+#       with tc.websocket_connect("/ws/chat") as ws:
+#           # Receive JSON message:
+#           data = ws.receive_json()
+#           assert data == {"type": "system", "message": "Connected"}
+#
+#           # Send JSON message:
+#           ws.send_json({"text": "hello"})
+#           response = ws.receive_json()
+#           assert response == {"type": "message", "content": "hello"}
+#
+# NOTE: The /ws/chat endpoint sends a welcome message immediately on connect.
+# You MUST receive it (ws.receive_json()) before sending/receiving other messages.
 
 class TestWebSocketChat:
     def test_connect_receives_welcome(self):
@@ -273,7 +361,32 @@ class TestWebSocketChat:
 # =============================================================================
 # EXERCISE 5: Parametrized tests for input validation edge cases
 # =============================================================================
+# READ FIRST: 01-pytest-fixtures-and-basics.md
+#   - "Parametrize -- Data-Driven Tests" for the decorator syntax and pytest.param
+# ALSO SEE: examples.py section 6 (test_create_user_validation) for a complete
+#   parametrized validation test with pytest.param(..., id="...")
+#
 # @pytest.mark.parametrize is the pytest equivalent of Vitest's test.each().
+#
+# Pattern — parametrize with named test cases:
+#   @pytest.mark.parametrize("payload", [
+#       pytest.param({"name": "A", "price": 0.01}, id="minimum-valid"),
+#       pytest.param({"name": "X" * 50, "price": 10000}, id="maximum-valid"),
+#   ])
+#   async def test_valid(client: AsyncClient, payload: dict):
+#       response = await client.post("/items/", json=payload)
+#       assert response.status_code == 201
+#
+# Pattern — parametrize with multiple parameters (payload + expected error field):
+#   @pytest.mark.parametrize("payload,error_field", [
+#       pytest.param({"name": "", "price": 5.0}, "name", id="empty-name"),
+#       pytest.param({"name": "OK", "price": -5}, "price", id="negative-price"),
+#   ])
+#   async def test_invalid(client: AsyncClient, payload: dict, error_field: str):
+#       response = await client.post("/items/", json=payload)
+#       assert response.status_code == 422
+#       error_locs = [e["loc"][-1] for e in response.json()["detail"]]
+#       assert error_field in error_locs
 
 # 5a: Valid item creation -- all should return 201
 @pytest.mark.parametrize("payload", [

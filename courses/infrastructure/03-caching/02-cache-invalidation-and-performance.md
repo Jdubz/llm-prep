@@ -300,6 +300,16 @@ def estimate_working_set(access_log, window_hours=1):
 
 ---
 
+## Related Reading
+
+- [Module 03: Caching Patterns and Redis Basics](01-caching-patterns-and-redis-basics.md) -- the foundational caching patterns (cache-aside, write-through, write-behind) that determine your invalidation needs
+- [Module 03: Advanced Caching Systems](03-advanced-caching-systems.md) -- stampede prevention mechanisms (mutex, XFetch, leases) that build on the invalidation strategies covered here
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- event-driven cache invalidation often uses message brokers (Kafka, SNS) to propagate invalidation signals across services
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- CDN caching architecture (edge PoPs, origin shield, cache hierarchies) extends the CDN caching concepts covered here
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- cache hit rate is the north star metric; use Prometheus histograms to track hit/miss rates, latency distributions, and eviction counts
+
+---
+
 ## Key Takeaways
 
 1. **Delete on write, never update in place.** Updating the cache value on write introduces race conditions with concurrent readers. Deleting is safe -- the next reader will load fresh data.

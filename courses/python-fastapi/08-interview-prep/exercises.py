@@ -17,6 +17,36 @@ from pydantic import BaseModel, Field, field_validator
 # ============================================================================
 # EXERCISE 1: TODO API with CRUD + Filtering (15 min)
 # ============================================================================
+# CONCEPTS FROM:
+#   Module 01 (FastAPI Foundations):
+#     - 01-http-routing-and-decorators.md  -> route decorators, path/query params, status codes
+#     - 02-dependency-injection.md         -> Depends() pattern (not needed here but good practice)
+#   Module 05 (Advanced API Patterns):
+#     - 02-pagination-filtering-and-bulk-operations.md -> query param filtering
+#
+# ALSO SEE:
+#   - Module 01 exercises.py (CRUD exercises)
+#   - Module 08 examples.py, Example 1 (URL Shortener) for similar CRUD pattern
+#   - 02-system-design-and-code-review.md, "Pattern 1: Complete CRUD Endpoint"
+#
+# KEY IMPORTS AND PATTERNS:
+#   from fastapi import FastAPI, HTTPException, Query, Path, status
+#   from pydantic import BaseModel, Field, field_validator
+#   - Pydantic models: Field(min_length=, max_length=) for string validation
+#   - Optional fields: use `field: type | None = None`
+#   - Status codes: status_code=201 on POST, status_code=204 on DELETE
+#   - Filtering: use Query() params with enum or str matching
+#   - 404 pattern: `if id not in store: raise HTTPException(status_code=404, detail="...")`
+#   - Auto-increment: `global _counter; _counter += 1`
+#
+# HINTS:
+#   - TodoCreate: title: str = Field(..., min_length=1, max_length=200)
+#                 description: str | None = Field(None, max_length=1000)
+#   - TodoUpdate: all fields Optional (title, description, completed)
+#   - TodoResponse: id: int, title: str, description: str | None, completed: bool, created_at: str
+#   - For PATCH, use model_dump(exclude_unset=True) to only update provided fields
+#   - Filter pattern: if status param given, filter dict values where completed matches
+# ----------------------------------------------------------------------------
 # POST /todos          -> Create (title 1-200 chars, description optional max 1000)
 # GET  /todos          -> List, filterable by ?status=pending|completed
 # GET  /todos/{id}     -> Get single todo by ID
@@ -43,6 +73,45 @@ class TodoResponse(BaseModel):
 # ============================================================================
 # EXERCISE 2: User Registration with Validation (15 min)
 # ============================================================================
+# CONCEPTS FROM:
+#   Module 01 (FastAPI Foundations):
+#     - 01-http-routing-and-decorators.md  -> Pydantic models, Field validators, status codes
+#     - 02-dependency-injection.md         -> header extraction pattern
+#   Module 04 (Auth):
+#     - 01-authentication-basics.md        -> password hashing, token generation, Bearer auth
+#     - 02-authorization-and-rbac.md       -> protecting endpoints with auth
+#
+# ALSO SEE:
+#   - Module 04 exercises.py (auth exercises)
+#   - Module 04 examples.py (JWT auth examples)
+#   - 01-interview-fundamentals.md, section "F1: How does FastAPI's dependency injection work?"
+#
+# KEY IMPORTS AND PATTERNS:
+#   from fastapi import FastAPI, HTTPException, Request, status
+#   from pydantic import BaseModel, Field, field_validator
+#   import hashlib, uuid
+#   - Password hashing approach (simplified for interview, not production):
+#       def _hash_pw(pw: str) -> str:
+#           return hashlib.sha256(pw.encode()).hexdigest()
+#   - Token generation:
+#       token = hashlib.sha256(f"{username}:{datetime.utcnow()}:{uuid.uuid4()}".encode()).hexdigest()
+#   - Bearer token extraction from header:
+#       auth = request.headers.get("Authorization", "")
+#       if not auth.startswith("Bearer "): raise HTTPException(401, ...)
+#       token = auth[7:]  # strip "Bearer " prefix
+#   - 409 for duplicates: raise HTTPException(status_code=409, detail="Username already exists")
+#
+# HINTS:
+#   - RegisterRequest validators (use @field_validator):
+#       username: str = Field(..., min_length=3, max_length=30)
+#       @field_validator("username") -> check .isalnum()
+#       @field_validator("email")    -> check "@" in v
+#       @field_validator("password") -> check len>=8, any(c.isupper()), any(c.isdigit())
+#   - LoginRequest: just username + password, no validators needed
+#   - UserResponse: id (str, use uuid), username, email, created_at — NO password_hash field
+#   - Store users in _users dict keyed by username
+#   - Store tokens in _tokens dict: token -> username mapping
+# ----------------------------------------------------------------------------
 # POST /register -> username (3-30 alphanumeric), email (must have @),
 #                   password (8+ chars, needs digit + uppercase). Hash with sha256.
 # POST /login    -> Validate creds, return {"token": "..."}. 401 on failure.
@@ -73,6 +142,64 @@ class UserResponse(BaseModel):
 # ============================================================================
 # EXERCISE 3: Rate-Limited API Endpoint (20 min)
 # ============================================================================
+# CONCEPTS FROM:
+#   Module 01 (FastAPI Foundations):
+#     - 03-middleware-asgi-and-advanced-patterns.md -> middleware pattern, Request/Response
+#   Module 05 (Advanced API Patterns):
+#     - 03-real-time-graphql-and-advanced-patterns.md -> advanced middleware
+#   Module 07 (Production):
+#     - 03-performance-and-scaling.md -> rate limiting in production
+#
+# ALSO SEE:
+#   - Module 08 examples.py, Example 4 (Rate Limiter — Sliding Window Counter)
+#   - 02-system-design-and-code-review.md, "Pattern 4: Rate Limiting Middleware"
+#   - Module 01 exercises.py (middleware exercises)
+#
+# KEY IMPORTS AND PATTERNS:
+#   from fastapi import FastAPI, Request, status
+#   from fastapi.responses import JSONResponse
+#   import time
+#
+# TOKEN BUCKET ALGORITHM OUTLINE:
+#   class TokenBucket:
+#       def __init__(self, capacity, refill_rate):
+#           self.capacity = capacity
+#           self.refill_rate = refill_rate    # tokens added per second
+#           self.tokens = float(capacity)     # start full
+#           self.last_refill = time.monotonic()
+#
+#       def consume(self) -> tuple[bool, float]:
+#           now = time.monotonic()
+#           elapsed = now - self.last_refill
+#           self.last_refill = now
+#           # Refill: add elapsed * rate, but cap at capacity
+#           self.tokens = min(self.capacity, self.tokens + elapsed * self.refill_rate)
+#           # Consume: if tokens >= 1, subtract 1 and allow
+#           if self.tokens >= 1.0:
+#               self.tokens -= 1.0
+#               return (True, self.tokens)
+#           return (False, self.tokens)
+#
+# MIDDLEWARE PATTERN:
+#   @app.middleware("http")
+#   async def rate_limit(request: Request, call_next):
+#       if request.url.path == "/health":      # skip health check
+#           return await call_next(request)
+#       ip = request.client.host if request.client else "unknown"
+#       bucket = _get_bucket(ip)
+#       allowed, remaining = bucket.consume()
+#       if not allowed:
+#           return JSONResponse(status_code=429, content={"detail": "Too many requests"},
+#                               headers={"Retry-After": "1"})
+#       response = await call_next(request)
+#       response.headers["X-RateLimit-Remaining"] = str(int(remaining))
+#       return response
+#
+# HINTS:
+#   - time.monotonic() is preferred over time.time() for measuring elapsed durations
+#   - _get_bucket: use _buckets.setdefault(ip, TokenBucket(10, 1.0))
+#   - Return JSONResponse (not raise HTTPException) from middleware for 429
+# ----------------------------------------------------------------------------
 # Implement TokenBucket(capacity, refill_rate_per_second):
 #   consume() -> (allowed: bool, tokens_remaining: float)
 #   Tokens refill continuously based on elapsed time, capped at capacity.
@@ -107,6 +234,27 @@ async def health_check():
 # ============================================================================
 # EXERCISE 4: Debug Broken Code (10 min)
 # ============================================================================
+# CONCEPTS FROM:
+#   Module 01 (FastAPI Foundations):
+#     - 01-http-routing-and-decorators.md  -> status codes, response_model, route decorators
+#   Module 06 (Testing):
+#     - 01-pytest-fixtures-and-basics.md   -> debugging approach, reading test failures
+#   Module 08 (Interview Prep):
+#     - 02-system-design-and-code-review.md -> "Code Review Checklist" section
+#
+# ALSO SEE:
+#   - 01-interview-fundamentals.md, section "F3: What changed in Pydantic v2?"
+#   - 02-system-design-and-code-review.md, "Code Review Exercises" (all 5 exercises)
+#
+# HINTS:
+#   Bug categories to look for:
+#   1. [Validation] URL field has no http/https check — use @field_validator
+#   2. [Status code] POST should return 201 — add status_code=201 to decorator
+#   3. [Slicing] all_bm[skip:limit] is wrong — should be [skip:skip+limit]
+#   4. [Identity] `== None` should be `is None` (Pythonic, avoids __eq__ override)
+#   5. [Error handling] dict.pop(key) raises KeyError if missing — guard with `if key not in dict`
+#      or use .pop(key, None) with a 404 check
+# ----------------------------------------------------------------------------
 # Bookmark manager with 5 bugs. Find and fix them all.
 
 app4_buggy = FastAPI(title="Bookmark Manager (BUGGY)")
@@ -148,6 +296,31 @@ async def delete_bookmark(bm_id: int):
 # ============================================================================
 # EXERCISE 5: Code Review (10 min)
 # ============================================================================
+# CONCEPTS FROM:
+#   Module 01 (FastAPI Foundations):
+#     - 01-http-routing-and-decorators.md  -> proper route methods (POST vs PATCH/PUT), type hints
+#     - 02-dependency-injection.md         -> Pydantic models for request bodies
+#   Module 04 (Auth):
+#     - 01-authentication-basics.md        -> password hashing, never storing plaintext
+#   Module 05 (Advanced API Patterns):
+#     - 02-pagination-filtering-and-bulk-operations.md -> route ordering, response_model
+#   Module 08 (Interview Prep):
+#     - 02-system-design-and-code-review.md -> "Code Review Checklist" section
+#
+# ALSO SEE:
+#   - 01-interview-fundamentals.md, section "F6: Explain FastAPI's response model and serialization"
+#   - 02-system-design-and-code-review.md, "Code Review Exercises 1-5"
+#
+# HINTS — 8+ improvements to identify:
+#   1. [Security] password stored & returned in plaintext -> hash with bcrypt/argon2
+#   2. [Security] password as query param -> visible in logs/URLs; use request body (Pydantic model)
+#   3. [Naming] 'id' and 'data' shadow Python builtins -> rename to _user_counter, _users
+#   4. [Validation] no Pydantic models -> zero input validation; add BaseModel classes
+#   5. [API design] POST for update should be PATCH or PUT
+#   6. [Errors] get_user raises KeyError on missing ID -> return 404 with HTTPException
+#   7. [Routing] /user/search unreachable -> /user/{id} matches "search" first; reorder or rename
+#   8. [Types] id param has no type hint -> no automatic validation; add `: int`
+# ----------------------------------------------------------------------------
 # Working but poorly written. List at least 8 improvements.
 
 app5_review = FastAPI()
@@ -194,6 +367,51 @@ async def search_users(q: str):
 # ============================================================================
 # EXERCISE 6: Webhook Delivery System with Retry (20 min)
 # ============================================================================
+# CONCEPTS FROM:
+#   Module 01 (FastAPI Foundations):
+#     - 01-http-routing-and-decorators.md  -> CRUD routes, status codes, Pydantic models
+#     - 02-dependency-injection.md         -> structuring reusable logic
+#   Module 02 (Async Python):
+#     - 01-asyncio-fundamentals.md         -> async patterns (retry logic could be async)
+#     - 02-concurrency-patterns.md         -> retry with backoff
+#   Module 05 (Advanced API Patterns):
+#     - 02-pagination-filtering-and-bulk-operations.md -> query param filtering
+#     - 03-real-time-graphql-and-advanced-patterns.md  -> webhook/event patterns
+#   Module 07 (Production):
+#     - 03-performance-and-scaling.md      -> retry strategies, resilience
+#
+# ALSO SEE:
+#   - Module 08 examples.py, Example 2 (Notification Service) for similar delivery simulation
+#   - Module 08 examples.py, Example 3 (File Pipeline) for status tracking pattern
+#   - 02-system-design-and-code-review.md, "Design 2: Notification Service"
+#
+# KEY IMPORTS AND PATTERNS:
+#   from pydantic import BaseModel, Field, field_validator
+#   import uuid
+#   from datetime import datetime
+#
+# HINTS:
+#   - WebhookCreate:
+#       url: str = Field(..., min_length=1)
+#       @field_validator("url") -> check v.startswith(("http://", "https://"))
+#       event_type: str = Field(..., min_length=1)
+#       secret: str | None = None
+#   - WebhookResponse: id (str, uuid), url, event_type, created_at
+#   - EventTrigger: event_type: str, payload: dict[str, Any]
+#   - _simulate_delivery: return (True, None) if "fail" not in url, else (False, "Delivery failed")
+#   - _deliver_with_retry pattern:
+#       attempts = []
+#       for attempt_num in range(max_attempts):
+#           # simulated backoff: [0, 1, 2] seconds (just record, don't actually sleep)
+#           success, error = _simulate_delivery(wh["url"])
+#           attempts.append(DeliveryAttempt(..., attempt=attempt_num+1,
+#               status="success" if success else "failed", error=error))
+#           if success:
+#               break  # stop retrying on success
+#       return attempts
+#   - POST /events: find all webhooks matching event_type, deliver to each with retry,
+#     build DeliveryReport with counts of successful/failed
+# ----------------------------------------------------------------------------
 # POST /webhooks             -> Register (url http/https, event_type, secret?)
 # DELETE /webhooks/{id}      -> Unregister
 # GET  /webhooks             -> List (?event_type filter)

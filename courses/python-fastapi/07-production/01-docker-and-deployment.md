@@ -635,6 +635,18 @@ kubectl rollout undo deployment/fastapi-service  # rollback
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` directly apply concepts from this module:
+
+- **Exercise 1: Health Check Endpoint with Database Verification** -- Implements the liveness and readiness probe endpoints described in the Kubernetes Deployment section above. You will build the `/healthz` (liveness) and `/readyz` (readiness) handlers that return appropriate status codes for orchestrator probes.
+
+- **Exercise 3: Graceful Shutdown with In-Flight Request Tracking** -- Implements the lifespan context manager pattern from the "Graceful Shutdown" section. You will build startup/shutdown logic using `@asynccontextmanager`, track active in-flight requests, and drain connections with a timeout before exiting -- the same pattern that interacts with Gunicorn's `graceful_timeout` and Kubernetes `terminationGracePeriodSeconds`.
+
+See `examples.py` sections 2 (Health Checks), 3 (Graceful Shutdown), and 4 (Request Logging Middleware) for complete reference implementations.
+
+---
+
 ## Key Takeaways
 
 - Use `python:3.12-slim` (not alpine) — alpine's musl libc breaks pre-built Python wheels.

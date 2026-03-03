@@ -400,6 +400,15 @@ A: **Canary** when you need gradual risk reduction with real traffic, have good 
 
 A: All schema changes must be backward-compatible (expand/contract). Run migrations before deploying the canary -- the stable version must tolerate the new schema. Never drop columns while both versions run. The contract phase happens only after 100% rollout and stabilization.
 
+### Related Reading
+
+- [Module 07: Feature Flags and Migrations](02-feature-flags-and-migrations.md) -- feature flags enable progressive delivery within the deployment strategies covered here; database migrations (expand/contract) are critical for zero-downtime deployments
+- [Module 07: Infrastructure and GitOps](03-infrastructure-and-gitops.md) -- Terraform, Pulumi, GitOps with ArgoCD, and CI/CD security (supply chain, SLSA, Sigstore) that integrate into the pipeline stages described here
+- [Module 06: Docker and Containerization](../06-containers-orchestration/01-docker-and-containerization.md) -- the container build step in your pipeline; multi-stage Docker builds, layer caching, and image scanning
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- the deployment target for CI/CD pipelines; Kubernetes deployment strategies (rolling, blue-green, canary) map to the strategies covered here
+- [Module 08: SLOs, Alerting, and Incident Response](../08-observability/02-slos-alerting-and-incident-response.md) -- canary deployments require observability to detect regressions; SLO burn rate alerts drive automated rollback decisions
+- [Module 09: API and Application Security](../09-security/02-api-and-application-security.md) -- security scanning (SAST, DAST, SCA) integrates into the CI pipeline stages described here
+
 ### Key Takeaways
 
 1. **Artifacts are immutable**: Build once, deploy everywhere. Never rebuild for production.

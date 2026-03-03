@@ -769,3 +769,13 @@ func main() {
 ```
 
 **Key insight for TypeScript engineers**: Go doesn't use dependency injection containers. You wire dependencies manually in `main()`. This feels tedious at first but gives you explicit, compile-time-checked dependency graphs — no runtime surprises from a DI container.
+
+---
+
+## Related Reading
+
+- **net/http foundations** — [Module 03: HTTP and JSON](../03-stdlib/01-http-and-json.md), section 1 covers the `http.Handler` interface, `http.HandlerFunc` adapter, and `http.ServeMux` that this file builds on
+- **Concurrency in middleware** — [Module 02: Synchronization and Context](../02-concurrency/02-synchronization-and-context.md), section 3 (context.Context) explains the request-scoped context that flows through middleware chains
+- **Data layer integration** — [Module 05: Queries, Transactions, and Patterns](../05-data-storage/02-queries-transactions-and-patterns.md), section 4 (Dependency Injection) shows how handlers connect to repositories through the interface-based DI wired in `main()`
+- **Testing handlers** — [Module 06: Integration and HTTP Testing](../06-testing/02-integration-and-http-testing.md), section 1 (httptest) covers testing the handlers and middleware from this file with `httptest.NewRecorder` and `httptest.NewServer`
+- **Production project structure** — [Module 07: Project Structure and Configuration](../07-production/01-project-structure-and-configuration.md), section 1 expands on the `cmd/`/`internal/` layout from section 6

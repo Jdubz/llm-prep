@@ -609,3 +609,20 @@ export default function Page() {
 ```
 
 Without selective hydration, React had to wait for ALL JS to load before hydrating ANYTHING, causing long blocking periods. With selective hydration, each Suspense boundary is a hydration unit -- the page becomes interactive incrementally.
+
+---
+
+## Practice
+
+- **Identify all 6 re-render triggers**: Take a component from your app and list every possible cause of a re-render: (1) own state change, (2) parent re-render, (3) context change, (4) hook state change, (5) forceUpdate, (6) key change. Add `console.log` to verify.
+- **Prevent unnecessary re-renders**: Build a parent with 3 children. Wrap one child in `React.memo`. Pass a callback to it. Observe that `React.memo` is defeated by the new function reference. Fix it with `useCallback`.
+- **`useTransition` experiment**: Build a tab switcher where one tab renders 10,000 items. Without `useTransition`, observe the UI freeze when switching tabs. Add `useTransition` and verify the old tab stays visible during the transition.
+- **Priority lanes tracing**: Open React DevTools with the Profiler and trigger a `startTransition` update. In the flame graph, observe that transition work has lower priority than synchronous updates.
+- **Selective hydration observation**: In a Next.js app, wrap a heavy component in `<Suspense>`. Load the page with network throttling. Observe that the rest of the page becomes interactive before the Suspense content loads.
+
+### Related Lessons
+
+- [Fiber & Rendering](01-react-fiber-and-rendering.md) -- virtual DOM, Fiber architecture, render/commit phases, reconciliation, hydration
+- [React Internals Deep Dive](03-react-internals-deep-dive.md) -- lane model deep dive, Suspense internals, effect flags, work loop
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- practical re-render prevention techniques (memo, useMemo, useCallback, composition)
+- [Performance: Tools & Advanced Patterns](../03-performance/02-performance-tools-and-advanced-patterns.md) -- React Profiler, code splitting, virtualization, concurrent rendering case studies

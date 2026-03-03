@@ -19,6 +19,10 @@ from typing import Any, Generator, Iterable, Iterator
 # EXERCISE 1: Chunked Iterator
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (generators, itertools)
+#   - ../05-advanced-api-patterns/02-pagination-filtering-and-bulk-operations.md (batch processing)
+#
 # Write a generator that yields fixed-size chunks from any iterable.
 # This is useful for batch processing (e.g., inserting records in batches).
 #
@@ -33,6 +37,34 @@ from typing import Any, Generator, Iterable, Iterator
 #   - Convert the iterable to an iterator with iter()
 #   - Loop: take a chunk with islice, break if empty, yield the chunk
 #   - Or: accumulate items in a list, yield when full
+#
+#   itertools.islice API — slicing for iterators:
+#     from itertools import islice
+#     islice(iterable, stop)           # first `stop` items
+#     islice(iterable, start, stop)    # items from start to stop
+#     # Unlike list slicing, islice works with any iterator and is lazy
+#
+#   Pattern — chunking with islice:
+#     def chunked(iterable, size):
+#         if size < 1:
+#             raise ValueError("size must be >= 1")
+#         it = iter(iterable)           # ensure we have an iterator
+#         while True:
+#             chunk = list(islice(it, size))  # take up to `size` items
+#             if not chunk:
+#                 break                  # iterator exhausted
+#             yield chunk
+#
+#   Why iter() is needed: islice consumes from an iterator. If you pass
+#   a list directly, each islice call would start from the beginning.
+#   Calling iter() once gives you a single iterator that remembers its
+#   position between islice calls.
+#
+#   How yield works:
+#   - A function with yield becomes a generator function
+#   - Calling it returns a generator object (lazy, produces values on demand)
+#   - Each yield suspends the function and produces a value
+#   - The function resumes on the next next() call (or for-loop iteration)
 #
 # Expected behavior:
 #   list(chunked(range(7), 3))  # -> [[0, 1, 2], [3, 4, 5], [6]]
@@ -51,6 +83,10 @@ def chunked(iterable: Iterable, size: int) -> Generator[list, None, None]:
 # EXERCISE 2: Sliding Window
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (deque, generators)
+#   - ../02-async-python/02-concurrency-patterns.md (streaming data patterns)
+#
 # Write a generator that yields overlapping windows (tuples) over an iterable.
 # This is a common pattern for time-series analysis and streaming data.
 #
@@ -64,6 +100,27 @@ def chunked(iterable: Iterable, size: int) -> Generator[list, None, None]:
 #   - Use collections.deque(maxlen=size) as a sliding buffer
 #   - Iterate through items, appending to the deque
 #   - Once the deque is full (len == size), yield tuple(deque) each step
+#
+#   collections.deque with maxlen — automatic sliding window:
+#     from collections import deque
+#     d = deque(maxlen=3)
+#     d.append(1)  # deque([1])
+#     d.append(2)  # deque([1, 2])
+#     d.append(3)  # deque([1, 2, 3])  <- full
+#     d.append(4)  # deque([2, 3, 4])  <- oldest item auto-evicted!
+#
+#   Pattern — sliding window generator:
+#     def window(iterable, size):
+#         if size < 1:
+#             raise ValueError("size must be >= 1")
+#         buf = deque(maxlen=size)
+#         for item in iterable:
+#             buf.append(item)
+#             if len(buf) == size:      # buffer is full
+#                 yield tuple(buf)      # yield a snapshot as a tuple
+#
+#   This is memory-efficient: only `size` items in memory at any time.
+#   Works with infinite iterables (generators, streams, etc.).
 #
 # Expected behavior:
 #   list(window([1, 2, 3, 4, 5], 3))
@@ -80,6 +137,10 @@ def window(iterable: Iterable, size: int) -> Generator[tuple, None, None]:
 # EXERCISE 3: Fibonacci Generator
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (generators, infinite sequences)
+#   - ../09-python-internals/01-object-model-and-memory.md (lazy evaluation, memory)
+#
 # Write an infinite Fibonacci generator plus a take(n) helper that
 # collects the first N items from any iterator.
 #
@@ -92,6 +153,27 @@ def window(iterable: Iterable, size: int) -> Generator[tuple, None, None]:
 # Hints:
 #   - fibonacci: a, b = 0, 1; yield a; a, b = b, a + b in a while True loop
 #   - take: use itertools.islice(iterable, n) and convert to list
+#
+#   Infinite generator pattern:
+#     def fibonacci():
+#         a, b = 0, 1
+#         while True:           # infinite loop — only safe in a generator
+#             yield a           # suspend and produce current value
+#             a, b = b, a + b  # tuple unpacking: simultaneous assignment
+#
+#   Python tuple unpacking:
+#     a, b = b, a + b
+#   is NOT the same as:
+#     a = b
+#     b = a + b    # BUG: a has already changed!
+#   Tuple unpacking evaluates the right side fully before assigning.
+#
+#   take() using itertools.islice:
+#     def take(n, iterable):
+#         return list(islice(iterable, n))
+#
+#   islice is safe with infinite generators — it only consumes n items:
+#     take(5, fibonacci())  # [0, 1, 1, 2, 3] — does NOT loop forever
 #
 # Expected behavior:
 #   take(8, fibonacci())  # -> [0, 1, 1, 2, 3, 5, 8, 13]
@@ -115,6 +197,10 @@ def take(n: int, iterable: Iterable) -> list:
 # EXERCISE 4: CSV Line Parser
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (generators, lazy evaluation)
+#   - ../05-advanced-api-patterns/01-file-handling-and-streaming.md (streaming patterns)
+#
 # Write a generator that lazily reads CSV-formatted lines and yields dicts.
 # This simulates processing large files without loading everything into memory.
 #
@@ -130,6 +216,35 @@ def take(n: int, iterable: Iterable) -> list:
 #   - Use iter() and next() to read the header line
 #   - Split on "," and strip each field
 #   - zip(headers, values) to create the dict
+#
+#   iter() and next() — manual iterator control:
+#     it = iter(lines)                    # convert iterable to iterator
+#     header_line = next(it, None)        # get first item (None if empty)
+#     # remaining items in `it` are the data rows
+#     for line in it:                     # continues from where next() left off
+#         ...
+#
+#   next(iterator, default) returns default instead of raising StopIteration
+#   when the iterator is empty. Always use the two-argument form when
+#   empty input is possible.
+#
+#   zip() for pairing headers with values:
+#     headers = ["name", "age", "city"]
+#     values = ["Alice", "30", "NYC"]
+#     dict(zip(headers, values))          # {"name": "Alice", "age": "30", ...}
+#
+#   Pattern — lazy CSV parser:
+#     def parse_csv(lines):
+#         it = iter(lines)
+#         header_line = next(it, None)
+#         if header_line is None:
+#             return                       # empty input, no header
+#         headers = [h.strip() for h in header_line.split(",")]
+#         for line in it:
+#             if not line.strip():
+#                 continue                 # skip empty lines
+#             values = [v.strip() for v in line.split(",")]
+#             yield dict(zip(headers, values))
 #
 # Expected behavior:
 #   lines = ["name, age, city", "Alice, 30, NYC", "Bob, 25, LA"]
@@ -148,6 +263,10 @@ def parse_csv(lines: Iterable[str]) -> Generator[dict[str, str], None, None]:
 # EXERCISE 5: Flatten Deeply Nested
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (yield from, recursion)
+#   - ../09-python-internals/01-object-model-and-memory.md (Iterable ABC, isinstance)
+#
 # Write a generator that recursively flattens arbitrarily nested iterables.
 # Strings should NOT be flattened (they're iterable but should stay whole).
 #
@@ -162,6 +281,33 @@ def parse_csv(lines: Iterable[str]) -> Generator[dict[str, str], None, None]:
 #   - Check: isinstance(item, Iterable) and not isinstance(item, (str, bytes, dict))
 #   - If iterable, yield from flatten(item) (recursive)
 #   - Otherwise, yield the item
+#
+#   yield from — delegating to a sub-generator:
+#     yield from some_iterable
+#   is equivalent to:
+#     for item in some_iterable:
+#         yield item
+#   but yield from is more efficient and handles generator protocol properly.
+#
+#   Why strings need special treatment:
+#     "hello" is iterable -> 'h', 'e', 'l', 'l', 'o'
+#     'h' is also iterable -> 'h' -> 'h' -> ... (infinite recursion!)
+#     So always check: not isinstance(item, (str, bytes, dict))
+#
+#   Using collections.abc.Iterable for type checking:
+#     from collections.abc import Iterable
+#     isinstance([1, 2], Iterable)    # True
+#     isinstance((1, 2), Iterable)    # True
+#     isinstance("hello", Iterable)   # True (that's why we exclude it!)
+#     isinstance(42, Iterable)        # False
+#
+#   Pattern — recursive flatten with yield from:
+#     def flatten(data):
+#         for item in data:
+#             if isinstance(item, IterableABC) and not isinstance(item, (str, bytes, dict)):
+#                 yield from flatten(item)   # recurse into nested iterables
+#             else:
+#                 yield item                 # leaf value, emit it
 #
 # Expected behavior:
 #   list(flatten([1, [2, [3, 4], 5], [6]]))      # -> [1, 2, 3, 4, 5, 6]
@@ -181,6 +327,11 @@ def flatten(data: Iterable) -> Generator:
 # EXERCISE 6: Timed Context Manager
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (context managers)
+#   - ../09-python-internals/01-object-model-and-memory.md (__enter__, __exit__)
+#   - ../02-async-python/01-asyncio-fundamentals.md (async context managers)
+#
 # Implement a Timer context manager that measures elapsed time.
 # Support nested timers that track their own independent durations.
 #
@@ -197,6 +348,33 @@ def flatten(data: Iterable) -> Generator:
 #   - Store start time in __enter__, compute elapsed in __exit__
 #   - __exit__ receives (exc_type, exc_val, exc_tb) — return False to
 #     propagate exceptions
+#
+#   Context manager protocol — __enter__ and __exit__:
+#
+#     class Timer:
+#         def __enter__(self) -> Timer:
+#             self._start = time.perf_counter()
+#             return self              # the `as t` in `with Timer() as t`
+#
+#         def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+#             self.elapsed = time.perf_counter() - self._start
+#             return False             # False = propagate exceptions
+#                                      # True = suppress exceptions
+#
+#   __exit__ parameters:
+#   - exc_type: exception class (e.g., ValueError), or None if no exception
+#   - exc_val: exception instance, or None
+#   - exc_tb: traceback, or None
+#   - Return False (or None) to let exceptions propagate normally
+#
+#   time.perf_counter() vs time.monotonic():
+#   - perf_counter: highest resolution timer, includes sleep time
+#   - monotonic: lower resolution, but guaranteed to never go backwards
+#   - For benchmarking and profiling, perf_counter is preferred
+#
+#   f-string formatting for decimal places:
+#     f"{value:.3f}"    # 3 decimal places: "0.100"
+#     f"Timer('{self.label}': {self.elapsed:.3f}s)"
 #
 # Expected behavior:
 #   with Timer("sleep") as t:

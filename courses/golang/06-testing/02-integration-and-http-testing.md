@@ -523,3 +523,13 @@ if (( $(echo "$COVERAGE < 80" | bc -l) )); then
     exit 1
 fi
 ```
+
+---
+
+## Related Reading
+
+- **HTTP handlers under test** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md) defines the handlers and middleware that section 1 tests with `httptest`
+- **Database layers under test** — [Module 05: Database Drivers and ORMs](../05-data-storage/01-database-drivers-and-orms.md) covers pgx, sqlc, and GORM — the database code tested with testcontainers in section 2
+- **Redis caching under test** — [Module 05: Migrations, Redis, and Advanced Storage](../05-data-storage/03-migrations-redis-and-advanced-storage.md), section 6 (Testing) complements the Redis testcontainer from section 2 with caching-specific test patterns
+- **CLI testing with Cobra** — [Module 08: Patterns and Composition](../08-advanced-patterns/02-patterns-and-composition.md), section 5 (Building CLIs with Cobra) shows the Cobra commands that section 4 tests
+- **Unit test foundations** — [Table-Driven Tests and Mocking](01-table-driven-tests-and-mocking.md) covers the mocking and table-driven patterns that complement the integration testing from this file

@@ -859,3 +859,20 @@ case. CRDTs are commutative and associative data structures where all operations
 applied in any order and produce the same result. This enables peer-to-peer sync without
 central coordination. The trade-off: CRDT data structures are larger (they carry tombstones
 and vector clock metadata). Libraries like Yjs integrate with React via `useSyncExternalStore`.
+
+---
+
+## Practice
+
+- **XState exercise**: Model a multi-step checkout flow (cart -> shipping -> payment -> confirmation) as a state machine. Add guards (e.g., "only proceed to payment if shipping address is valid") and parallel states (e.g., "loading payment methods" while the user fills in shipping).
+- **Optimistic update**: Build a todo list with TanStack Query mutations. Implement optimistic toggling of a todo's `completed` status. Verify: (1) UI updates instantly, (2) on error, the previous state is restored, (3) `onSettled` invalidates the query for eventual consistency.
+- **Undo/redo with event sourcing**: Build a simple drawing app (or text editor) that stores actions as an event log. Implement undo (pop from history, replay remaining events) and redo (push popped event back). Use `useReducer` for the state machine.
+- **Zustand internals walkthrough**: Read through the simplified `createStore` implementation in this lesson. Add a `subscribe` middleware that logs every state change. Verify it works by wiring it up to a real component.
+- **State anti-pattern audit**: Review a real codebase (or your own) for the anti-patterns listed in this lesson: god store, over-globalized UI state, server data in client state. Propose refactors.
+
+### Related Lessons
+
+- [State Management Fundamentals](01-state-management-fundamentals.md) -- `useState`, `useReducer`, Context fundamentals this lesson extends
+- [State Libraries & Solutions](02-state-libraries-and-solutions.md) -- Zustand, Jotai, TanStack Query used in the patterns above
+- [Hooks & State Management](../01-hooks-deep-dive/01-hooks-and-state-management.md) -- `useSyncExternalStore` used by Zustand, `useReducer` used by XState patterns
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- how selector-based subscriptions and Context splitting affect re-render performance

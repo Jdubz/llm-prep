@@ -236,3 +236,14 @@ GET /healthz/deep   -> Are all my dependencies healthy? (deep check)
 - **Retry amplification:** actual load = `1 + failure_rate * retries` (without budget).
 - **Connection pool sizing:** `pool_size >= peak_rps * avg_response_time_seconds`
 - **WebSocket capacity:** ~10K-100K connections per server.
+
+---
+
+## Related Reading
+
+- [Module 05: Circuit Breakers and Retry Strategies](02-circuit-breakers-and-retry-strategies.md) -- resilience patterns (circuit breakers, bulkheads, retry budgets) that work alongside load balancing to prevent cascading failures
+- [Module 05: Advanced Load Balancing Patterns](03-advanced-load-balancing-patterns.md) -- nginx/HAProxy/Envoy configuration, HTTP/2 and HTTP/3, CDN architecture, WebSocket load balancing, and global multi-region architectures
+- [Module 02: Indexing, Sharding, and Replication](../02-databases-at-scale/02-indexing-sharding-and-replication.md) -- consistent hashing is used both for load balancing (covered here) and for database sharding
+- [Module 03: Caching Patterns and Redis Basics](../03-caching/01-caching-patterns-and-redis-basics.md) -- Redis Cluster uses consistent hashing for key distribution, the same algorithm described in the load balancing context
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- Kubernetes Services implement L4 load balancing (ClusterIP, NodePort, LoadBalancer), and Ingress controllers provide L7 load balancing
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- the RED method (Rate, Errors, Duration) is how you monitor your load-balanced services to detect when backends are degraded

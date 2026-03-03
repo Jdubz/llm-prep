@@ -424,3 +424,21 @@ Role clarity is especially important for staff-level positions, which are often 
 6. **Staff-level questions focus on systems and strategy, not tasks and tools.** The altitude of your questions signals the altitude of your thinking.
 
 7. **Pay attention to HOW they answer, not just WHAT they say.** Enthusiasm, hesitation, and deflection are all signals about culture and reality.
+
+---
+
+## Practice
+
+- After your next interview (or a mock interview), write down the answers you received and evaluate them against the red flags table in this guide. Were any answers vague, defensive, or inconsistent?
+- Practice the follow-up pattern: for each question in the framework guide, prepare a follow-up that asks for a specific example. "Can you give me a recent example?" is the single most revealing follow-up you can ask.
+- Take a company at each stage (early startup, growth, enterprise) and write 5 tailored questions using the stage-specific guidance in this guide. Notice how the same underlying concerns (stability, growth, autonomy) surface differently at each stage.
+- Review the staff-level question upgrades table. For each of your prepared questions, check whether you are asking at the senior or staff level and upgrade where appropriate.
+
+---
+
+## Cross-References
+
+- **[Module 04 — Questions to Ask Framework](01-questions-to-ask-framework.md):** Read the framework guide first for the full question bank organized by category and round. This guide adds the interpretive and strategic layers on top.
+- **[Module 01 — Interview Strategy](../01-strategy/):** Company research (Module 01) makes your follow-up questions sharper. When you know the company's engineering blog mentions Kubernetes, you can ask "I saw your post about the K8s migration -- what were the biggest surprises?" instead of generic questions.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** The DORA metrics framework here connects to Module 03's discussion of engineering maturity signals. When you ask about deployment frequency or incident response, you are evaluating the same operational maturity that Module 03 teaches you to demonstrate.
+- **[Module 08 — Negotiation & Closing](../08-negotiation/):** Red flag detection during interviews protects you from accepting offers at companies with systemic problems. The role clarity questions here also inform your negotiation -- understanding the scope and expectations of the role helps you negotiate appropriate compensation.

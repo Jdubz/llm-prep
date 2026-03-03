@@ -20,6 +20,11 @@ T = TypeVar("T")
 # EXERCISE 1: Sequential to Concurrent
 # ============================================================================
 #
+# RELATED READING:
+#   - ../02-async-python/01-asyncio-fundamentals.md (coroutines, gather, event loop)
+#   - ../02-async-python/02-concurrency-patterns.md (sequential vs concurrent)
+#   - ../08-interview-prep/01-interview-fundamentals.md (async interview questions)
+#
 # Rewrite a sequential fetch pattern using asyncio.gather for concurrency.
 # This is the single most common async interview question.
 #
@@ -35,6 +40,34 @@ T = TypeVar("T")
 #   - Sequential: loop and await each fetch_one()
 #   - Concurrent: build a list of coroutines, pass to asyncio.gather(*coros)
 #   - asyncio.gather returns results in the same order as the input coroutines
+#
+#   async/await basics:
+#     async def fetch_one(url, delay=0.1):
+#         await asyncio.sleep(delay)     # non-blocking sleep
+#         return {"url": url, "status": 200}
+#
+#   asyncio.gather API — run coroutines concurrently:
+#     results = await asyncio.gather(coro1, coro2, coro3)
+#     # results is a list in the SAME ORDER as the input coroutines
+#     # All three run concurrently (not sequentially)
+#
+#   Pattern — sequential vs concurrent:
+#
+#     # Sequential (slow): total time = sum of all delays
+#     async def fetch_all_sequential(urls_and_delays):
+#         results = []
+#         for url, delay in urls_and_delays:
+#             result = await fetch_one(url, delay)
+#             results.append(result)
+#         return results
+#
+#     # Concurrent (fast): total time = max of all delays
+#     async def fetch_all_concurrent(urls_and_delays):
+#         coros = [fetch_one(url, delay) for url, delay in urls_and_delays]
+#         return list(await asyncio.gather(*coros))
+#
+#   Key insight: asyncio.gather(*coros) unpacks the list into separate
+#   arguments. The * operator splats a list: gather(c1, c2, c3).
 #
 # Expected behavior:
 #   urls = [("/a", 0.1), ("/b", 0.1), ("/c", 0.1)]
@@ -68,6 +101,11 @@ async def fetch_all_concurrent(
 # EXERCISE 2: Semaphore-Bounded Fetcher
 # ============================================================================
 #
+# RELATED READING:
+#   - ../02-async-python/02-concurrency-patterns.md (semaphores, bounded concurrency)
+#   - ../02-async-python/01-asyncio-fundamentals.md (async context managers)
+#   - ../07-production/03-performance-and-scaling.md (rate limiting, backpressure)
+#
 # Limit concurrent requests to N using asyncio.Semaphore. This prevents
 # overwhelming a downstream service.
 #
@@ -83,6 +121,33 @@ async def fetch_all_concurrent(
 #       async with sem:
 #           return await fetch_one(url, delay)
 #   - Use asyncio.gather on the wrapped coroutines
+#
+#   asyncio.Semaphore API — limiting concurrent access:
+#     sem = asyncio.Semaphore(3)      # allow up to 3 concurrent operations
+#
+#     async with sem:                  # blocks if 3 are already running
+#         await do_work()              # only 3 can be here at once
+#     # semaphore auto-released when exiting the `async with` block
+#
+#   How it works:
+#   - Semaphore has an internal counter (starts at max_concurrent)
+#   - async with sem: decrements the counter (acquire)
+#   - If counter is 0, the coroutine awaits until another releases
+#   - Exiting the block increments the counter (release)
+#
+#   Pattern — bounded concurrency with semaphore + gather:
+#     async def fetch_bounded(urls_and_delays, max_concurrent=3):
+#         sem = asyncio.Semaphore(max_concurrent)
+#
+#         async def limited_fetch(url, delay):
+#             async with sem:                    # throttle here
+#                 return await fetch_one(url, delay)
+#
+#         coros = [limited_fetch(url, d) for url, d in urls_and_delays]
+#         return list(await asyncio.gather(*coros))
+#
+#   All coroutines start immediately with gather, but the semaphore ensures
+#   only max_concurrent are actively running at any time.
 #
 # Expected behavior:
 #   urls = [("/a", 0.1), ("/b", 0.1), ("/c", 0.1), ("/d", 0.1)]
@@ -103,6 +168,11 @@ async def fetch_bounded(
 # EXERCISE 3: Async Retry
 # ============================================================================
 #
+# RELATED READING:
+#   - ../02-async-python/02-concurrency-patterns.md (retry patterns, error handling)
+#   - ../02-async-python/01-asyncio-fundamentals.md (async/await, asyncio.sleep)
+#   - ../09-python-internals/02-advanced-python-features.md (decorator factories)
+#
 # Write an async-aware retry decorator with exponential backoff.
 # This is the async version of exercise 2 from the functions module.
 #
@@ -118,6 +188,33 @@ async def fetch_bounded(
 #   - Same three-layer pattern as sync retry, but wrapper is async
 #   - await asyncio.sleep(current_delay) instead of time.sleep()
 #   - await func(*args, **kwargs) to call the wrapped async function
+#
+#   CRITICAL: asyncio.sleep vs time.sleep:
+#   - time.sleep(1) BLOCKS the entire event loop (nothing else runs)
+#   - await asyncio.sleep(1) YIELDS control (other tasks run during the wait)
+#   - NEVER use time.sleep in async code
+#
+#   Pattern — async decorator factory (three layers, async wrapper):
+#     def async_retry(max_attempts=3, delay=0.1):
+#         def decorator(func):
+#             @functools.wraps(func)
+#             async def wrapper(*args, **kwargs):    # async wrapper!
+#                 current_delay = delay
+#                 for attempt in range(1, max_attempts + 1):
+#                     try:
+#                         return await func(*args, **kwargs)  # await the async fn
+#                     except Exception:
+#                         if attempt == max_attempts:
+#                             raise
+#                         await asyncio.sleep(current_delay)  # non-blocking sleep
+#                         current_delay *= 2
+#             return wrapper
+#         return decorator
+#
+#   The only differences from the sync version (exercise 02, exercise 2):
+#   1. wrapper is `async def` instead of `def`
+#   2. `await func(...)` instead of `func(...)`
+#   3. `await asyncio.sleep(...)` instead of `time.sleep(...)`
 #
 # Expected behavior:
 #   attempt_count = 0
@@ -145,6 +242,10 @@ def async_retry(
 # EXERCISE 4: Timeout Wrapper
 # ============================================================================
 #
+# RELATED READING:
+#   - ../02-async-python/01-asyncio-fundamentals.md (asyncio.wait_for, timeouts)
+#   - ../02-async-python/03-async-debugging-and-production.md (timeout best practices)
+#
 # Write a utility that wraps any coroutine with a timeout and optional
 # fallback value.
 #
@@ -157,6 +258,28 @@ def async_retry(
 # Hints:
 #   - asyncio.wait_for(coro, timeout=seconds) raises asyncio.TimeoutError
 #   - Catch TimeoutError and return the fallback
+#
+#   asyncio.wait_for API:
+#     result = await asyncio.wait_for(coroutine, timeout=5.0)
+#     # If the coroutine finishes within 5s, returns its result
+#     # If not, raises asyncio.TimeoutError
+#     # The coroutine is CANCELLED on timeout (important for cleanup)
+#
+#   Pattern — timeout with fallback:
+#     async def with_timeout(coro, timeout, fallback=None):
+#         try:
+#             return await asyncio.wait_for(coro, timeout=timeout)
+#         except asyncio.TimeoutError:
+#             return fallback
+#
+#   Note: asyncio.TimeoutError (not TimeoutError) in Python < 3.11.
+#   In Python 3.11+, asyncio.TimeoutError is an alias for the builtin
+#   TimeoutError, so catching either works.
+#
+#   Alternative in Python 3.11+ — asyncio.timeout context manager:
+#     async with asyncio.timeout(5.0):
+#         result = await some_coroutine()
+#     # Raises TimeoutError if the block takes longer than 5s
 #
 # Expected behavior:
 #   async def slow():
@@ -180,6 +303,11 @@ async def with_timeout(
 # EXERCISE 5: Producer/Consumer Pipeline
 # ============================================================================
 #
+# RELATED READING:
+#   - ../02-async-python/02-concurrency-patterns.md (producer/consumer, queues)
+#   - ../02-async-python/01-asyncio-fundamentals.md (asyncio.Queue, task coordination)
+#   - ../05-advanced-api-patterns/01-file-handling-and-streaming.md (streaming pipelines)
+#
 # Implement an async producer/consumer pipeline using asyncio.Queue.
 # The producer generates work items, the consumer processes them.
 #
@@ -198,6 +326,53 @@ async def with_timeout(
 #   - Consumer: while True: item = await queue.get(); if item is None: break
 #   - Use asyncio.gather to run producer + consumers concurrently
 #   - Send num_consumers None sentinels to stop all consumers
+#
+#   asyncio.Queue API:
+#     queue = asyncio.Queue()            # unbounded queue
+#     queue = asyncio.Queue(maxsize=10)  # bounded queue (put blocks when full)
+#
+#     await queue.put(item)              # add item (blocks if full)
+#     item = await queue.get()           # remove and return item (blocks if empty)
+#     queue.qsize()                      # current number of items
+#     queue.empty()                      # True if queue is empty
+#
+#   Sentinel pattern for graceful shutdown:
+#   Since consumers loop forever with `while True`, you need a way to tell
+#   them to stop. Send a special value (None) that means "you're done":
+#
+#     # Producer sends one None per consumer:
+#     for _ in range(num_consumers):
+#         await queue.put(None)
+#
+#     # Consumer checks for sentinel:
+#     while True:
+#         item = await queue.get()
+#         if item is None:
+#             break
+#         results.append(item.upper())
+#
+#   Pattern — orchestrating the pipeline:
+#     async def run_pipeline(items, num_consumers=2):
+#         queue = asyncio.Queue()
+#         results = []
+#
+#         async def _producer():
+#             for item in items:
+#                 await queue.put(item)
+#                 await asyncio.sleep(0.01)
+#             for _ in range(num_consumers):
+#                 await queue.put(None)       # one sentinel per consumer
+#
+#         async def _consumer():
+#             while True:
+#                 item = await queue.get()
+#                 if item is None:
+#                     break
+#                 results.append(item.upper())
+#
+#         consumers = [_consumer() for _ in range(num_consumers)]
+#         await asyncio.gather(_producer(), *consumers)
+#         return results
 #
 # Expected behavior:
 #   results = await run_pipeline(["hello", "world", "foo"], num_consumers=2)
@@ -226,6 +401,12 @@ async def run_pipeline(items: list[str], num_consumers: int = 2) -> list[str]:
 # EXERCISE 6: Async Context Manager (Connection Pool Mock)
 # ============================================================================
 #
+# RELATED READING:
+#   - ../02-async-python/01-asyncio-fundamentals.md (async context managers)
+#   - ../02-async-python/02-concurrency-patterns.md (resource management)
+#   - ../03-sqlalchemy/02-querying-and-session-management.md (connection pooling)
+#   - ../01-fastapi-foundations/03-middleware-asgi-and-advanced-patterns.md (lifespan)
+#
 # Implement an async context manager that simulates a database connection
 # pool. This practices __aenter__/__aexit__ which FastAPI uses for
 # lifespan management and database sessions.
@@ -244,6 +425,40 @@ async def run_pipeline(items: list[str], num_consumers: int = 2) -> list[str]:
 #   - Use a list or deque for available connections
 #   - acquire() pops from available, release() appends back
 #   - __aenter__ creates the connections, __aexit__ clears them
+#
+#   Async context manager protocol — __aenter__ and __aexit__:
+#
+#     class AsyncPool:
+#         async def __aenter__(self) -> AsyncPool:
+#             # Setup: create connections
+#             await asyncio.sleep(0.01)         # simulate connection time
+#             self._available = [Connection(i) for i in range(self._max_size)]
+#             return self
+#
+#         async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool:
+#             # Teardown: close all connections
+#             for conn in self._all_connections:
+#                 conn.closed = True
+#             await asyncio.sleep(0.01)         # simulate cleanup
+#             return False                       # don't suppress exceptions
+#
+#   Compared to sync context managers:
+#   - __enter__  -> async def __aenter__
+#   - __exit__   -> async def __aexit__
+#   - with ...   -> async with ...
+#   Same protocol, just async.
+#
+#   Pool acquire/release pattern:
+#     async def acquire(self) -> Connection:
+#         if not self._available:
+#             raise RuntimeError("Pool exhausted")
+#         return self._available.pop()
+#
+#     async def release(self, conn: Connection) -> None:
+#         self._available.append(conn)
+#
+#   This is how real connection pools (asyncpg, sqlalchemy async) work:
+#   a fixed set of connections, checked out and returned by callers.
 #
 # Expected behavior:
 #   async with AsyncPool(max_size=2) as pool:

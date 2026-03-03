@@ -583,3 +583,13 @@ row = stmt.QueryRowContext(ctx, "bob@example.com")
 ```
 
 Prepared statements are useful when executing the same query many times with different parameters.
+
+---
+
+## Related Reading
+
+- **Testing in depth** — [Module 06: Table-Driven Tests and Mocking](../06-testing/01-table-driven-tests-and-mocking.md) expands on the `testing` package basics from section 1 with table-driven patterns, mocking strategies, and test helpers
+- **database/sql vs pgx** — [Module 05: Database Drivers and ORMs](../05-data-storage/01-database-drivers-and-orms.md), section 2 (pgx) explains why many Go projects use pgx directly instead of `database/sql`, and when the stdlib interface still makes sense
+- **io composition in HTTP** — [Module 04: Request Handling and Validation](../04-http-services/02-request-handling-and-validation.md) shows `io.Reader` used for JSON body decoding and `io.Writer` used for response encoding in HTTP handlers
+- **File embedding** — [Module 03: Time, Logging, and Additional Stdlib](03-time-logging-and-additional-stdlib.md), section 7 (embed) shows how to bundle files into binaries using `embed.FS` which implements `fs.FS`
+- **Benchmarking IO operations** — [Module 06: Benchmarking, Profiling, and Advanced Testing](../06-testing/03-benchmarking-profiling-and-advanced-testing.md), section 1 covers how to benchmark the IO patterns from this file

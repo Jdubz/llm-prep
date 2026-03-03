@@ -327,6 +327,16 @@ app.add_middleware(CORSMiddleware,
 
 ---
 
+## Practice Exercises
+
+These exercises are in `exercises.py`. Complete them to test the concepts from this module.
+
+- **Exercise 3 (Permission-Based Routes):** Implement `require_permission()` using the role-to-permission mapping pattern -- tests the "Permission Check Dependency" and RBAC factory patterns from this file.
+- **Exercise 4 (API Key Validation):** Implement `generate_api_key()` and `get_api_key_user()` with SHA-256 hashing -- tests the "API Key Management" patterns from this file.
+- **Exercise 2 (Auth Dependency Chain):** The `require_role()` factory from Exercise 2 is the foundation that Exercise 3 builds on -- see `01-authentication-basics.md` for the dependency chain concepts.
+
+---
+
 ## Key Takeaways
 
 - RBAC: roles group permissions; `require_role` and `require_permission` factory dependencies.

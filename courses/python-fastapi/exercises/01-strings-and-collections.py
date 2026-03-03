@@ -17,6 +17,10 @@ from collections import Counter, defaultdict
 # EXERCISE 1: Group Anagrams
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (data structures)
+#   - ../08-interview-prep/01-interview-fundamentals.md (common coding patterns)
+#
 # Given a list of strings, group anagrams together. Two strings are anagrams
 # if they contain the same characters in any order.
 #
@@ -30,6 +34,19 @@ from collections import Counter, defaultdict
 #   - Anagrams have the same sorted characters: sorted("eat") == sorted("tea")
 #   - Use a dict mapping sorted-character tuples to lists of words
 #   - tuple(sorted(word)) makes a hashable dict key
+#
+#   Pattern — using defaultdict to group by a derived key:
+#     from collections import defaultdict
+#     groups = defaultdict(list)
+#     for word in words:
+#         key = tuple(sorted(word))   # "eat" -> ('a', 'e', 't')
+#         groups[key].append(word)
+#     return list(groups.values())
+#
+#   Key concepts:
+#   - sorted(str) returns a list of characters in alphabetical order
+#   - tuple() makes it hashable so it can be a dict key
+#   - defaultdict(list) auto-creates an empty list for new keys
 #
 # Expected behavior:
 #   group_anagrams(["eat", "tea", "tan", "ate", "nat", "bat"])
@@ -46,6 +63,10 @@ def group_anagrams(words: list[str]) -> list[list[str]]:
 # EXERCISE 2: Flatten Nested Dict
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (recursion, dict patterns)
+#   - ../08-interview-prep/01-interview-fundamentals.md (data transformation)
+#
 # Convert a nested dictionary into a flat dictionary with dot-separated keys.
 #
 # Requirements:
@@ -58,6 +79,22 @@ def group_anagrams(words: list[str]) -> list[list[str]]:
 #   - Use recursion: if a value is a dict, recurse with the current prefix
 #   - Build the key with f"{prefix}.{key}" (or just key if no prefix yet)
 #   - A helper function with a prefix parameter keeps the signature clean
+#
+#   Pattern — recursive dict flattening:
+#     def flatten_dict(nested, prefix="", sep="."):
+#         result = {}
+#         for key, value in nested.items():
+#             new_key = f"{prefix}{sep}{key}" if prefix else key
+#             if isinstance(value, dict):
+#                 result.update(flatten_dict(value, new_key, sep))
+#             else:
+#                 result[new_key] = value
+#         return result
+#
+#   Key concepts:
+#   - isinstance(value, dict) checks if we should recurse deeper
+#   - The prefix parameter accumulates the dot-separated path
+#   - dict.update() merges the recursively-flattened sub-dict into result
 #
 # Expected behavior:
 #   flatten_dict({"a": {"b": 1, "c": {"d": 2}}, "e": 3})
@@ -74,6 +111,10 @@ def flatten_dict(nested: dict, prefix: str = "", sep: str = ".") -> dict:
 # EXERCISE 3: Most Frequent Words
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (collections module)
+#   - ../08-interview-prep/01-interview-fundamentals.md (string manipulation)
+#
 # Given a string of text, return the N most frequent words (case-insensitive).
 #
 # Requirements:
@@ -87,6 +128,22 @@ def flatten_dict(nested: dict, prefix: str = "", sep: str = ".") -> dict:
 #   - str.lower() and str.strip(".,!?;:\"'()") for normalization
 #   - collections.Counter has a .most_common(n) method
 #   - Filter out empty strings after stripping
+#
+#   Useful str methods:
+#   - "Hello World".split()        -> ["Hello", "World"]  (splits on whitespace)
+#   - "Hello".lower()              -> "hello"
+#   - "hello!".strip(".,!?;:\"'()") -> "hello" (strips leading/trailing punctuation)
+#
+#   Counter API:
+#     from collections import Counter
+#     counter = Counter(["a", "b", "a", "c", "a", "b"])
+#     counter.most_common(2)       -> [("a", 3), ("b", 2)]
+#     counter.most_common()        -> all items sorted by frequency
+#
+#   Pattern — word frequency counting:
+#     words = [w.strip(".,!?;:\"'()").lower() for w in text.split()]
+#     words = [w for w in words if w]   # filter empty strings
+#     return Counter(words).most_common(n)
 #
 # Expected behavior:
 #   most_frequent("the cat sat on the mat the cat", n=2)
@@ -102,6 +159,10 @@ def most_frequent(text: str, n: int = 3) -> list[tuple[str, int]]:
 # ============================================================================
 # EXERCISE 4: Merge Intervals
 # ============================================================================
+#
+# RELATED READING:
+#   - ../08-interview-prep/01-interview-fundamentals.md (classic algorithm patterns)
+#   - ../09-python-internals/02-advanced-python-features.md (sorting, tuples)
 #
 # Given a list of intervals as (start, end) tuples, merge all overlapping
 # intervals and return the result sorted by start time.
@@ -119,6 +180,24 @@ def most_frequent(text: str, n: int = 3) -> list[tuple[str, int]]:
 #   - If current.start <= last_merged.end, extend last_merged
 #   - Otherwise, start a new merged interval
 #
+#   Key sorting functions:
+#   - sorted(intervals) sorts tuples lexicographically (by first element, then second)
+#   - sorted(items, key=lambda x: x[0]) explicitly sorts by first element
+#
+#   Pattern — merge overlapping intervals:
+#     sorted_intervals = sorted(intervals)
+#     merged = [sorted_intervals[0]]      # start with first interval
+#     for start, end in sorted_intervals[1:]:
+#         last_start, last_end = merged[-1]
+#         if start <= last_end:            # overlapping
+#             merged[-1] = (last_start, max(last_end, end))
+#         else:
+#             merged.append((start, end))  # non-overlapping, add new
+#     return merged
+#
+#   Key insight: after sorting by start, you only need to check whether
+#   each interval overlaps with the last merged interval (greedy approach).
+#
 # Expected behavior:
 #   merge_intervals([(1, 3), (2, 6), (8, 10), (15, 18)])
 #   # -> [(1, 6), (8, 10), (15, 18)]
@@ -134,6 +213,10 @@ def merge_intervals(intervals: list[tuple[int, int]]) -> list[tuple[int, int]]:
 # EXERCISE 5: Inverted Index
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (collections module)
+#   - ../08-interview-prep/01-interview-fundamentals.md (data structure design)
+#
 # Build an inverted index from a list of (doc_id, text) pairs. An inverted
 # index maps each word to the set of document IDs that contain it.
 #
@@ -147,6 +230,27 @@ def merge_intervals(intervals: list[tuple[int, int]]) -> list[tuple[int, int]]:
 #   - Use collections.defaultdict(set)
 #   - Iterate through each document, split text into words
 #   - For each word, add the doc_id to that word's set
+#
+#   defaultdict API:
+#     from collections import defaultdict
+#     index = defaultdict(set)      # missing keys auto-create empty sets
+#     index["word"].add(1)          # no KeyError, creates set then adds
+#     index["word"].add(2)
+#     # index["word"] == {1, 2}
+#
+#   set operations you may find useful:
+#     s.add(item)                   # add a single element
+#     s1 & s2                       # intersection (docs containing both words)
+#     s1 | s2                       # union (docs containing either word)
+#
+#   Pattern — building the index:
+#     index = defaultdict(set)
+#     for doc_id, text in documents:
+#         for word in text.lower().split():
+#             word = word.strip(".,!?;:\"'()")
+#             if word:
+#                 index[word].add(doc_id)
+#     return dict(index)
 #
 # Expected behavior:
 #   docs = [(1, "the cat sat"), (2, "the dog sat"), (3, "the cat played")]
@@ -166,6 +270,10 @@ def build_inverted_index(documents: list[tuple[int, str]]) -> dict[str, set[int]
 # EXERCISE 6: Matrix Rotation
 # ============================================================================
 #
+# RELATED READING:
+#   - ../08-interview-prep/01-interview-fundamentals.md (matrix operations)
+#   - ../09-python-internals/02-advanced-python-features.md (list slicing)
+#
 # Rotate an NxN matrix 90 degrees clockwise. Modify the matrix in-place
 # and also return it for convenience.
 #
@@ -179,6 +287,27 @@ def build_inverted_index(documents: list[tuple[int, str]]) -> dict[str, set[int]
 #   - Transpose: swap matrix[i][j] with matrix[j][i]
 #   - Reverse each row: row[:] = row[::-1] (in-place slice assignment)
 #   - Alternative one-liner (not in-place): list(zip(*matrix[::-1]))
+#
+#   Step-by-step algorithm (in-place, two steps):
+#
+#   Step 1 — Transpose (swap rows and columns):
+#     n = len(matrix)
+#     for i in range(n):
+#         for j in range(i + 1, n):              # j > i avoids double-swap
+#             matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+#
+#   Step 2 — Reverse each row:
+#     for row in matrix:
+#         row[:] = row[::-1]    # in-place slice assignment (row.reverse() also works)
+#
+#   Why this works:
+#     Original:    Transposed:   Row-reversed:
+#     1 2 3        1 4 7         7 4 1
+#     4 5 6   ->   2 5 8   ->   8 5 2    (90 degrees clockwise)
+#     7 8 9        3 6 9         9 6 3
+#
+#   In-place slice assignment: row[:] = row[::-1] replaces the contents
+#   of the existing list rather than creating a new list object.
 #
 # Expected behavior:
 #   matrix = [[1, 2, 3],

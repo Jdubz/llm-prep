@@ -1,3 +1,20 @@
+// READ FIRST: Understand the patterns and design decisions behind this hook:
+//   - src/lessons/02-custom-hooks/01-custom-hooks-fundamentals.md
+//       Sections: "Return Value Contracts", "Real-World Custom Hook Implementations"
+//   - src/lessons/02-custom-hooks/02-custom-hooks-testing-and-advanced.md
+//       Sections: "Building a Mini Data-Fetching Library", "Testing Custom Hooks"
+//
+// ALSO SEE:
+//   - src/lessons/02-custom-hooks/CustomHooksDemo.jsx — run this to test your implementation interactively
+//   - src/hooks/usePrevious.js — a simpler custom hook exercise to try first
+//
+// KEY CONCEPTS:
+//   - AbortController for race condition handling (what happens when url changes mid-fetch?)
+//   - The "cancelled" boolean flag as a second safety net alongside abort
+//   - useCallback for a stable refetch identity so consumers can safely list it in deps
+//   - Return shape { data, error, isLoading, refetch } follows the tuple-or-object contract
+//     described in 01-custom-hooks-fundamentals.md
+
 import { useState, useEffect, useCallback } from 'react';
 
 /**

@@ -461,3 +461,13 @@ srv.Shutdown(shutdownCtx)
 | Missing `wg.Done()` | Always `defer wg.Done()` |
 | Infinite loop without exit | Check `ctx.Done()` periodically |
 | Orphaned goroutine after parent returns | Use context for lifecycle management |
+
+---
+
+## Related Reading
+
+- **Context in HTTP services** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md) shows how `context.Context` flows through HTTP handlers and middleware chains
+- **Graceful shutdown pattern** — [Module 04: Advanced HTTP Patterns](../04-http-services/03-advanced-http-patterns.md), section 1 (Graceful Shutdown) uses `signal.NotifyContext` and `context.WithTimeout` from this file in a production server
+- **Context-aware transactions** — [Module 05: Queries, Transactions, and Patterns](../05-data-storage/02-queries-transactions-and-patterns.md), section 2 (Context-Aware Transactions) shows context cancellation propagating into database operations
+- **Testing with goroutine leak detection** — [Module 06: Benchmarking, Profiling, and Advanced Testing](../06-testing/03-benchmarking-profiling-and-advanced-testing.md), section 5 covers `goleak` for catching the leak patterns described in section 5 above
+- **Advanced concurrency patterns** — [Advanced Concurrency Patterns](03-advanced-concurrency-patterns.md) builds on these primitives with fan-out/fan-in, worker pools, and the singleflight pattern

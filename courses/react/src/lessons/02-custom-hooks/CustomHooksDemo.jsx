@@ -7,6 +7,16 @@ import { useFetch } from '../../hooks/useFetch';
  *
  * Test your hook implementations here.
  * Run the dev server: npm run dev
+ *
+ * LESSON MATERIAL (read these for theory and patterns):
+ *   - src/lessons/02-custom-hooks/01-custom-hooks-fundamentals.md
+ *       Covers: when to extract hooks, composition, return value contracts, real-world examples
+ *   - src/lessons/02-custom-hooks/02-custom-hooks-testing-and-advanced.md
+ *       Covers: testing with renderHook, TanStack Query internals, TypeScript generics, anti-patterns
+ *
+ * HOOK SOURCE FILES (implement these, then test here):
+ *   - src/hooks/usePrevious.js — tracks the previous value of a variable (Demo 1 below)
+ *   - src/hooks/useFetch.js   — data fetching with race condition handling (Demos 2 & 3 below)
  */
 
 // Demo 1: usePrevious

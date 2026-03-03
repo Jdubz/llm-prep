@@ -528,4 +528,19 @@ npm ci    # Uses package-lock.json exactly -- fails if lock file is out of date
     }
   ]
 }
+
+**Common mistake with automated dependency updates:** Teams enable automerge for all patch updates without adequate test coverage. A supply chain attack that ships as a patch version bypasses review entirely. The safest approach: automerge security vulnerability patches only, require human review for all other updates, and run a comprehensive test suite before merge.
+
+---
+
+## Related Reading
+
+- **Session stores with Redis** (Section 1) connects to [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (Redis setup with ioredis, session caching pattern, stateless design rule)
+- **CSRF protection** (Section 2) — the `SameSite` cookie attribute interacts with OAuth redirect flows described in [JWT and OAuth2](01-jwt-and-oauth2.md#4-oauth-20-and-openid-connect)
+- **Rate limiting algorithms** (Section 3) — the Redis-backed implementations connect to [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (sliding window with sorted set, rate limiting with `rate-limiter-flexible`)
+- **Zod validation** (Section 4) — runtime validation schemas use TypeScript inference patterns from [TypeScript Advanced — Advanced Type Patterns](../01-typescript-advanced/02-advanced-type-patterns.md) (`z.infer<typeof Schema>`)
+- **SQL injection prevention** (Section 4.3) — parameterized queries are covered in depth in [Database Patterns — Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md) and [Database Patterns — Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md)
+- **mTLS** (Section 5) — mutual TLS in service meshes connects to [Architecture — Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md) (zero-trust, service mesh)
+- For REST API endpoint security, see [REST API Design — HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md) (rate limiting headers, security checklist)
+- For GraphQL-specific auth patterns, see [GraphQL — Advanced GraphQL Patterns](../04-graphql/02-advanced-graphql-patterns.md) (custom `@auth` directives)
 ```

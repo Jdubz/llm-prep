@@ -575,3 +575,31 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 14. **When would you use gRPC instead of REST?**
     gRPC when: service-to-service communication (not browser clients), bidirectional streaming is needed, strong contract enforcement matters, payload efficiency is critical (protobuf vs JSON). REST when: browser clients, public APIs, team is unfamiliar with protobuf, simpler tooling is preferred.
+
+---
+
+## Related Reading
+
+- **Concurrency for graceful shutdown** — [Module 02: Synchronization and Context](../02-concurrency/02-synchronization-and-context.md), section 4 (Graceful Shutdown) covers the `signal.NotifyContext` and context cancellation that powers the shutdown pattern in section 1
+- **Data storage integration** — [Module 05: Database Drivers and ORMs](../05-data-storage/01-database-drivers-and-orms.md) covers the database drivers (pgx, sqlc) that HTTP services connect to through the patterns established in this module
+- **HTTP testing** — [Module 06: Integration and HTTP Testing](../06-testing/02-integration-and-http-testing.md) covers testing the full HTTP stack from this module, including `httptest.NewServer` for integration tests with middleware
+- **Deployment** — [Module 07: Deployment and Scaling](../07-production/03-deployment-and-scaling.md), section 1 (Docker Multi-Stage Builds) shows how to containerize the HTTP services built in this module
+- **Rate limiting concurrency** — [Module 02: Advanced Concurrency Patterns](../02-concurrency/03-advanced-concurrency-patterns.md), section 5 (Bounded Concurrency) provides the underlying patterns for the rate limiter middleware in section 3
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the HTTP service concepts from this module (Handlers, Routing, and Middleware through Advanced HTTP Patterns):
+
+1. **Build a complete REST API** — Using only `net/http` (Go 1.22+ ServeMux), build a CRUD API with proper middleware (logging, request ID, CORS, panic recovery). Implement structured JSON error responses with error codes. Test every handler with `httptest.NewRecorder`.
+
+2. **Middleware chain** — Implement three custom middleware functions: (a) request timing that adds `X-Response-Time` header, (b) basic auth that checks credentials from a config, (c) request body size limiter. Chain them together and write tests for each in isolation and combined.
+
+3. **Graceful shutdown** — Build an HTTP server that accepts long-running requests (simulate with `time.Sleep`). Implement graceful shutdown that waits for in-flight requests to complete within a timeout. Test by sending a request, triggering shutdown, and verifying the request completes.
+
+4. **WebSocket echo server** — Using `nhooyr.io/websocket`, build a WebSocket echo server with a ping/pong heartbeat. Write a test client that connects, sends messages, and verifies responses. Add a timeout that disconnects idle clients.
+
+5. **Reverse proxy with load balancing** — Using `httputil.ReverseProxy`, build a simple load balancer that distributes requests across multiple backend servers. Use `httptest.NewServer` to create test backends. Implement health checking and automatic backend removal.
+
+6. **Rate limiter middleware** — Implement a per-IP rate limiter using a token bucket algorithm. Store buckets in a `sync.Map` with periodic cleanup of stale entries. Write a benchmark to verify performance under concurrent load.

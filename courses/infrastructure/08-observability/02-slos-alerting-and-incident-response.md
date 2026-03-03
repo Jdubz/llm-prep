@@ -251,6 +251,15 @@ A: Audit last month of alerts -- was each actionable? Delete/suppress non-action
 
 A: (1) Declare incident, create channel, post summary with impact. (2) Page relevant team leads, assign who debugs vs who communicates. (3) Parallel investigation workstreams. (4) Status page update within 5 min, internal updates every 15 min. (5) If no root cause in 15 min, mitigate first (rollback, scale, fallback). (6) Confirm resolution with monitoring. (7) Schedule postmortem within 48 hours.
 
+### Related Reading
+
+- [Module 08: Logging, Metrics, and Tracing](01-logging-metrics-and-tracing.md) -- the three pillars (logs, metrics, traces) and PromQL queries that SLO-based alerting rules are built on
+- [Module 08: Advanced Observability](03-advanced-observability.md) -- the OTel Collector processes and routes the telemetry data that SLO dashboards consume; cost management for observability data at scale
+- [Module 01: Advanced System Design](../01-system-design-framework/02-advanced-system-design.md) -- SLOs are a staff-level design expectation; the system design framework includes defining SLIs as part of requirements gathering
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- circuit breakers and error budgets work together; when SLO burn rate is high, circuit breakers should be more aggressive
+- [Module 07: Pipeline Design and Deployment Strategies](../07-cicd/01-pipeline-design-and-deployment-strategies.md) -- canary deployments need SLO-based metrics to decide when to promote or rollback; burn rate alerts drive automated deployment gates
+- [Module 07: Feature Flags and Migrations](../07-cicd/02-feature-flags-and-migrations.md) -- error budget policy (freeze features when budget is exhausted) directly affects feature flag rollout decisions
+
 ### Key Takeaways
 
 1. **SLOs are the foundation of reliable operations**: Without SLOs, every alert is an opinion. With SLOs, every alert is grounded in user impact.

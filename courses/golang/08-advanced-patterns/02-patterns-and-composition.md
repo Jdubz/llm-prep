@@ -367,11 +367,11 @@ func InitializeServer(cfg *config.Config) (*server.Server, error) {
 }
 ```
 
-Running `wire` generates `wire_gen.go` with the concrete wiring code. It is code generation, not runtime magic.
+Running `wire` generates `wire_gen.go` with the concrete wiring code. It is code generation, not runtime magic. Wire analyzes the input/output types of each constructor function and determines the correct call order. If a constructor returns a `*pgxpool.Pool` and another constructor accepts a `*pgxpool.Pool`, Wire knows to call the first before the second. If the dependency graph is incomplete or has a cycle, Wire fails at generation time, not at runtime.
 
 ### Uber fx (Runtime DI)
 
-For teams that prefer a container-based approach:
+For teams that prefer a container-based approach. Unlike Wire, fx resolves dependencies at application startup using reflection. This means dependency errors are caught when the application starts rather than at compile time. The trade-off is less boilerplate in exchange for slightly later error detection:
 
 ```go
 func main() {
@@ -618,3 +618,13 @@ client := &http.Client{
 | CLI framework | Cobra |
 | Dynamic query building | squirrel query builder |
 | Enum with String() | stringer code gen |
+
+---
+
+## Related Reading
+
+- **Embedding foundations** — [Module 01: Types, Interfaces, and Structs](../01-go-mental-model/01-types-interfaces-and-structs.md), section 5 (Structs) and section 6 (Embedding) introduce the struct embedding that section 1 expands into delegation and shadowing patterns
+- **DI in HTTP services** — [Module 05: Queries, Transactions, and Patterns](../05-data-storage/02-queries-transactions-and-patterns.md), section 4 (Dependency Injection) shows the constructor-based DI from section 4 applied to database repositories and HTTP handlers
+- **Functional options in practice** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md) uses the `WithX` option pattern from section 2 for configuring servers and middleware
+- **CLI testing** — [Module 06: Integration and HTTP Testing](../06-testing/02-integration-and-http-testing.md), section 4 (Testing CLI Applications) shows how to test the Cobra commands from section 5
+- **Observer pattern with channels** — [Module 02: Goroutines and Channels](../02-concurrency/01-goroutines-and-channels.md) covers the channel primitives that the observer pattern in section 6 (Go-Idiomatic Design Patterns) uses instead of callbacks

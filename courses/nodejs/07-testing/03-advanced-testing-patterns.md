@@ -491,3 +491,27 @@ In-process testing with a fake queue, contract tests for message schemas, E2E wi
 - Test names are documentation. If a test fails in CI, the name should tell you what broke without reading code.
 - Shared test state is the root of all flakiness. Each test should set up what it needs.
 - E2E tests in CI should run against ephemeral environments, never shared staging.
+
+## Related Reading
+
+- **Contract testing with Pact** is the formal version of the API compatibility checks discussed in [03 – API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md#api-versioning-strategies) — contracts prevent breaking changes across service boundaries.
+- **Property-based testing with fast-check** is especially powerful for the serialization and parsing logic in [01 – Conditional and Mapped Types](../01-typescript-advanced/01-conditional-and-mapped-types.md#template-literal-types) and the data validation in [05 – Session Management and Validation](../05-auth-security/02-session-management-and-validation.md#input-validation-with-zod).
+- **Mutation testing and test quality measurement** complements the coverage strategy from [07 – Vitest and Unit Testing](./01-vitest-and-unit-testing.md#coverage-strategy) — coverage measures quantity, mutation testing measures quality.
+- **Chaos testing with network failures and timeouts** directly tests the resilience patterns in [08 – Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md) and the circuit breaker pattern in [09 – Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md).
+- **Load testing with k6 and Artillery** connects to the performance profiling workflow in [08 – Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md) and the load test interpretation in [08 – Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md#interpreting-load-test-results).
+- **Database chaos testing (connection pool exhaustion)** relates to the connection pool configuration in [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md) and the pool sizing guidance in [08 – Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md#database-connection-pools).
+- **The integration-heavy testing philosophy** underpins every testing pattern here — see [07 – Vitest and Unit Testing](./01-vitest-and-unit-testing.md#the-integration-heavy-approach) for the foundational argument and the testing trophy model.
+
+## Practice Suggestions
+
+1. **Build a fully tested REST API from scratch**: Create a small Express or Fastify API with 3-4 CRUD endpoints, using test containers for a real Postgres database, Vitest with `pool: 'forks'`, transaction rollback for test isolation, and factory patterns for test data. Aim for 80%+ branch coverage with integration tests only — no mocking the database.
+
+2. **Implement contract testing between two services**: Create a consumer service and a provider service. Write Pact consumer tests that generate contract files, then write provider verification tests. Set up a simple Pact Broker (Docker) and practice the `can-i-deploy` workflow to understand how contract testing gates deployments.
+
+3. **Write property-based tests for a real utility**: Pick a non-trivial utility function (URL parser, currency formatter, pagination cursor encoder/decoder) and write property-based tests with fast-check. Define at least 3 properties (roundtrip, invariant, and equivalence). Observe how shrinking finds minimal reproduction cases.
+
+4. **Run mutation testing on a critical module**: Configure Stryker on a billing or auth module. Analyze the surviving mutants to find gaps in your assertions. Focus on boundary mutations (`>` to `>=`) and boolean substitutions — these reveal the most dangerous test weaknesses.
+
+5. **Build a chaos testing suite**: Using MSW, simulate network errors, timeouts, rate limiting (429), and partial failures for an external API dependency. Verify your circuit breaker opens after consecutive failures, your retry logic respects backoff, and your application returns graceful error responses instead of crashing.
+
+6. **Create a load testing pipeline**: Write a k6 script that ramps to 100 virtual users over 1 minute, sustains for 5 minutes, then ramps down. Define thresholds for p95 latency (<300ms) and error rate (<1%). Run it against your test API and use the results to identify the bottleneck (connection pool, N+1 query, missing index, or event loop saturation).

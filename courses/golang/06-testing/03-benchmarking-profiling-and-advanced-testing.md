@@ -604,3 +604,31 @@ Code coverage tells you which lines were executed by tests. Mutation testing tel
 
 **Q: How does `t.Cleanup` differ from `defer`?**
 Both run cleanup in LIFO order. The key difference: `defer` is scoped to the function where it is called, while `t.Cleanup` is scoped to the test (including all its subtests). `t.Cleanup` is preferred in helper functions because it runs cleanup regardless of how many nested `t.Run` subtests are created, and it receives `t` context for logging.
+
+---
+
+## Related Reading
+
+- **Concurrency testing** — [Module 02: Advanced Concurrency Patterns](../02-concurrency/03-advanced-concurrency-patterns.md) covers the race conditions, deadlocks, and goroutine patterns that section 5 (Testing Concurrent Code) targets with the race detector and `goleak`
+- **Memory internals for profiling** — [Module 01: Advanced Go Internals](../01-go-mental-model/03-advanced-go-internals.md), section 2 (Escape Analysis) and section 3 (Garbage Collector) explain the allocation and GC behavior that pprof profiles reveal
+- **Production profiling** — [Module 07: Observability and Health](../07-production/02-observability-and-health.md), section 6 (Profiling in Production) extends the pprof techniques from section 2 to live production services with continuous profiling
+- **Benchmark-driven optimization** — [Module 07: Deployment and Scaling](../07-production/03-deployment-and-scaling.md), section 3 (Runtime Tuning) shows how benchmarks from section 1 inform `GOMAXPROCS` and `GOMEMLIMIT` settings
+- **Fuzzing for HTTP handlers** — [Module 04: Request Handling and Validation](../04-http-services/02-request-handling-and-validation.md) defines the validation logic that fuzz tests from section 3 can stress-test with malformed input
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the testing concepts from this module (Table-Driven Tests and Mocking through Benchmarking, Profiling, and Advanced Testing):
+
+1. **Table-driven test suite** — Pick a pure function (e.g., a URL parser, input validator, or pagination cursor encoder) and write a comprehensive table-driven test with at least 10 cases including edge cases. Use `t.Parallel()` for independent subtests and `t.Helper()` in assertion helpers.
+
+2. **Mock-based handler test** — Define a service interface, implement a manual mock (function fields, not mockery), and write handler tests using `httptest.NewRecorder`. Verify correct HTTP status codes, response bodies, and that the mock was called with expected arguments.
+
+3. **Integration test with testcontainers** — Write an integration test that starts a PostgreSQL container, runs migrations, and tests a repository's CRUD operations. Use `TestMain` for the shared container and `t.Cleanup` for per-test transaction rollback.
+
+4. **Benchmark comparison** — Write a benchmark comparing two implementations of the same function (e.g., `strings.Builder` vs `fmt.Sprintf` for string building, or `sync.Mutex` vs `sync/atomic` for a counter). Use `b.ReportAllocs()` and explain the results.
+
+5. **Fuzz test for a parser** — Write a fuzz test for a function that parses structured input (e.g., a cursor token decoder, a query string parser). The fuzz function should verify that no input causes a panic and that round-trip invariants hold (encode then decode returns the original).
+
+6. **Profiling investigation** — Write a deliberately inefficient function (e.g., string concatenation in a loop, excessive allocations). Profile it with `go test -bench=. -cpuprofile=cpu.prof -memprofile=mem.prof`. Use `go tool pprof` to identify the hot path, fix it, and re-benchmark to verify improvement.

@@ -214,3 +214,14 @@ services:
 volumes:
   pgdata:
 ```
+
+---
+
+## Related Reading
+
+- [Module 06: Kubernetes Core and Operations](02-kubernetes-core-and-operations.md) -- Kubernetes orchestrates the containers you build with Docker, managing scheduling, scaling, networking, and storage
+- [Module 06: Kubernetes Advanced Patterns](03-kubernetes-advanced-patterns.md) -- Helm charts, GitOps with ArgoCD, and service mesh patterns for containerized services
+- [Module 07: Pipeline Design and Deployment Strategies](../07-cicd/01-pipeline-design-and-deployment-strategies.md) -- CI/CD pipelines build and push container images; multi-stage Docker builds integrate into the pipeline's build stage
+- [Module 07: Infrastructure and GitOps](../07-cicd/03-infrastructure-and-gitops.md) -- devcontainers for development environments and Tilt/Skaffold for inner-loop Kubernetes development
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- structured logging from containers, correlation IDs propagated through containerized services
+- [Module 09: API and Application Security](../09-security/02-api-and-application-security.md) -- container security scanning (Trivy, Snyk), distroless base images, and image signing for supply chain security

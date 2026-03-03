@@ -275,6 +275,14 @@ async def get_users(version: int = Depends(get_api_version)):
 
 ---
 
+## Practice Exercises
+
+The following exercise in `exercises.py` directly tests concepts from this file:
+
+- **Exercise 5 (In-Memory Rate Limiter Middleware)** -- Implement a token bucket rate limiter as `BaseHTTPMiddleware`. Covers the token bucket algorithm (capacity, refill rate, per-client buckets), the `dispatch()` method, extracting client IP from `request.client.host`, and returning `429 Too Many Requests` with a `Retry-After` header. This corresponds to the "Rate Limiting" section above. Note: this exercise uses an in-memory approach suitable for single-instance setups; for multi-instance, see the Redis-based pattern in this file.
+
+---
+
 ## Key Takeaways
 
 - Offset pagination is simple but has consistency issues when data changes between pages.

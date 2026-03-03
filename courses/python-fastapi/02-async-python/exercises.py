@@ -10,8 +10,16 @@ Assumes Python 3.11+ for TaskGroup and asyncio.timeout.
 
 Each exercise includes:
 - A docstring explaining expected behavior
+- A "READ FIRST" pointer to the relevant MD file and section
+- An "ALSO SEE" pointer to the matching example in examples.py
 - Stub code with TODO markers
 - A test function that validates your implementation
+
+Companion files (all in the same directory):
+- 01-asyncio-fundamentals.md  -- event loop, coroutines, await basics
+- 02-concurrency-patterns.md  -- gather, TaskGroup, Semaphore, Queue, rate limiters
+- 03-async-debugging-and-production.md -- debugging, testing, production patterns
+- examples.py                 -- fully working examples you can run and study
 """
 
 import asyncio
@@ -41,6 +49,34 @@ def _sync_fetch(url: str) -> dict:
 # ===========================================================================
 # EXERCISE 1: Convert Synchronous Code to Async
 # ===========================================================================
+#
+# READ FIRST:
+#   01-asyncio-fundamentals.md -> "Basic Coroutines" section (async def, await)
+#   02-concurrency-patterns.md -> "asyncio.gather (like Promise.all)" section
+#
+# ALSO SEE:
+#   examples.py -> Example 1: Parallel HTTP Fetching with Semaphore
+#     (shows asyncio.gather with a list of coroutines)
+#
+# KEY CONCEPT -- asyncio.gather:
+#   asyncio.gather(*awaitables) -> list[results]
+#
+#   Takes any number of awaitables (coroutines, tasks, futures) and runs them
+#   ALL concurrently on the event loop. Returns a list of results in the SAME
+#   order as the input awaitables.
+#
+#   Signature:
+#     await asyncio.gather(coro1(), coro2(), coro3())
+#     # returns [result1, result2, result3]
+#
+#   To pass a list of coroutines, use star-unpacking:
+#     coroutines = [fetch(url) for url in urls]
+#     results = await asyncio.gather(*coroutines)
+#
+#   The key difference from sequential execution: all coroutines start at
+#   the same time, so the total time is max(individual times) instead of
+#   sum(individual times).
+# ===========================================================================
 
 def fetch_all_sync(urls: list[str]) -> list[dict]:
     """REFERENCE: synchronous version -- fetches URLs one at a time.
@@ -69,12 +105,59 @@ async def fetch_all_async(urls: list[str]) -> list[dict]:
         'https://a.com'
     """
     # TODO: Replace this with a concurrent async implementation.
-    # Hint: use asyncio.gather() with _simulated_fetch()
+    #
+    # Steps:
+    # 1. Build a list of coroutines:
+    #      coroutines = [_simulated_fetch(url) for url in urls]
+    # 2. Run them all concurrently with gather:
+    #      results = await asyncio.gather(*coroutines)
+    # 3. Return results (gather preserves input order)
     raise NotImplementedError("Implement fetch_all_async")
 
 
 # ===========================================================================
 # EXERCISE 2: Fan-Out/Fan-In -- Fetch and Aggregate
+# ===========================================================================
+#
+# READ FIRST:
+#   02-concurrency-patterns.md -> "Semaphores for Concurrency Limiting" section
+#   02-concurrency-patterns.md -> "asyncio.gather (like Promise.all)" section
+#     (specifically the return_exceptions=True pattern)
+#
+# ALSO SEE:
+#   examples.py -> Example 1: Parallel HTTP Fetching with Semaphore
+#     (shows the exact semaphore + gather pattern you need)
+#
+# KEY CONCEPT -- asyncio.Semaphore:
+#   A semaphore limits how many coroutines can run a section of code at once.
+#   Think of it as a bouncer letting only N people into a club at a time.
+#
+#   Create:   sem = asyncio.Semaphore(5)   # allow 5 concurrent
+#   Use:      async with sem:              # blocks until a slot opens
+#                 await do_work()          # only 5 run this at once
+#
+#   The "async with" acquires the semaphore (decrementing the counter).
+#   When the block exits, it releases (incrementing the counter).
+#   If the counter is 0, the next "async with" will wait.
+#
+# KEY CONCEPT -- asyncio.gather with return_exceptions:
+#   results = await asyncio.gather(*coros, return_exceptions=True)
+#
+#   When return_exceptions=True, exceptions are returned as values in the
+#   results list instead of being raised. You then filter:
+#     successes = [r for r in results if not isinstance(r, Exception)]
+#     failures  = [r for r in results if isinstance(r, Exception)]
+#
+# PATTERN for this exercise:
+#   1. Create a Semaphore
+#   2. Write a wrapper coroutine: async def _limited_fetch(url):
+#        async with sem:
+#            try:
+#                return await _simulated_fetch(url)
+#            except Exception as e:
+#                return {"url": url, "error": str(e)}  # return error as value
+#   3. Gather all wrappers
+#   4. Separate successes (dicts with "status" key) from failures (dicts with "error" key)
 # ===========================================================================
 
 async def fan_out_fan_in(urls: list[str], max_concurrent: int = 5) -> dict:
@@ -114,6 +197,54 @@ async def fan_out_fan_in(urls: list[str], max_concurrent: int = 5) -> dict:
 # ===========================================================================
 # EXERCISE 3: Async Rate Limiter (Token Bucket)
 # ===========================================================================
+#
+# READ FIRST:
+#   02-concurrency-patterns.md -> "Token Bucket Rate Limiter" section
+#     (shows the complete algorithm and data structure)
+#
+# ALSO SEE:
+#   examples.py -> Example 6: Token Bucket Rate Limiter
+#     (complete working implementation of the same class)
+#
+# KEY CONCEPT -- Token Bucket Algorithm:
+#   The bucket holds up to `capacity` tokens. Tokens are added at `rate`
+#   tokens per second. To do work, you must acquire a token. If the bucket
+#   is empty, you wait until tokens refill.
+#
+#   State you need:
+#     self._rate      = rate           # tokens per second (float)
+#     self._capacity  = capacity       # max tokens (int)
+#     self._tokens    = float(capacity)  # current tokens (starts full)
+#     self._last_refill = time.monotonic()  # last refill timestamp
+#     self._lock      = asyncio.Lock()  # protect shared state
+#
+# KEY CONCEPT -- asyncio.Lock:
+#   An async lock prevents concurrent coroutines from interleaving in a
+#   critical section (between await points, Python is single-threaded, but
+#   across awaits, interleaving can happen).
+#
+#   lock = asyncio.Lock()
+#   async with lock:
+#       # only one coroutine at a time in here
+#       self._refill()
+#       if self._tokens >= 1:
+#           self._tokens -= 1
+#           return
+#
+# KEY CONCEPT -- time.monotonic():
+#   Returns a float in seconds from an arbitrary epoch. Unlike time.time(),
+#   it never goes backwards (no NTP adjustments). Use it for measuring
+#   elapsed time:
+#     start = time.monotonic()
+#     ...
+#     elapsed = time.monotonic() - start
+#
+# REFILL FORMULA:
+#   elapsed = now - self._last_refill
+#   new_tokens = elapsed * self._rate
+#   self._tokens = min(self._capacity, self._tokens + new_tokens)
+#   self._last_refill = now
+# ===========================================================================
 
 class AsyncRateLimiter:
     """Token bucket rate limiter for async code.
@@ -136,8 +267,13 @@ class AsyncRateLimiter:
 
     def __init__(self, rate: float, capacity: int):
         # TODO: Initialize the rate limiter state.
-        # Store rate, capacity, current token count, last refill timestamp.
-        # Use asyncio.Lock for thread-safe refill + consume.
+        #
+        # You need these instance variables:
+        #   self._rate = rate                    # float: tokens per second
+        #   self._capacity = capacity            # int: max tokens
+        #   self._tokens = float(capacity)       # float: current tokens (start full)
+        #   self._last_refill = time.monotonic() # float: timestamp of last refill
+        #   self._lock = asyncio.Lock()          # Lock: protects _refill + consume
         raise NotImplementedError("Implement __init__")
 
     def _refill(self) -> None:
@@ -147,6 +283,12 @@ class AsyncRateLimiter:
         Update the last-refill timestamp.
         """
         # TODO: Calculate elapsed time, add tokens, cap at capacity.
+        #
+        # Steps:
+        #   now = time.monotonic()
+        #   elapsed = now - self._last_refill
+        #   self._tokens = min(self._capacity, self._tokens + elapsed * self._rate)
+        #   self._last_refill = now
         raise NotImplementedError("Implement _refill")
 
     async def acquire(self, tokens: int = 1) -> None:
@@ -159,14 +301,63 @@ class AsyncRateLimiter:
         4. Otherwise: release lock, sleep briefly, retry
         """
         # TODO: Implement the acquire loop.
-        # Hint: use a while True loop. Inside the lock, call _refill(),
-        # check if self._tokens >= tokens. If yes, subtract and return.
-        # If no, release the lock and await asyncio.sleep(tokens / self._rate).
+        #
+        # Pattern:
+        #   while True:
+        #       async with self._lock:
+        #           self._refill()
+        #           if self._tokens >= tokens:
+        #               self._tokens -= tokens
+        #               return              # acquired!
+        #       # Not enough tokens yet -- sleep and retry
+        #       await asyncio.sleep(tokens / self._rate)
         raise NotImplementedError("Implement acquire")
 
 
 # ===========================================================================
 # EXERCISE 4: Timeout Wrapper
+# ===========================================================================
+#
+# READ FIRST:
+#   02-concurrency-patterns.md -> "Timeout Handling" section
+#   02-concurrency-patterns.md -> "asyncio Synchronization Primitives" section
+#     (the Timeouts subsection)
+#
+# ALSO SEE:
+#   03-async-debugging-and-production.md -> "Testing Timeouts and Concurrency"
+#     (shows asyncio.timeout in a test context)
+#
+# KEY CONCEPT -- asyncio.timeout (Python 3.11+):
+#   asyncio.timeout is an async context manager that cancels the enclosed
+#   code if it takes longer than the specified number of seconds.
+#
+#   Signature and usage:
+#     async with asyncio.timeout(seconds):
+#         result = await some_coroutine()
+#
+#   If the timeout expires, it raises TimeoutError (builtin, not
+#   asyncio.TimeoutError). The coroutine inside is automatically cancelled.
+#
+#   Full pattern for this exercise:
+#     try:
+#         async with asyncio.timeout(timeout_seconds):
+#             return await coro
+#     except TimeoutError:
+#         return fallback
+#
+# ALTERNATIVE -- asyncio.wait_for (older Python):
+#   result = await asyncio.wait_for(coro, timeout=seconds)
+#
+#   Raises asyncio.TimeoutError on timeout. Also cancels the coroutine.
+#
+#   Full pattern:
+#     try:
+#         return await asyncio.wait_for(coro, timeout=timeout_seconds)
+#     except asyncio.TimeoutError:
+#         return fallback
+#
+# NOTE: Both approaches automatically cancel the timed-out coroutine,
+# so you do NOT need to manually cancel anything.
 # ===========================================================================
 
 async def with_timeout(coro, *, timeout_seconds: float, fallback=None):
@@ -212,6 +403,55 @@ async def with_timeout(coro, *, timeout_seconds: float, fallback=None):
 # ===========================================================================
 # EXERCISE 5: Producer/Consumer Pipeline with Error Handling
 # ===========================================================================
+#
+# READ FIRST:
+#   02-concurrency-patterns.md -> "asyncio.Queue for Producer/Consumer" section
+#     (shows the complete producer/consumer pattern with sentinels)
+#   02-concurrency-patterns.md -> "TaskGroup: Structured Concurrency" section
+#     (shows how to use asyncio.TaskGroup for managing concurrent tasks)
+#
+# ALSO SEE:
+#   examples.py -> Example 3: Producer/Consumer with asyncio.Queue
+#     (complete working producer/consumer with TaskGroup)
+#   examples.py -> Example 4: Structured Concurrency with TaskGroup
+#     (shows TaskGroup error handling with except*)
+#
+# KEY CONCEPT -- asyncio.Queue:
+#   An async-safe FIFO queue with optional max size for backpressure.
+#
+#   Create:    q = asyncio.Queue(maxsize=5)
+#   Produce:   await q.put(item)     # blocks if queue is full (backpressure!)
+#   Consume:   item = await q.get()  # blocks if queue is empty
+#   Done:      q.task_done()         # signal that a get()'d item is processed
+#
+#   IMPORTANT: Call q.task_done() for EVERY item you get(), including
+#   sentinel/shutdown values. This is needed if anyone calls q.join().
+#
+# KEY CONCEPT -- Sentinel (Poison Pill) Pattern:
+#   To tell consumers to stop, the producer sends one None per consumer:
+#     for _ in range(num_consumers):
+#         await queue.put(None)
+#   Each consumer checks:
+#     item = await queue.get()
+#     if item is None:
+#         queue.task_done()
+#         break  # exit the loop
+#
+# KEY CONCEPT -- asyncio.TaskGroup (Python 3.11+):
+#   Structured concurrency: all tasks must complete before the block exits.
+#   If any task raises an exception, all other tasks are cancelled.
+#
+#   async with asyncio.TaskGroup() as tg:
+#       tg.create_task(producer(queue))
+#       for i in range(num_consumers):
+#           tg.create_task(consumer(queue, i))
+#   # all tasks are done here
+#
+#   NOTE: In this exercise, you should catch errors INSIDE the consumer
+#   (try/except around _simulated_fetch), so that one failed URL does NOT
+#   crash the whole pipeline. The TaskGroup is for lifecycle management,
+#   not for error recovery of individual items.
+# ===========================================================================
 
 async def producer_consumer_pipeline(
     items: list[str],
@@ -246,19 +486,43 @@ async def producer_consumer_pipeline(
     """
     # TODO: Implement the pipeline.
     #
-    # 1. Create an asyncio.Queue with maxsize=max_queue_size
-    # 2. Create shared lists for successes and failures
+    # 1. Create an asyncio.Queue with maxsize=max_queue_size:
+    #      queue: asyncio.Queue[str | None] = asyncio.Queue(maxsize=max_queue_size)
+    #
+    # 2. Create shared lists for successes and failures:
+    #      successes: list[dict] = []
+    #      failures: list[dict] = []
+    #
     # 3. Write an async producer(queue) that:
-    #    - Puts each item into the queue
-    #    - Then puts None once per consumer (shutdown signals)
+    #      async def producer(q):
+    #          for item in items:
+    #              await q.put(item)          # blocks if queue full (backpressure)
+    #          for _ in range(num_consumers):
+    #              await q.put(None)          # one sentinel per consumer
+    #
     # 4. Write an async consumer(queue, cid) that:
-    #    - Loops: gets item from queue
-    #    - If item is None: call task_done() and break
-    #    - Otherwise: try _simulated_fetch(item), append to successes
-    #    - On exception: append {"url": item, "error": str(e)} to failures
-    #    - Always call task_done()
-    # 5. Use asyncio.TaskGroup to run 1 producer + num_consumers consumers
-    # 6. Return the results dict
+    #      async def consumer(q, cid):
+    #          while True:
+    #              item = await q.get()
+    #              if item is None:
+    #                  q.task_done()
+    #                  break
+    #              try:
+    #                  result = await _simulated_fetch(item)
+    #                  successes.append(result)
+    #              except Exception as e:
+    #                  failures.append({"url": item, "error": str(e)})
+    #              finally:
+    #                  q.task_done()  # ALWAYS call task_done, even on error
+    #
+    # 5. Use asyncio.TaskGroup to run 1 producer + num_consumers consumers:
+    #      async with asyncio.TaskGroup() as tg:
+    #          tg.create_task(producer(queue))
+    #          for i in range(num_consumers):
+    #              tg.create_task(consumer(queue, i))
+    #
+    # 6. Return the results dict:
+    #      return {"successes": successes, "failures": failures}
     raise NotImplementedError("Implement producer_consumer_pipeline")
 
 

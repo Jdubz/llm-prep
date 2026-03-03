@@ -708,3 +708,21 @@ The value of knowing these patterns is not using them every time — it is recog
 - Trees/Graphs: Number of islands, course schedule (topological sort), clone graph
 - Advanced: Word break II (backtracking + DP), serialize/deserialize binary tree, alien dictionary
 - System design coding: LRU cache, design Twitter, implement trie
+
+---
+
+## Practice
+
+- For dynamic programming, practice the framework: define state, transition, base case, and answer for three problems (one 1D, one 2D, one from the categories table). Start with top-down memoization, then convert to bottom-up tabulation.
+- Implement the LRU cache from the system design coding section from scratch without looking at the template. Time yourself. This is one of the most commonly asked coding questions and should be doable in 20 minutes with clean code.
+- Run through the edge case checklist at the end of this guide against your last three coding interview solutions (or LeetCode submissions). How many edge cases did you miss? Make the checklist a habit before marking any solution as complete.
+- For graph algorithms, practice recognizing which algorithm applies: given a one-sentence problem description, decide between BFS, Dijkstra, Bellman-Ford, topological sort, or Union-Find. Do this for 10 problems to build pattern recognition speed.
+
+---
+
+## Cross-References
+
+- **[Module 06 — Core Coding Patterns](01-core-coding-patterns.md):** Read the core patterns guide first. This file builds on those foundational patterns with advanced techniques. The core patterns (sliding window, two pointers, BFS/DFS, binary search) cover the majority of interview questions; reach for the advanced patterns here only when the problem demands it.
+- **[Module 05 — Common Technical Questions](../05-common-technical/):** The system design coding section here (LRU cache, rate limiter, consistent hashing) bridges Module 05's theoretical concepts with practical implementation. Module 05 explains WHY these data structures matter; this module shows HOW to implement them.
+- **[Module 07 — Take-Home & Live Coding](../07-take-home-live-coding/):** The edge case checklist at the end of this file is directly applicable to take-home submissions. Module 07's testing strategy section recommends testing happy path, validation, edge cases, and error handling -- use this checklist to identify which edge cases to test. The [plant-watering project](../projects/plant-watering/) is a concrete take-home that exercises data structure selection and edge case handling.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** When discussing your approach to a DP problem or graph algorithm in an interview, use Module 03's trade-off voicing pattern: "Option A gives us X but costs Y. Option B gives us Z but costs W. I am choosing A because..."

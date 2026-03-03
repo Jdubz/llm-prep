@@ -19,6 +19,11 @@ T = TypeVar("T")
 # EXERCISE 1: Money Class
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/01-object-model-and-memory.md (dunder methods, object model)
+#   - ../09-python-internals/02-advanced-python-features.md (operator overloading)
+#   - ../08-interview-prep/01-interview-fundamentals.md (OOP design)
+#
 # Implement a Money class with rich comparison, arithmetic, and hashing.
 # This practices the dunder methods that Python uses for operator overloading.
 #
@@ -39,6 +44,36 @@ T = TypeVar("T")
 #     from __eq__ and __lt__ (import functools, add @functools.total_ordering)
 #   - Round amounts to 2 decimal places in __init__
 #   - __hash__ = hash((self.amount, self.currency))
+#
+#   Dunder method signatures for comparison:
+#     def __eq__(self, other: object) -> bool:
+#         if not isinstance(other, Money):
+#             return NotImplemented         # let Python try other.__eq__(self)
+#         return self.amount == other.amount and self.currency == other.currency
+#
+#     def __lt__(self, other: object) -> bool:
+#         if not isinstance(other, Money):
+#             return NotImplemented
+#         if self.currency != other.currency:
+#             raise ValueError("Cannot compare different currencies")
+#         return self.amount < other.amount
+#
+#   @functools.total_ordering:
+#     When you define __eq__ and __lt__, this class decorator auto-generates
+#     __le__, __gt__, and __ge__ for you. Just add @functools.total_ordering
+#     above the class definition.
+#
+#   Arithmetic dunder methods:
+#     def __add__(self, other: Money) -> Money:
+#         # Validate same currency, return Money(self.amount + other.amount, ...)
+#
+#     def __sub__(self, other: Money) -> Money:
+#         # Same pattern as __add__
+#
+#   Hashing rule: if __eq__ is defined, __hash__ MUST also be defined
+#   (or explicitly set to None) or instances become unhashable:
+#     def __hash__(self) -> int:
+#         return hash((self.amount, self.currency))
 #
 # Expected behavior:
 #   m1 = Money(10.50, "USD")
@@ -95,6 +130,11 @@ class Money:
 # EXERCISE 2: Linked List
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/01-object-model-and-memory.md (iterator protocol)
+#   - ../09-python-internals/02-advanced-python-features.md (dunder methods)
+#   - ../08-interview-prep/01-interview-fundamentals.md (data structures)
+#
 # Implement a singly linked list with Python's iterator protocol and
 # collection dunder methods.
 #
@@ -112,6 +152,34 @@ class Money:
 #   - __iter__ is a generator: start at head, yield value, move to next
 #   - __len__ can iterate and count, or maintain a size counter
 #   - __contains__ can use __iter__: return any(v == value for v in self)
+#
+#   Iterator protocol — making a class work with for loops and list():
+#     def __iter__(self):
+#         current = self._head
+#         while current is not None:
+#             yield current.value       # yield makes this a generator
+#             current = current.next
+#
+#   When you define __iter__, Python automatically supports:
+#   - for item in obj: ...
+#   - list(obj)
+#   - item in obj  (if __contains__ is not defined)
+#
+#   Collection dunder methods:
+#     def __len__(self) -> int:           # len(obj)
+#         return self._size
+#
+#     def __contains__(self, value) -> bool:  # value in obj
+#         return any(v == value for v in self)  # uses __iter__
+#
+#   Append to end of linked list:
+#     If head is None, set head to new node.
+#     Otherwise, walk to the last node (while current.next), then set
+#     current.next = new_node.
+#
+#   Prepend to beginning:
+#     new_node = Node(value, next_node=self._head)
+#     self._head = new_node
 #
 # Expected behavior:
 #   ll = LinkedList()
@@ -168,6 +236,11 @@ class LinkedList:
 # EXERCISE 3: Registry Pattern
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (class decorators, metaclass patterns)
+#   - ../01-fastapi-foundations/01-http-routing-and-decorators.md (decorator registration)
+#   - ../09-python-internals/03-imports-and-runtime.md (module-level state)
+#
 # Implement a class decorator that auto-registers subclasses in a central
 # registry. This pattern is used in plugin systems and serialization
 # frameworks.
@@ -182,6 +255,29 @@ class LinkedList:
 #   - A class decorator receives the class and returns it (possibly modified)
 #   - The registry is just a dict: registry[cls.__name__] = cls
 #   - Check for `kind` attribute with hasattr()
+#
+#   Class decorator pattern — differs from function decorators:
+#   A class decorator takes a class as input and returns a class (usually
+#   the same class, possibly modified):
+#
+#     def register(cls):
+#         if not hasattr(cls, "kind"):
+#             raise ValueError(f"{cls.__name__} must have a 'kind' attribute")
+#         registry[cls.__name__] = cls
+#         return cls                       # MUST return the class
+#
+#   This is simpler than function decorators because you don't need a
+#   wrapper function. You just inspect/modify the class and return it.
+#
+#   How @register works:
+#     @register
+#     class JsonParser:
+#         kind = "json"
+#     # equivalent to: JsonParser = register(JsonParser)
+#
+#   get_registered is just a dict lookup:
+#     def get_registered(name):
+#         return registry.get(name)        # returns None if not found
 #
 # Expected behavior:
 #   @register
@@ -215,6 +311,10 @@ def get_registered(name: str) -> type | None:
 # EXERCISE 4: Immutable Config
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/01-object-model-and-memory.md (attribute access, descriptors)
+#   - ../09-python-internals/02-advanced-python-features.md (__setattr__, __getattr__)
+#
 # Implement a config class that becomes immutable after initialization.
 # Supports dot-notation access for nested dictionaries.
 #
@@ -232,6 +332,38 @@ def get_registered(name: str) -> type | None:
 #   - Set a _frozen flag at the end of __init__
 #   - In __getattr__, check if the value in _data is a dict and wrap it
 #   - __getattr__ is only called when normal attribute lookup fails
+#
+#   Attribute access dunder methods:
+#
+#   __getattr__(self, name) — called ONLY when normal lookup fails:
+#     def __getattr__(self, name):
+#         try:
+#             value = self._data[name]
+#         except KeyError:
+#             raise AttributeError(f"No attribute '{name}'")
+#         if isinstance(value, dict):
+#             return ImmutableConfig(value)  # wrap nested dicts
+#         return value
+#
+#   __setattr__(self, name, value) — called on EVERY attribute assignment:
+#     def __setattr__(self, name, value):
+#         if getattr(self, '_frozen', False):
+#             raise AttributeError("Config is immutable")
+#         # This won't work during __init__ because _frozen isn't set yet.
+#         # But we use object.__setattr__ in __init__ to bypass this entirely.
+#
+#   __delattr__(self, name) — called on del obj.attr:
+#     def __delattr__(self, name):
+#         raise AttributeError("Config is immutable")
+#
+#   The object.__setattr__ trick — bypassing your own __setattr__:
+#     def __init__(self, data):
+#         object.__setattr__(self, '_data', data)    # bypass self.__setattr__
+#         object.__setattr__(self, '_frozen', True)   # now frozen
+#
+#   Why: during __init__ you need to set _data and _frozen, but your
+#   __setattr__ override would block it. Calling object.__setattr__
+#   directly uses the base class implementation, skipping your override.
 #
 # Expected behavior:
 #   config = ImmutableConfig({"db": {"host": "localhost", "port": 5432}})
@@ -269,6 +401,11 @@ class ImmutableConfig:
 # EXERCISE 5: Observable (Event Emitter)
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (Protocol, structural typing)
+#   - ../09-python-internals/01-object-model-and-memory.md (callables, __call__)
+#   - ../01-fastapi-foundations/02-dependency-injection.md (callback patterns)
+#
 # Implement an event system with on(), emit(), and off() methods.
 # Define a Listener protocol for type safety.
 #
@@ -286,6 +423,36 @@ class ImmutableConfig:
 #   - Use a defaultdict(list) to store listeners per event
 #   - Listener is a Protocol with __call__(self, **kwargs) -> None
 #   - off() can use list.remove() wrapped in a try/except ValueError
+#
+#   Protocol — structural typing (duck typing with type checking):
+#     from typing import Protocol, runtime_checkable
+#
+#     @runtime_checkable
+#     class Listener(Protocol):
+#         def __call__(self, **kwargs: Any) -> None: ...
+#
+#   A Protocol defines an interface without inheritance. Any object that
+#   has a matching __call__ signature satisfies the protocol. This means:
+#   - Regular functions:      def handler(**kwargs): ...
+#   - Lambdas:                lambda **data: print(data)
+#   - Classes with __call__:  class Handler: def __call__(self, **kwargs): ...
+#   All satisfy Listener without explicitly inheriting from it.
+#
+#   @runtime_checkable allows isinstance() checks:
+#     isinstance(my_func, Listener)  # True if it matches the protocol
+#
+#   defaultdict(list) for event storage:
+#     from collections import defaultdict
+#     self._listeners = defaultdict(list)
+#     self._listeners["click"].append(handler)   # auto-creates list
+#     for listener in self._listeners["click"]:  # empty list if no listeners
+#         listener(**data)
+#
+#   Safe removal:
+#     try:
+#         self._listeners[event].remove(listener)
+#     except ValueError:
+#         pass  # listener wasn't registered, that's fine
 #
 # Expected behavior:
 #   obs = Observable()
@@ -331,6 +498,10 @@ class Observable:
 # EXERCISE 6: Generic Stack
 # ============================================================================
 #
+# RELATED READING:
+#   - ../09-python-internals/02-advanced-python-features.md (generics, TypeVar)
+#   - ../09-python-internals/01-object-model-and-memory.md (data model, __class_getitem__)
+#
 # Implement a type-safe stack using Generic[T]. This practices Python's
 # generics system which is used in Pydantic, SQLAlchemy, and FastAPI.
 #
@@ -348,6 +519,34 @@ class Observable:
 #   - Use a list internally (append/pop from end = O(1) stack operations)
 #   - Generic[T] is for type checking only — no runtime enforcement needed
 #   - __iter__ should yield from reversed internal list (top first)
+#
+#   Generic[T] syntax — parameterized types:
+#     from typing import Generic, TypeVar
+#     T = TypeVar("T")                    # declare a type variable
+#
+#     class Stack(Generic[T]):            # Stack is parameterized by T
+#         def __init__(self) -> None:
+#             self._items: list[T] = []   # T is used in type annotations
+#
+#         def push(self, item: T) -> None:
+#             self._items.append(item)
+#
+#         def pop(self) -> T:
+#             if not self._items:
+#                 raise IndexError("pop from empty stack")
+#             return self._items.pop()    # list.pop() removes last element
+#
+#   Generic[T] has NO runtime effect. It exists purely for type checkers
+#   like mypy and pyright. At runtime, Stack[int] and Stack[str] are the
+#   same class. But it gives you type safety during development:
+#     stack: Stack[int] = Stack()
+#     stack.push(1)          # OK
+#     stack.push("hello")    # type error caught by mypy
+#
+#   Yielding in reverse (top to bottom):
+#     def __iter__(self):
+#         yield from reversed(self._items)
+#     # reversed() returns a reverse iterator without copying the list
 #
 # Expected behavior:
 #   stack: Stack[int] = Stack()

@@ -97,6 +97,8 @@ When designing a system, reach for these building blocks:
 
 ## Design Patterns Quick Reference
 
+These patterns recur across nearly every system design problem. Recognizing which pattern fits is often the key insight that unlocks a design.
+
 ### Fan-Out on Write (Push)
 
 ```
@@ -106,6 +108,8 @@ Use when: Subscriber count is small/medium (< 10K per event)
 Examples: News feed (normal users), notification delivery
 Trade-off: Fast reads, slow/expensive writes for popular producers
 ```
+
+**Why it matters:** Fan-out on write pre-computes the result so reads are a simple lookup. This is the right choice when read latency matters more than write latency and the fan-out factor is bounded. The moment a single producer has millions of subscribers (the "celebrity problem"), write cost becomes prohibitive -- a single post triggers millions of writes.
 
 ### Fan-Out on Read (Pull)
 
@@ -117,6 +121,8 @@ Examples: News feed (celebrities), large chat channels
 Trade-off: Slow reads (merge at query time), no write amplification
 ```
 
+**Why it matters:** Fan-out on read avoids the celebrity problem entirely because writes are O(1) regardless of subscriber count. The cost shifts to read time, where you must query multiple sources and merge. This is acceptable when the number of sources per reader is small (a user follows 500 accounts, not 500,000) and you can cache the merged result.
+
 ### CQRS
 
 ```
@@ -126,6 +132,8 @@ Reads  -> Read Model
 Use when: Read and write patterns are fundamentally different
 Trade-off: Complexity, eventual consistency between write and read models
 ```
+
+**Why it matters:** Most systems have fundamentally different read and write patterns. Writes need normalized data with strong consistency (prevent double-spending). Reads need denormalized data optimized for specific query patterns (show a user's order history with product details). CQRS lets you optimize each independently. The cost is eventual consistency between the models and the operational complexity of maintaining the event-driven synchronization.
 
 ### Sharding
 
@@ -138,6 +146,8 @@ Strategies:
 Trade-off: Cross-shard queries are expensive, rebalancing is painful
 ```
 
+**When to choose each strategy:** Hash-based sharding is the default when you need even distribution and your primary access pattern is point lookups by key. Range-based sharding is better when you frequently scan contiguous ranges (time-series data, alphabetical ranges) but requires careful monitoring for hot spots. Directory-based sharding provides maximum flexibility for rebalancing but adds a lookup step and a single point of failure (the directory).
+
 ### Content-Addressable Storage
 
 ```
@@ -147,6 +157,8 @@ Same content -> same ID -> stored once
 Use when: Deduplication matters (file storage, artifact caching)
 Trade-off: Cannot modify content in place (new content = new hash = new object)
 ```
+
+**Why it matters:** Content-addressable storage eliminates duplicate data at the storage level. When two users upload the same file, it is stored once and both metadata records point to the same object. This is how Git stores objects, how Docker layers work, and how file storage services achieve deduplication. The trade-off is immutability -- you cannot update a file in place, only create a new version with a new hash.
 
 ---
 
@@ -559,3 +571,60 @@ Reference counting: track how many metadata records point to each object. Only d
 6. **Consider failure modes.** Discuss graceful degradation for every component.
 
 If stuck on a detail, pivot honestly: "I am not sure about the exact implementation, but the approach involves [principle]. Let me describe the high-level approach." The interviewer tests reasoning, not memorization.
+
+---
+
+## Related Reading
+
+Each problem draws on specific modules from this course. Use these references to deepen your understanding of the building blocks:
+
+**URL Shortener:**
+- [Module 02: SQL, NoSQL, and Decision Framework](../02-databases-at-scale/01-sql-nosql-and-decision-framework.md) -- DynamoDB vs PostgreSQL for the key-value mapping store
+- [Module 03: Caching Patterns and Redis Basics](../03-caching/01-caching-patterns-and-redis-basics.md) -- cache-aside pattern for the 100:1 read-heavy access pattern
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- Kafka for async analytics event processing
+
+**Chat System:**
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- WebSocket load balancing, connection draining, and scaling WebSocket servers with pub/sub backplanes
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- Cassandra for write-heavy message storage, Redis for presence detection and connection registry
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- fan-out patterns for group chat message delivery
+
+**News Feed / Timeline:**
+- [Module 03: Advanced Caching Systems](../03-caching/03-advanced-caching-systems.md) -- multi-tier caching for pre-computed feeds (Redis sorted sets as L2, in-process cache as L1)
+- [Module 04: Event Sourcing, CQRS, and Sagas](../04-message-queues/02-event-sourcing-cqrs-and-sagas.md) -- CQRS pattern for separating feed write (fan-out) from feed read (pre-computed)
+- [Module 02: Indexing, Sharding, and Replication](../02-databases-at-scale/02-indexing-sharding-and-replication.md) -- sharding user feeds by user_id
+
+**Rate Limiter:**
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- rate limiting at the API gateway layer, and how rate limiters interact with circuit breakers and retry budgets
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- Redis atomic operations (INCR, EXPIRE) for distributed rate limiting counters
+
+**Notification System:**
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- SQS/SNS for per-channel delivery queues, DLQ for failed notifications, Kafka for event replay
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- circuit breakers per notification provider (APNS, FCM, SES, Twilio)
+
+**File Storage Service:**
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- CDN architecture for file downloads; presigned URL generation at the API layer
+- [Module 09: Authentication and Authorization](../09-security/01-authentication-and-authorization.md) -- access control for shared files, presigned URLs with expiry, encryption at rest for stored content
+
+**General:**
+- [Module 01: System Design Framework Essentials](../01-system-design-framework/01-system-design-framework-essentials.md) -- the structured framework (requirements, estimation, high-level design, deep dives, trade-offs) that every problem follows
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- every design should include observability; RED metrics for each service, distributed tracing across service boundaries
+
+---
+
+## Practice
+
+For each problem, try the following exercises to connect the design to the specific modules that provide the building blocks:
+
+1. **URL Shortener -- Cache sizing exercise:** Using the estimation numbers (100M new URLs/month, 100:1 read ratio), calculate the cache size needed to achieve a 95% hit rate. Reference the Pareto principle from [Module 03](../03-caching/01-caching-patterns-and-redis-basics.md) and work through the math for a Redis cluster.
+
+2. **Chat System -- WebSocket scaling exercise:** Given 10M concurrent connections and 50K connections per server, design the WebSocket gateway tier. How does the connection registry (Redis) scale? What happens during a rolling deployment? Reference the WebSocket load balancing patterns from [Module 05](../05-load-balancing/03-advanced-load-balancing-patterns.md).
+
+3. **News Feed -- Fan-out threshold analysis:** At what follower count does fan-out-on-write become impractical? Estimate the write amplification for a user with 1K, 10K, 100K, and 1M followers. Use the estimation formulas and Kafka throughput numbers from [Module 04](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md).
+
+4. **Rate Limiter -- Algorithm implementation:** Implement the token bucket algorithm using Redis MULTI/EXEC. Then implement the sliding window counter. Compare memory usage and accuracy for each. Reference Redis data structures from [Module 02](../02-databases-at-scale/03-database-platforms-and-scaling.md).
+
+5. **Notification System -- Failure scenario walkthrough:** What happens when the push notification provider (APNS) is down for 30 minutes? Trace the flow through the DLQ, retry logic, and fallback channels. Reference circuit breaker patterns from [Module 05](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) and DLQ strategies from [Module 04](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md).
+
+6. **File Storage -- Deduplication at scale:** With 500M files and content-addressable storage, estimate the storage savings from deduplication. What is the reference counting strategy when a file is deleted? How do you handle garbage collection? Reference the database transaction guarantees from [Module 02](../02-databases-at-scale/01-sql-nosql-and-decision-framework.md).
+
+7. **Cross-cutting exercise:** Pick any problem and add a complete observability design. Define the SLIs (what do you measure?), SLOs (what is acceptable?), and alerting rules (burn rate thresholds). Reference [Module 08](../08-observability/02-slos-alerting-and-incident-response.md) for the SLO framework and [Module 08](../08-observability/01-logging-metrics-and-tracing.md) for instrumentation.

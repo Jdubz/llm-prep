@@ -495,6 +495,8 @@ Edge runtimes (Cloudflare Workers, Vercel Edge Functions) run a restricted subse
 
 **Does not work at the edge**: Database connections (no TCP; use HTTP-based DB proxies), heavy computation, large payloads, long-running processes.
 
+**Common mistake with serverless cold starts:** Initializing all dependencies eagerly in module scope. In a Lambda function, every `import` at the top level runs during cold start, even if the handler only uses a subset. Use lazy initialization (as shown above) for expensive clients like database pools and SDK clients. Another pitfall is using a large deployment package — tree-shake with esbuild and externalize the AWS SDK (it is already in the Lambda runtime) to minimize cold start time.
+
 ---
 
 ## gRPC vs REST for Internal Services
@@ -509,3 +511,15 @@ Edge runtimes (Cloudflare Workers, Vercel Edge Functions) run a restricted subse
 | Debugging | Harder (binary protocol) | Easy (curl, browser) |
 
 **Interview point:** "HTTP/3 eliminates TCP head-of-line blocking at the transport layer. HTTP/2 solved it at the HTTP layer but still suffers when a TCP packet is lost. QUIC solves this by making each stream independent at the transport level."
+
+## Related Reading
+
+- **Clustering and PM2** solve the single-threaded limitation covered in [02 – Threading and Process Management](../02-node-runtime/02-threading-and-process-management.md#cluster-module) — that file covers the runtime internals while this one covers production scaling patterns.
+- **Shared state limitations and Redis externalization** connect to the Redis caching patterns in [08 – Caching and Redis](./01-caching-and-redis.md) — every item in the "what breaks" table is solved by a pattern in that file.
+- **Stateless design for horizontal scaling** enables the session management strategies in [05 – Session Management and Validation](../05-auth-security/02-session-management-and-validation.md) and the multi-tenancy patterns in [06 – Advanced Patterns and Multi-Tenancy](../06-database-patterns/03-advanced-patterns-and-multi-tenancy.md).
+- **Load testing with k6** is the production validation of the performance optimizations here — see also the load testing patterns in [07 – Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md#performance-and-load-testing) for test authoring guidance.
+- **Database connection pooling** relates directly to the pool configuration in [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md) and the connection pool exhaustion chaos tests in [07 – Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md#database-chaos).
+- **V8 optimization tips (monomorphic functions, hidden classes)** build on the V8 runtime internals in [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md).
+- **Graceful shutdown** is a cross-cutting concern also covered in [04 – Advanced GraphQL Patterns](../04-graphql/02-advanced-graphql-patterns.md#graceful-shutdown) and [09 – Clean Architecture and DDD](../09-architecture-patterns/01-clean-architecture-and-ddd.md#error-handling-architecture).
+
+**When to use gRPC vs REST for internal services:** Use gRPC when you need high-throughput, low-latency communication between backend services, especially when bidirectional streaming is required (e.g., real-time data feeds between services). Stick with REST when the consumer is a browser or a team that values debuggability over raw performance. A common mistake is adopting gRPC for all internal communication when most services are simple request/response CRUD — the complexity of maintaining `.proto` files and gRPC tooling only pays off at high traffic volumes or when streaming is a core requirement.

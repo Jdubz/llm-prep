@@ -331,6 +331,16 @@ python3.13t -c "import sys; print(sys._is_gil_enabled())"  # False
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` test concepts from this file. Each exercise has self-contained instructions and can be completed independently.
+
+- **Exercise 3 — RangeValidator Descriptor**: Implement a data descriptor with `__set_name__`, `__get__`, and `__set__` that enforces numeric range validation. Tests the full descriptor protocol. (See: "Descriptors" section above)
+- **Exercise 4 — Cooperative Mixin via super()**: Implement `UpperMixin` and `StripMixin` using `super().process()` to build a cooperative processing pipeline. Tests C3 linearization and how `super()` follows the MRO. (See: "MRO and `super()`" section above)
+- **Exercise 10 — ContextVar for async request tracing**: Implement `traced_task()` using `ContextVar.set()`, `.get()`, and `.reset()` with proper token-based cleanup. Tests async-safe context isolation. (See: "Context Variables (PEP 567)" section above)
+
+---
+
 ## Key Takeaways
 
 - Descriptors (`__get__`/`__set__`) power `property`, `classmethod`, `staticmethod`, and ORMs. Data descriptors take priority over instance `__dict__`; non-data descriptors don't.

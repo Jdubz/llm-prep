@@ -76,6 +76,8 @@ class OrderEventBus extends EventEmitter<OrderEvents> {}
 
 **Critical gotcha**: `EventEmitter` doesn't handle async listeners. If an `async` listener throws, you get an unhandled promise rejection. Wrap listeners or use a proper async event bus.
 
+**Common mistake with typed EventEmitter**: Forgetting that `EventEmitter` listeners execute synchronously in registration order. If you register 5 listeners for `order:created` and the 3rd throws, the 4th and 5th never run. For critical workflows, prefer a message queue (BullMQ) that isolates each handler's execution and provides retry semantics, rather than relying on in-process EventEmitter for anything beyond fire-and-forget notifications.
+
 ### Message Brokers
 
 **BullMQ** (Redis-backed queues):
@@ -336,3 +338,14 @@ Outbox pattern. Write the message to an `outbox_events` table in the same transa
 **Q: "What is the difference between event sourcing and a regular event-driven system?"**
 
 In a regular event-driven system, events trigger side effects but the source of truth is current state in a database. In event sourcing, the sequence of events IS the source of truth — current state is derived by replaying events. Event sourcing enables temporal queries (what was the state at time T?), complete audit history, and event replay. It adds significant complexity; only use it when those benefits are required.
+
+## Related Reading
+
+- **CQRS and event-driven CQRS** build on the database read/write optimization patterns in [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md) — the query side often uses Redis for read models as covered in [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md).
+- **EventEmitter patterns** rely on the event loop fundamentals in [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md) and the async testing approaches in [07 – Vitest and Unit Testing](../07-testing/01-vitest-and-unit-testing.md#events).
+- **BullMQ as a message broker** is covered in full implementation detail in [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#bullmq-queue-setup), including dead letter queues and retry strategies.
+- **Event sourcing with EventStoreDB** stores the domain events produced by the DDD entities in [09 – Clean Architecture and DDD](./01-clean-architecture-and-ddd.md#domain-driven-design-practical) — the `Order.create()` and `Order.confirm()` methods generate the events that get persisted.
+- **Saga pattern (orchestration and choreography)** manages distributed transactions across the microservices discussed in [09 – Microservices and Advanced Patterns](./03-microservices-and-advanced-patterns.md) with compensating transactions for failure recovery.
+- **Outbox pattern for atomic DB + message publish** solves the dual-write problem that arises when using the transaction patterns from [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md#transaction-isolation-levels) alongside a message broker.
+- **OpenTelemetry context propagation** is covered in more depth for production use in [08 – Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md#opentelemetry-vendor-agnostic).
+- **Testing event-driven systems** — contract testing for message schemas is covered in [07 – Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md#contract-testing-with-pact) and chaos testing for failure scenarios in [07 – Advanced Testing Patterns](../07-testing/03-advanced-testing-patterns.md#chaos-testing).

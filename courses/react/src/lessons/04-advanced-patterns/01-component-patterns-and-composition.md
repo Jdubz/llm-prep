@@ -954,6 +954,23 @@ function renderButton(props: ButtonProps) {
 
 ---
 
+## Practice
+
+- **Build a compound component**: Create a `<Tabs>` / `<Tabs.List>` / `<Tabs.Tab>` / `<Tabs.Panel>` compound component using Context. Support both controlled and uncontrolled modes with the `useControllableState` pattern from this lesson.
+- **Headless hook exercise**: Extract the logic from your `<Tabs>` compound component into a `useTabs` headless hook. The hook should return `{ activeTab, setActiveTab, getTabProps, getPanelProps }`. Build two completely different UIs that use the same hook.
+- **Polymorphic `as` prop**: Build a `<Box>` component that accepts an `as` prop and correctly forwards all HTML attributes for the given element type. Verify TypeScript catches invalid prop combinations (e.g., `<Box as="input" href="..." />` should be a type error).
+- **Error boundary + key reset**: Build an error boundary that displays a "Retry" button. On click, use the key-reset pattern to remount the failed subtree. Verify that state is fully reset.
+- **Discriminated union props**: Build a `<Button>` with three variants (`as: "button" | "link" | "submit"`), each with different required props. Use `never` types to ban invalid combinations and `assertNever` for exhaustive switching.
+
+### Related Lessons
+
+- [Hooks & State Management](../01-hooks-deep-dive/01-hooks-and-state-management.md) -- `useState`, `useRef`, `useContext` fundamentals used inside compound components and headless hooks
+- [Custom Hooks Fundamentals](../02-custom-hooks/01-custom-hooks-fundamentals.md) -- hook composition and return value contracts for headless hook patterns
+- [Advanced Component APIs](02-advanced-component-apis.md) -- IoC, generic component typing, builder pattern, design system patterns
+- [State Management Fundamentals](../05-state-management/01-state-management-fundamentals.md) -- Context API patterns used in compound components and provider composition
+
+---
+
 ## Key Takeaways for Interviews
 
 1. **Compound components** are the gold standard for related component groups. Know how to build one from scratch with Context.

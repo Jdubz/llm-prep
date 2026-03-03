@@ -327,3 +327,21 @@ The framing for every advanced topic:
 3. The **tradeoffs** — nothing is free
 4. The **real-world usage** — where you have seen or used it
 5. The **alternatives** — when you would choose something else
+
+---
+
+## Practice
+
+- Pick two advanced data structures from this guide (e.g., Bloom filter and LSM tree). For each, prepare a 2-minute explanation covering: the problem it solves, how it works (at a level you could whiteboard), the key trade-offs, and when you would choose it vs the simpler alternative. Practice delivering both explanations out loud.
+- Implement a basic Bloom filter in your primary language. Target: under 50 lines. This turns theoretical knowledge into practical understanding and gives you a concrete "I have implemented X" reference for interviews.
+- Explain the difference between HTTP/2 and QUIC to a colleague. Focus on why QUIC exists (TCP head-of-line blocking) and how it solves the problem (stream-level independence). If your explanation takes more than 2 minutes, trim it.
+- For the CRDTs section, walk through a concrete example: two users editing a shared counter offline, then reconnecting. Trace through how a G-Counter merges the divergent states. This kind of concrete trace-through is what interviewers look for at the staff level.
+
+---
+
+## Cross-References
+
+- **[Module 05 — Foundational Technical Concepts](01-foundational-technical-concepts.md):** The advanced topics here assume mastery of the foundational data structures, networking, and concurrency concepts. If any section feels unfamiliar, revisit the foundational guide first.
+- **[Module 05 — Security and Distributed Systems](02-security-and-distributed-systems.md):** This file extends the distributed systems and cryptography coverage from the security guide. Read them in order: foundational, security and distributed systems, then this advanced deep dive.
+- **[Module 06 — Coding Patterns](../06-coding-patterns/):** The system design coding section in Module 06 (LRU cache, rate limiter, consistent hashing) provides implementation templates for concepts discussed here at the theoretical level. Study the theory here, then practice the implementations in Module 06.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** Staff-level technical knowledge only matters if you can communicate it. Module 03's layered explanation model is essential for presenting advanced topics: start with the problem, then the mechanism, then the trade-offs. Never lead with implementation details.

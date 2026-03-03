@@ -544,3 +544,21 @@ Maintain a max-heap (left half) and min-heap (right half). Balance them so they 
 - **Max-heap** stores the smaller half (top = median candidate)
 - **Min-heap** stores the larger half (top = median candidate)
 - Median = top of max-heap (odd count) or average of both tops (even count)
+
+---
+
+## Practice
+
+- For each pattern in the quick reference table, solve one representative LeetCode problem. Start with the pattern you are least comfortable with, not the one you already know.
+- Practice the 35-minute time management framework with a real problem: set a timer, spend the first 5 minutes understanding, 5 minutes planning, 20 minutes coding, and 5 minutes testing. Do this at least three times to internalize the pacing.
+- Take the pattern recognition decision tree and apply it to 5 random LeetCode mediums. Before looking at hints or solutions, identify which pattern applies using only the decision tree questions. Track your accuracy.
+- For each BFS/DFS template, implement both the recursive and iterative versions from memory. Being able to switch between them is a useful skill when the interviewer has a preference or when recursion depth is a concern.
+
+---
+
+## Cross-References
+
+- **[Module 05 — Common Technical Questions](../05-common-technical/):** The data structure knowledge from Module 05 underpins every pattern here. Module 05's decision framework ("What do I need? Reach for X") is the foundation for choosing the right pattern in this guide. Study them together.
+- **[Module 06 — Pattern Optimization and Edge Cases](02-pattern-optimization-and-edge-cases.md):** This companion file covers advanced patterns (dynamic programming, backtracking, graph algorithms, monotonic stack, intervals, bit manipulation) and the edge case checklist. Read this core patterns guide first, then advance.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** The "thinking out loud" section in Module 03 is essential for live coding. Every pattern template here should be accompanied by narration: state the pattern, explain why you chose it, describe the trade-offs.
+- **[Module 07 — Take-Home & Live Coding](../07-take-home-live-coding/):** The time management and live coding best practices in Module 07 complement the pattern knowledge here. Module 07 covers the process (how to structure your time, how to communicate); this module covers the substance (which patterns to use).

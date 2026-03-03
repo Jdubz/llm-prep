@@ -275,3 +275,17 @@ Outside I/O callbacks: non-deterministic. Inside I/O callbacks: `setImmediate` a
 - **Show trade-offs**: Every decision has costs. Name them.
 - **Ask clarifying questions**: In system design, the constraints change the answer
 - **Admit gaps**: "I haven't used X in production, but my understanding is..." beats faking it
+
+## Related Reading
+
+This module is the capstone — every answer here references concepts from earlier modules. Here are the most important connections:
+
+- **Event loop phases, microtasks, and `process.nextTick`** (Q1, Q2, Q15 in Node.js section) are covered in depth in [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md#event-loop-phases).
+- **Stream backpressure and `pipeline()`** (Q3) are covered in [02 – Memory, Streams, and Runtime Internals](../02-node-runtime/03-memory-streams-and-runtime-internals.md#streams-and-backpressure).
+- **Worker threads vs child processes** (Q4, Q6) are detailed in [02 – Threading and Process Management](../02-node-runtime/02-threading-and-process-management.md).
+- **Covariance/contravariance, `infer`, branded types, and template literals** (TypeScript Q1-Q6) are covered in [01 – Conditional and Mapped Types](../01-typescript-advanced/01-conditional-and-mapped-types.md) and [01 – Advanced Type Patterns](../01-typescript-advanced/02-advanced-type-patterns.md).
+- **Clean architecture, CQRS, and microservices** (Q11-Q15 in the top 20) are the core topics of [09 – Clean Architecture and DDD](../09-architecture-patterns/01-clean-architecture-and-ddd.md), [09 – Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md), and [09 – Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md).
+- **Graceful shutdown** (Q10, Q19) is covered from different angles in [08 – Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md#graceful-shutdown) and [04 – Advanced GraphQL Patterns](../04-graphql/02-advanced-graphql-patterns.md#graceful-shutdown).
+- **Memory leak debugging** (Q5, Q6) connects to [08 – Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md#memory-leaks).
+- **`AsyncLocalStorage`** (Q12, Q17) is covered in [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md) and used for multi-tenancy in [06 – Advanced Patterns and Multi-Tenancy](../06-database-patterns/03-advanced-patterns-and-multi-tenancy.md).
+- **ESM vs CJS** (Q14, Q18) is explained in [02 – Threading and Process Management](../02-node-runtime/02-threading-and-process-management.md) and [00 – TypeScript and Node.js Fundamentals](../00-ts-node-fundamentals.md).

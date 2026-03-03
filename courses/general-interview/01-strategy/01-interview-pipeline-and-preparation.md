@@ -825,3 +825,21 @@ Titles and levels are not standardized across the industry. Understanding the ma
 5. **Optimize for learning early, performance late.** Use warm-up companies to calibrate and improve before your top choices.
 
 6. **Take care of yourself.** Interview fatigue is real. Rest, exercise, and time away from preparation are not luxuries; they are performance optimizations.
+
+---
+
+## Practice
+
+- Fill in the company research template for three companies at different tiers (dream, target, safety). Compare the depth of your research across all three.
+- Write two versions of your "Why are you leaving?" answer: one for a recruiter screen and one for a hiring manager. Practice both out loud until they feel natural.
+- Draft follow-up emails for each template above using a real or hypothetical interview scenario. Save them as drafts so they are ready when you need them.
+- Map out a 6-week interview calendar for your actual pipeline. Identify scheduling conflicts and plan around them.
+
+---
+
+## Cross-References
+
+- **[Module 00 — Before You Start](../00-before-you-start.md):** Complete the self-assessment and career narrative exercises in Module 00 before applying the strategy framework here. This module assumes you have identified your strengths, gaps, and superpower.
+- **[Module 08 — Negotiation & Closing](../08-negotiation/):** The pipeline management and timeline strategies in this module set up the negotiation leverage covered in Module 08. Clustering on-sites and managing competing offers are tactics that directly increase your negotiation power.
+- **[Module 02 — Behavioral Interview Mastery](../02-behavioral/):** The behavioral round preparation in the on-site section here is covered in depth in Module 02. Build your story bank there.
+- **[Module 04 — Questions to Ask Interviewers](../04-questions-to-ask/):** The per-interview checklist includes "prepare questions for this specific round." Module 04 provides the complete question framework organized by round and interviewer type.

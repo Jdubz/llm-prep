@@ -443,3 +443,14 @@ Kafka provides EOS within Kafka. For external systems, approximate with at-least
 8. **50K messages in SQS DLQ. Investigate and recover.**
 
    Sample messages, correlate with error logs, identify pattern (schema change, outage, permissions). Fix root cause, replay from DLQ, monitor.
+
+---
+
+## Related Reading
+
+- [Module 04: Event Sourcing, CQRS, and Sagas](02-event-sourcing-cqrs-and-sagas.md) -- patterns that build on message brokers: event sourcing uses Kafka as the append-only log, CQRS uses events to populate read models, sagas coordinate distributed transactions
+- [Module 04: Message Queue Operations](03-message-queue-operations-and-patterns.md) -- Kafka internals (ISR, KRaft), the outbox pattern, CDC with Debezium, schema evolution, and stream processing
+- [Module 02: SQL, NoSQL, and Decision Framework](../02-databases-at-scale/01-sql-nosql-and-decision-framework.md) -- databases that back your message consumers; understanding consistency models helps you choose between at-least-once and exactly-once semantics
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- retry patterns (exponential backoff with jitter, retry budgets) apply directly to message consumer error handling and DLQ strategies
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- deploying Kafka on Kubernetes using StatefulSets, and scaling consumers with KEDA based on consumer lag
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- monitoring consumer lag, processing latency, and DLQ depth with Prometheus metrics; correlating messages across services using distributed tracing

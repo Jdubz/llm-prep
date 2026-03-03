@@ -284,7 +284,7 @@ For HTTP/2 without TLS (h2c), you need `golang.org/x/net/http2/h2c`.
 
 ### Transport and Client Customization
 
-The `http.Client` uses an `http.Transport` for connection management:
+The `http.Client` uses an `http.Transport` for connection management. The default transport is shared across all clients and is safe for concurrent use, but customizing it lets you control connection pooling, timeouts, and TLS behavior. In production, you should always configure `Timeout` on the client — the default is zero (no timeout), which means a slow or unresponsive server will cause your goroutine to block indefinitely.
 
 ```go
 transport := &http.Transport{
@@ -669,3 +669,13 @@ return fmt.Errorf("fetching user %d: %w", id, err)
 // Error with context — no wrapping (breaks error chain intentionally)
 return fmt.Errorf("fetching user %d: %v", id, err)
 ```
+
+---
+
+## Related Reading
+
+- **Building HTTP services** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md) takes the `net/http` patterns from section 1 and builds production routing, middleware chains, and framework comparisons
+- **JSON with database layers** — [Module 05: Database Drivers and ORMs](../05-data-storage/01-database-drivers-and-orms.md) shows how `encoding/json` struct tags interact with database struct tags in pgx, sqlc, and GORM
+- **io.Reader/Writer composition** — [Testing and IO](02-testing-and-io.md), section 2 (bufio) and section 3 (os file operations) extend the `io.Reader`/`io.Writer` patterns from section 2 with buffered reading and file system operations
+- **Error wrapping in production** — [Module 07: Project Structure and Configuration](../07-production/01-project-structure-and-configuration.md), section 3 covers the `%w` error wrapping from section 4 in the context of production error handling middleware
+- **Testing HTTP handlers** — [Module 06: Integration and HTTP Testing](../06-testing/02-integration-and-http-testing.md), section 1 covers `httptest.NewRecorder` and `httptest.NewServer` for testing the handlers built with `net/http`

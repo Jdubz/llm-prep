@@ -359,6 +359,16 @@ async def readiness(db: AsyncSession = Depends(get_db)):
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` directly test concepts from this file:
+
+- **Exercise 2 (SSE Progress Stream)** -- Build an async generator that yields SSE-formatted events and return it via `StreamingResponse`. Covers the SSE wire format (`event:`, `id:`, `data:`, double newline) and the `media_type="text/event-stream"` pattern from the "Server-Sent Events" section above.
+- **Exercise 3 (Background Task System)** -- Implement the 202 Accepted + polling pattern using `BackgroundTasks.add_task()`. Covers `status_code=202`, job state tracking, and progress polling from the "Background Tasks" and "Long-Running Operations" sections above.
+- **Exercise 4 (File Upload with Validation)** -- Validate content type and file size, then stream to disk in 64 KB chunks. Covers the chunked `UploadFile.read()` pattern, size enforcement, and cleanup from the "File Upload" and "Streaming Large File Upload" sections above.
+
+---
+
 ## Key Takeaways
 
 - For large uploads, stream in chunks rather than reading the whole file into memory.

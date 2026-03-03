@@ -467,3 +467,13 @@ func main() {
 ```
 
 Your entire application — binary, templates, static assets, database migrations — is a single file. No more managing asset directories in Docker images.
+
+---
+
+## Related Reading
+
+- **Package visibility foundations** — [Module 01: Packages and Modules](../01-go-mental-model/02-packages-and-modules.md) covers the package system, visibility rules, and `go.mod` that underpin the project layout in section 1
+- **HTTP service structure** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md), section 6 (Project Structure for HTTP Services) shows a concrete example of the `cmd/`/`internal/` layout from section 1 wired into a working HTTP server
+- **Error handling in handlers** — [Module 04: Request Handling and Validation](../04-http-services/02-request-handling-and-validation.md), section 1 shows the HTTP-level error handling that complements the production error patterns from section 3
+- **Database migrations** — [Module 05: Migrations, Redis, and Advanced Storage](../05-data-storage/03-migrations-redis-and-advanced-storage.md), section 1 covers goose and golang-migrate for the migrations directory referenced in section 1
+- **Deployment** — [Deployment and Scaling](03-deployment-and-scaling.md), section 1 (Docker Multi-Stage Builds) shows how the Makefile targets from section 4 and embed directives from section 6 are used in production Docker images

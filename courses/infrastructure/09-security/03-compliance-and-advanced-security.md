@@ -389,6 +389,16 @@ A: Build a data catalog that maps PII fields to services and storage locations. 
 
 A: At rest: AES-256 with envelope encryption via KMS, plus field-level encryption for PHI fields. In transit: TLS 1.3 externally, mTLS between services. Key management: separate KMS keys per data classification; only the patient-records service can decrypt PHI. Audit every decryption. Ensure BAAs with cloud providers, conduct annual HIPAA risk assessments.
 
+### Related Reading
+
+- [Module 09: Authentication and Authorization](01-authentication-and-authorization.md) -- zero trust architecture, OAuth2/OIDC, and encryption foundations that compliance frameworks require
+- [Module 09: API and Application Security](02-api-and-application-security.md) -- the API security controls, container hardening, and CI/CD scanning that implement compliance requirements
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- GDPR and HIPAA have specific requirements for data encryption at rest, audit logging, and data retention policies that affect database choices
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- VPC design, network security groups vs NACLs, and TLS termination architecture connect to the network security topics covered here
+- [Module 06: Kubernetes Advanced Patterns](../06-containers-orchestration/03-kubernetes-advanced-patterns.md) -- RBAC, Pod Security Standards, OPA/Gatekeeper, and network policies enforce compliance controls at the cluster level
+- [Module 07: Infrastructure and GitOps](../07-cicd/03-infrastructure-and-gitops.md) -- CI/CD supply chain security (SLSA, Sigstore, SBOM) and GitOps audit trails support SOC 2 and other compliance frameworks
+- [Module 08: SLOs, Alerting, and Incident Response](../08-observability/02-slos-alerting-and-incident-response.md) -- incident response processes and blameless postmortems are requirements for SOC 2 and many compliance frameworks
+
 ### Key Takeaways
 
 1. **Compliance is a constraint, not a goal.** Understand the technical implications of SOC 2, GDPR, HIPAA, and PCI DSS.

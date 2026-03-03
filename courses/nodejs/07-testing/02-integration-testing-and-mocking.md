@@ -267,6 +267,8 @@ test('handles Stripe API failure gracefully', async () => {
 
 **Critical interview point:** `onUnhandledRequest: 'error'` is essential. It ensures your tests fail if code makes unexpected network calls. This catches regressions where someone adds a new API call without a corresponding mock.
 
+**Common mistake with MSW handler specificity:** Defining overly broad handlers (e.g., `http.get('*', ...)`) that match unintended requests. Always use the full URL including the host. If you use a base URL variable, make sure it matches exactly what your production code calls. Overly broad handlers mask real bugs where your code calls the wrong endpoint.
+
 ---
 
 ## Database Testing
@@ -778,3 +780,13 @@ test('events arrive in order', async () => {
   expect(events).toEqual(['initialized', 'processing', 'completed']);
 });
 ```
+
+## Related Reading
+
+- **Supertest and Express/Fastify integration testing** verifies the REST APIs covered in [03 – HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md) and [03 – API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md#etag-and-conditional-requests).
+- **MSW for mocking external services** is the recommended approach for testing the external API integrations described in [04 – GraphQL Performance and Alternatives](../04-graphql/03-graphql-performance-and-alternatives.md#rest-to-graphql-migration) and [05 – JWT and OAuth2](../05-auth-security/01-jwt-and-oauth2.md#oauth2-and-oidc).
+- **Test containers and database testing patterns** apply directly to the ORM patterns in [06 – Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md) and the transaction isolation strategies in [06 – Queries, Transactions, and Optimization](../06-database-patterns/02-queries-transactions-and-optimization.md#transaction-isolation-levels).
+- **Auth header helpers for test setup** use the JWT signing covered in [05 – JWT and OAuth2](../05-auth-security/01-jwt-and-oauth2.md#jwt-deep-dive).
+- **Testing GraphQL queries and DataLoader batching** connects to [04 – Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md#resolver-patterns) and [04 – Advanced GraphQL Patterns](../04-graphql/02-advanced-graphql-patterns.md#dataloader).
+- **WebSocket and Socket.IO testing** relies on the event-driven patterns in [02 – Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md) and the Redis adapter scaling approach in [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#websocket-scaling-with-redis-adapter).
+- **BullMQ worker testing** connects to the queue patterns in [08 – Caching and Redis](../08-performance-scaling/01-caching-and-redis.md#bullmq-queue-setup) and the event-driven architecture in [09 – Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md#message-brokers).

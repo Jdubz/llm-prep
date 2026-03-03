@@ -341,3 +341,14 @@ Default: SQS (AWS), Kafka (streaming), RabbitMQ (routing)
 5. **Design an event-driven order system that is resilient to partial failures.**
 
    Saga orchestrator with compensation steps for each service call. Outbox pattern for reliable event publishing. Idempotency keys on all service-to-service calls. DLQs with alerting for poison messages. Circuit breakers per downstream service.
+
+---
+
+## Related Reading
+
+- [Module 04: Message Brokers](01-message-brokers-kafka-sqs-rabbitmq.md) -- the broker fundamentals that this module builds on, including Kafka partitioning, SQS visibility timeout, and delivery guarantees
+- [Module 04: Event Sourcing, CQRS, and Sagas](02-event-sourcing-cqrs-and-sagas.md) -- the higher-level patterns (event sourcing, CQRS read model projections, saga orchestration) that depend on the operational details covered here
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- the outbox pattern writes to PostgreSQL in the same transaction as business data; CDC with Debezium tails the PostgreSQL WAL
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- deploying Kafka with StatefulSets for stable network identities and persistent volumes, and using KEDA to autoscale consumers based on Kafka consumer lag
+- [Module 07: Pipeline Design and Deployment Strategies](../07-cicd/01-pipeline-design-and-deployment-strategies.md) -- deploying schema-evolved consumers requires careful deployment ordering (deploy new consumer version before publishing new schema)
+- [Module 08: Advanced Observability](../08-observability/03-advanced-observability.md) -- the OTel Collector receives traces from Kafka producers and consumers, enabling end-to-end visibility across event-driven architectures

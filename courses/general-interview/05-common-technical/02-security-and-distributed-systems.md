@@ -174,3 +174,21 @@
 
 **Q: Explain the Two Generals Problem and why it matters.**
 > A: Two generals on opposite sides of an enemy must agree on an attack time, but their messengers can be captured. No number of acknowledged messages can guarantee both generals know the other will attack. This is a fundamental impossibility result — it proves that guaranteed consensus over an unreliable network is impossible. It is the conceptual foundation for understanding why distributed consensus is hard and why protocols like Raft require majority quorums rather than unanimity.
+
+---
+
+## Practice
+
+- For each authentication pattern in the table above, write a one-sentence description of when you would choose it and what the primary trade-off is. This prepares you for the common interview question: "How would you design the auth layer for X?"
+- Explain the CAP theorem to a product manager in under 60 seconds, then to a systems engineer in 2 minutes. Practice both versions out loud.
+- Pick one OWASP Top 10 vulnerability and trace through how you would identify and fix it in a codebase you have worked on. This creates a concrete behavioral story that combines security knowledge with practical experience.
+- Draw the Raft consensus flow (leader election, log replication) from memory. If you cannot, review the section above and try again. The ability to whiteboard a consensus protocol is a strong staff-level signal.
+
+---
+
+## Cross-References
+
+- **[Module 05 — Foundational Technical Concepts](01-foundational-technical-concepts.md):** This file builds on the networking, OS, and concurrency fundamentals from the foundational guide. Read that file first for the prerequisite knowledge.
+- **[Module 05 — Advanced Technical Deep Dive](03-advanced-technical-deep-dive.md):** The advanced file goes deeper on distributed systems (Byzantine fault tolerance, CRDTs, gossip protocols, consistent hashing) and cryptography. Read this file for the core concepts, then the advanced file for staff-level depth.
+- **[Module 06 — Coding Patterns](../06-coding-patterns/):** System design coding problems (LRU cache, rate limiter, consistent hashing implementation) bridge the gap between the theoretical concepts here and the coding patterns in Module 06. Module 06 provides the implementation templates.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** The analogy reference table in Module 03 includes analogies for many distributed systems concepts (eventual consistency, circuit breakers, pub/sub). Use those analogies when explaining the concepts from this guide in interviews.

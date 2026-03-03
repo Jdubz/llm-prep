@@ -1069,6 +1069,24 @@ describe('TransferForm', () => {
 
 ---
 
+## Practice
+
+- **Query priority drill**: Take 3 components from your app and write tests using the RTL query priority: `getByRole` first, then `getByLabelText`, then `getByText`. Avoid `getByTestId` unless no accessible query is possible.
+- **MSW integration**: Set up MSW in a test file. Write handlers for success, error (500), and empty (200, `[]`) responses. Test all three states of a data-fetching component.
+- **Form testing**: Write a test for a login form that: (1) submits empty and shows validation errors, (2) fills valid data and submits, (3) verifies the submit callback received the correct data. Follow the "Testing Forms" pattern from this lesson.
+- **Custom render wrapper**: Create a `renderWithProviders` utility that wraps components in `QueryClientProvider` and `MemoryRouter`. Use it in 3 tests to verify it simplifies provider setup.
+- **Accessibility audit**: Add `jest-axe` to a test file and run it against 3 components. Fix any violations found.
+- **Test `usePrevious` and `useFetch`**: Write isolated hook tests using `renderHook` for the hooks in `src/hooks/usePrevious.js` and `src/hooks/useFetch.js`.
+
+### Related Lessons
+
+- [Testing: Strategies & Mocking](02-testing-strategies-and-mocking.md) -- testing hooks in isolation, E2E with Playwright, visual regression, Storybook
+- [Custom Hooks Testing & Advanced](../02-custom-hooks/02-custom-hooks-testing-and-advanced.md) -- `renderHook` patterns, testing hooks that need providers, mock timing
+- [Hooks & State Management](../01-hooks-deep-dive/01-hooks-and-state-management.md) -- the hooks you will be testing
+- [State Management Libraries](../05-state-management/02-state-libraries-and-solutions.md) -- TanStack Query patterns commonly tested with MSW
+
+---
+
 ## Common Interview Questions
 
 ### 1. "What is the difference between `getBy`, `queryBy`, and `findBy`?"

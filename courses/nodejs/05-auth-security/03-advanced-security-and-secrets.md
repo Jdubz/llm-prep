@@ -559,3 +559,30 @@ jwt.verify(token, publicKey); // Library may accept 'none'
 ```
 
 Always pass `{ algorithms: [...] }` as the third argument. Never accept `alg: none`.
+
+---
+
+## Related Reading
+
+- **Security headers and Helmet** (Section 1) — CSP and CORS configurations interact with the API gateway patterns in [REST API Design — API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md#5-api-gateway-patterns)
+- **CORS** (Section 2) — the dynamic origin validation pattern serves the multi-origin scenarios discussed in [REST API Design — HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md)
+- **Prototype pollution** (Section 3.1) — the `Object.create(null)` defense connects to V8 hidden classes in [Node.js Runtime — Threading and Process Management](../02-node-runtime/02-threading-and-process-management.md#5-v8-engine-internals-deep-dive)
+- **ReDoS** (Section 3.2) — catastrophic backtracking is an event loop starvation vector discussed in [Node.js Runtime — Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md#5-event-loop-starvation)
+- **SSRF prevention** (Section 3.3) — DNS resolution in the validation function uses `dns.resolve` covered in [Node.js Runtime — Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md#4-libuv-thread-pool)
+- **Secret management** (Section 4) — Vault dynamic credentials connect to database connection management in [Database Patterns — Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md) (connection pooling)
+- **Zero-trust architecture** (Section 5) connects to [Architecture — Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md) (service mesh, distributed trust)
+- **Audit logging** (Section 6) — structured logging and event sourcing connect to [Architecture — Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md) and [Database Patterns — Advanced Patterns and Multi-Tenancy](../06-database-patterns/03-advanced-patterns-and-multi-tenancy.md) (event sourcing, audit tables)
+- For testing security configurations, see [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md) and the security testing checklist in Section 7
+
+---
+
+## Practice Suggestions
+
+These exercises cover the entire Auth & Security module (files 01-03):
+
+1. **JWT auth system with refresh token rotation**: Implement a complete auth system with RS256-signed access tokens (5-minute expiry), refresh token rotation with family tracking, and a Redis-based token blocklist. Test replay detection by reusing a consumed refresh token and verify the entire family is revoked.
+2. **OAuth2 PKCE implementation**: Build the Authorization Code + PKCE flow from scratch (not using a library). Implement the authorization URL builder, code exchange, and PKCE verification. Verify that interception of the authorization code without the verifier fails.
+3. **Rate limiter comparison**: Implement three rate limiting algorithms (fixed window, sliding window counter, token bucket) using Redis. Write load tests that demonstrate the fixed window boundary bug (2x burst), and show that sliding window and token bucket handle it correctly.
+4. **Security header audit**: Take an existing Express/Fastify app and configure Helmet with a strict CSP. Test with the CSP Evaluator tool. Add nonce-based script loading. Verify that inline scripts are blocked. Configure CORS for multiple origins with credential support.
+5. **Prototype pollution lab**: Write a vulnerable `Object.assign`-based merge function. Demonstrate the attack with `__proto__` injection. Then implement three defenses: key blocklist, `Object.create(null)` targets, and `Map`-based storage. Write tests that verify each defense.
+6. **Secret rotation exercise**: Set up a HashiCorp Vault dev server. Implement dynamic database credential generation where Vault creates short-lived Postgres credentials. Build the application-level credential rotation that fetches new credentials before the lease expires without dropping connections.

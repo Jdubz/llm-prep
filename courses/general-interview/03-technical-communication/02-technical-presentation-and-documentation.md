@@ -517,3 +517,21 @@ When asked about presenting to leadership:
 6. **Lead with the recommendation.** Whether presenting to leadership or writing a design doc, frontload your conclusion. Respect your audience's time.
 
 7. **Commit to decisions, even ones you disagreed with.** Passive resistance is invisible to some and corrosive to all. Once decided, execute fully.
+
+---
+
+## Practice
+
+- Write a mini design doc (1-2 pages) for a system you have built or are familiar with. Follow the standard structure from this guide. Then have a colleague review it and note which sections were clear and which needed more detail.
+- Take a recent technical decision from your work and prepare a 5-minute leadership presentation using the structure in this guide. Record yourself delivering it and evaluate: Did you lead with the recommendation? Did you frame everything in business terms?
+- Pick a PR or code change you recently reviewed. Rewrite your review comments using the tone and specificity guidelines from this guide. Compare the original and revised versions.
+- Practice the post-mortem format by writing a retrospective on a past incident from memory. Focus on root cause analysis, not just timeline. Include actionable items with owners.
+
+---
+
+## Cross-References
+
+- **[Module 03 — Communication Fundamentals](01-communication-fundamentals.md):** Read the communication fundamentals guide first. This file builds on those core skills with written and presentation-specific techniques.
+- **[Module 02 — Behavioral Interview Mastery](../02-behavioral/):** Design docs, post-mortems, and leadership presentations are frequent topics in behavioral interviews. Module 02's STAR framework helps you turn these experiences into compelling interview stories. "Tell me about a design doc you wrote" and "Tell me about a time you presented to leadership" are common behavioral prompts.
+- **[Module 07 — Take-Home & Live Coding](../07-take-home-live-coding/):** README writing for take-home submissions is a form of technical writing. The README quality guidelines in Module 07 complement the documentation principles here.
+- **[Module 04 — Questions to Ask Interviewers](../04-questions-to-ask/):** When interviewers describe their design review or code review process, you can demonstrate depth by referencing the frameworks in this guide. Asking "Do you use an RFC process?" signals staff-level thinking.

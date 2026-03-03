@@ -192,6 +192,15 @@ A: Audit for flags 100% on/off for >30 days. Assign owners. Enforce expiration d
 
 A: Central store (Vault or AWS Secrets Manager) as source of truth. External Secrets Operator syncs into K8s Secrets. Per-service access control via Vault policies or IAM. Automated rotation with credential refresh. Audit logging. Developers never see production secrets. ExternalSecret manifests reference secrets by path, not value.
 
+### Related Reading
+
+- [Module 07: Pipeline Design and Deployment Strategies](01-pipeline-design-and-deployment-strategies.md) -- feature flags work alongside deployment strategies (canary, blue-green) to control risk during rollouts
+- [Module 07: Infrastructure and GitOps](03-infrastructure-and-gitops.md) -- secrets management with Vault and External Secrets Operator, and GitOps workflows for managing configuration changes
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- PostgreSQL migration tooling, advisory locks for preventing concurrent migrations, and database-specific schema change considerations
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- running database migrations as Kubernetes Jobs or init containers before deployment rollout
+- [Module 08: SLOs, Alerting, and Incident Response](../08-observability/02-slos-alerting-and-incident-response.md) -- feature flag rollouts should be monitored against SLOs; error budget consumption during a rollout signals when to halt
+- [Module 09: Authentication and Authorization](../09-security/01-authentication-and-authorization.md) -- secrets management (Vault, AWS Secrets Manager) and rotation strategies for database credentials and API keys
+
 ### Key Takeaways
 
 1. **Database migrations require discipline**: Expand/contract is the only way to achieve zero-downtime schema changes.

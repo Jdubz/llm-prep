@@ -429,6 +429,22 @@ asyncio.current_task()                           # currently running task
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice the concepts from this file. See also `examples.py` for fully working reference implementations.
+
+- **Exercise 1: Convert Synchronous Code to Async** -- Uses `asyncio.gather` to run coroutines concurrently. Practices the "asyncio.gather (like Promise.all)" section above. *(Also see: `examples.py` Example 1)*
+
+- **Exercise 2: Fan-Out/Fan-In with Semaphore** -- Combines `asyncio.Semaphore` for concurrency limiting with `asyncio.gather` and error aggregation. Practices the "Semaphores for Concurrency Limiting" and "asyncio.gather" sections above. *(Also see: `examples.py` Example 1 -- Parallel HTTP Fetching with Semaphore)*
+
+- **Exercise 3: Async Rate Limiter (Token Bucket)** -- Implement a token bucket rate limiter using `asyncio.Lock` and `time.monotonic`. Practices the "Token Bucket Rate Limiter" section under "Advanced Async Patterns" above. *(Also see: `examples.py` Example 6 -- Token Bucket Rate Limiter)*
+
+- **Exercise 4: Timeout Wrapper** -- Wrap a coroutine with `asyncio.timeout` (or `asyncio.wait_for`) and return a fallback on timeout. Practices the "Timeout Handling" section above. *(Also see: `examples.py` has no dedicated timeout example, but the "asyncio Synchronization Primitives" section above shows the exact API)*
+
+- **Exercise 5: Producer/Consumer Pipeline** -- Build a full producer/consumer pipeline using `asyncio.Queue` (with backpressure) and `asyncio.TaskGroup` for structured concurrency. Practices the "asyncio.Queue for Producer/Consumer" and "TaskGroup: Structured Concurrency" sections above. *(Also see: `examples.py` Examples 3 and 4)*
+
+---
+
 ## Key Takeaways
 
 - Prefer `TaskGroup` over `gather` for structured concurrency with automatic error propagation.

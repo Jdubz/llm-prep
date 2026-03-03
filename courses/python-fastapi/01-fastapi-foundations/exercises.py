@@ -11,7 +11,7 @@ Run tests:  python exercises.py
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request, status
@@ -24,9 +24,21 @@ from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
 # EXERCISE 1: Create Pydantic Models with Field Validation
 # ============================================================================
 #
+# READ FIRST: 01-http-routing-and-decorators.md
+#   - "Pydantic v2 Models" section for BaseModel, Field(), and schema patterns
+#   - "Field Validators and Model Validators" section for @field_validator
+#   - "Computed Fields and Custom Types" section for @computed_field
+# ALSO SEE: examples.py sections 1 and 5 for complete working models
+#
 # Build the schema layer for a "Book" resource. This is the FastAPI equivalent
 # of defining Zod schemas in Express -- but these also generate OpenAPI docs
 # and drive serialization automatically.
+#
+# The Pattern: Separate schemas for Create, Update, and Response.
+# A shared "Base" model holds the common fields. Create inherits from Base
+# (same fields, nothing extra). Update makes all fields optional so clients
+# can send partial updates. Response adds server-generated fields (id,
+# timestamps) and computed fields.
 #
 # Requirements:
 #   - BookBase: shared fields (title, author, isbn, genre, page_count, price)
@@ -34,20 +46,38 @@ from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
 #   - BookUpdate: partial update (all fields optional)
 #   - BookResponse(BookBase): what the API returns (adds id, created_at, in_stock)
 #
-# Field constraints:
-#   - title: 1-200 characters
-#   - author: 1-100 characters
-#   - isbn: exactly 13 characters, digits only (use a field_validator)
-#   - genre: one of "fiction", "non-fiction", "sci-fi", "biography", "technical"
-#   - page_count: integer > 0
-#   - price: float >= 0
+# Field constraints (use Field() from pydantic):
+#   - title: str, 1-200 characters        -> Field(..., min_length=1, max_length=200)
+#   - author: str, 1-100 characters       -> Field(..., min_length=1, max_length=100)
+#   - isbn: str, validated via @field_validator (see below)
+#   - genre: use Literal["fiction", "non-fiction", "sci-fi", "biography", "technical"]
+#   - page_count: int, must be > 0        -> Field(..., gt=0)
+#   - price: float, must be >= 0          -> Field(..., ge=0)
 #   - BookResponse.in_stock: computed field, True if page_count > 0
 #
-# Hints:
-#   - Use Field(..., min_length=, max_length=) for string constraints
-#   - Use @field_validator("isbn") for custom validation
-#   - Use @computed_field with @property for in_stock
-#   - Use typing.Literal or a StrEnum for genre
+# How @field_validator works:
+#   Validators run AFTER Field() constraints. They receive the already-validated
+#   value and can transform or reject it. Three rules:
+#     1. Decorate with @field_validator("field_name")
+#     2. Must also be @classmethod (Pydantic v2 requirement)
+#     3. Must return the value -- forgetting this silently sets the field to None
+#
+#   Example:
+#     @field_validator("isbn")
+#     @classmethod
+#     def validate_isbn(cls, v: str) -> str:
+#         if len(v) != 13 or not v.isdigit():
+#             raise ValueError("ISBN must be exactly 13 digits")
+#         return v   # <-- always return the value!
+#
+# How @computed_field works:
+#   A read-only field derived from other fields. Not stored, but included in
+#   serialization and OpenAPI docs. Use @computed_field above @property:
+#
+#   @computed_field
+#   @property
+#   def in_stock(self) -> bool:
+#       return self.page_count > 0
 #
 # Expected behavior:
 #   BookCreate(title="Dune", author="Frank Herbert", isbn="9780441013593",
@@ -60,30 +90,31 @@ from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
 
 
 class BookBase(BaseModel):
-    # TODO: Define shared fields with appropriate Field() constraints
-    title: str = Field(..., min_length=1, max_length=200)
-    author: str = Field(..., min_length=1, max_length=200)
-
-    @field_validator("isbn")
-    def isbn: 
-    
-    genre:
-    page_count:
-    price:
+    # TODO: Define all 6 shared fields with appropriate Field() constraints.
+    # Use Literal[...] for genre to restrict to valid values.
+    # Add a @field_validator for isbn (must be @classmethod, must return v).
+    ...
 
 
 class BookCreate(BookBase):
-    # TODO: Add isbn field_validator that checks length == 13 and all digits
+    # BookCreate inherits everything from BookBase. No extra fields needed
+    # for this exercise -- the client sends the same fields that BookBase defines.
     ...
 
 
 class BookUpdate(BaseModel):
-    # TODO: All fields optional (use `str | None = None` pattern)
+    # TODO: All fields optional using the `field_type | None = None` pattern.
+    # This does NOT inherit from BookBase because all fields must be optional.
+    # Example: title: str | None = None
+    # When consuming: use model_dump(exclude_unset=True) to get only sent fields.
     ...
 
 
 class BookResponse(BookBase):
-    # TODO: Add id (UUID), created_at (datetime), and a computed in_stock field
+    # TODO: Add server-generated fields:
+    #   - id: UUID (from uuid module, already imported above)
+    #   - created_at: datetime (from datetime module, already imported above)
+    #   - in_stock: @computed_field @property, returns True if page_count > 0
     ...
 
 
@@ -91,28 +122,50 @@ class BookResponse(BookBase):
 # EXERCISE 2: Implement a Dependency That Reads Config from Environment
 # ============================================================================
 #
+# READ FIRST: 02-dependency-injection.md
+#   - "What Dependency Injection Is" for the mental model
+#   - "Basic Dependencies" for Depends() usage
+#   - "Nested (Recursive) Dependencies" for chaining dependencies
+#   - "Yield Dependencies" for the yield pattern used in get_book_store
+# ALSO SEE: examples.py section 2 for a complete dependency chain
+#
 # Build a dependency chain: get_app_config -> get_book_store
 #
 # In Express you'd use dotenv + process.env. FastAPI uses Depends() to inject
-# typed, validated configuration into your handlers.
+# typed, validated configuration into your handlers. Instead of middleware
+# attaching values to `req`, dependencies are declared in function signatures
+# and resolved automatically.
+#
+# The chain works like this:
+#   1. get_app_config() returns an AppConfig instance (simple return)
+#   2. get_book_store() depends on get_app_config via Depends(), uses the
+#      config to create a store, and yields it (yield dependency pattern)
+#   3. Route handlers depend on get_book_store via Depends() to get the store
 #
 # Requirements:
-#   - AppConfig: a Pydantic model with:
+#   - AppConfig: a Pydantic BaseModel with:
 #       store_name: str (default "My Bookshop")
 #       max_inventory: int (default 1000)
 #       debug: bool (default False)
 #   - get_app_config(): returns an AppConfig instance
 #   - InMemoryBookStore: class that holds books in a dict
 #       __init__ takes max_inventory: int
-#       has methods: add(book) -> BookResponse, get(id) -> BookResponse | None,
-#                    list_all() -> list[BookResponse], delete(id) -> bool
+#       has methods: add(book) -> dict, get(id) -> dict | None,
+#                    list_all() -> list[dict], delete(id) -> bool
 #   - get_book_store(config=Depends(get_app_config)): yield dependency that
 #       creates an InMemoryBookStore and yields it
 #
-# Hints:
-#   - Use a yield dependency for get_book_store (even though there's no real
-#     cleanup) to practice the pattern
-#   - The store should use config.max_inventory
+# Yield dependency pattern:
+#   A yield dependency is like a context manager. Code before `yield` is setup,
+#   the yielded value is injected into the handler, and code after `yield` is
+#   cleanup (runs even if the handler raises an exception).
+#
+#   async def get_book_store(config: AppConfig = Depends(get_app_config)):
+#       store = InMemoryBookStore(max_inventory=config.max_inventory)
+#       try:
+#           yield store        # <-- this value gets injected into the handler
+#       finally:
+#           print("cleanup")   # <-- runs after handler completes
 #
 # Expected behavior:
 #   config = get_app_config()
@@ -177,20 +230,43 @@ async def get_book_store(
 # EXERCISE 3: Build a CRUD Router for "Book" with Proper Status Codes
 # ============================================================================
 #
+# READ FIRST: 01-http-routing-and-decorators.md
+#   - "Path Operations and Decorators" for routing syntax
+#   - "Decorator Parameters" for status_code= and response_model=
+#   - "Parameter Extraction" for Path, Query, Body parameters
+#   - "Response Models and Status Codes" for status code patterns
+#   - "Routers and Application Structure" for APIRouter usage
+# ALSO READ: 02-dependency-injection.md
+#   - "Basic Dependencies" for injecting the store into handlers
+# ALSO SEE: examples.py section 1 for a complete CRUD router with users
+#
 # Express equivalent: router.post("/", handler), router.get("/:id", handler), etc.
 # FastAPI routers are similar but add automatic validation and OpenAPI docs.
+#
+# How routing works:
+#   The @router.post("/", ...) decorator registers a handler for POST requests.
+#   The decorator accepts parameters that control behavior:
+#     - response_model=BookResponse: tells FastAPI to serialize the return value
+#       through this Pydantic model (strips extra fields, generates OpenAPI docs)
+#     - status_code=201: sets the default HTTP status code for successful responses
+#
+# How dependency injection works in handlers:
+#   Add a parameter with a default of Depends(some_function):
+#     async def create_book(
+#         book: BookCreate,                                    # from request body
+#         store: InMemoryBookStore = Depends(get_book_store),  # injected dependency
+#     ) -> Any:
+#
+# How error handling works:
+#   Raise HTTPException to return an error response:
+#     raise HTTPException(status_code=404, detail="Book not found")
+#   This immediately stops the handler and returns a JSON error response.
 #
 # Requirements:
 #   - POST   /         -> 201, returns BookResponse
 #   - GET    /         -> 200, returns list[BookResponse]
 #   - GET    /{book_id} -> 200, returns BookResponse (404 if missing)
 #   - DELETE /{book_id} -> 204, no content (404 if missing)
-#
-# Hints:
-#   - Use response_model= and status_code= in the decorator
-#   - Inject the store with Depends(get_book_store)
-#   - Raise HTTPException(status_code=404, detail="...") for missing resources
-#   - For DELETE, return None with status_code=204
 #
 # Expected behavior:
 #   POST /books with valid body -> 201 + BookResponse JSON
@@ -260,30 +336,51 @@ async def delete_book(
 # EXERCISE 4: Create a Custom Exception Handler for Structured Errors
 # ============================================================================
 #
+# READ FIRST: 03-middleware-asgi-and-advanced-patterns.md
+#   - "Exception Handlers" section for how to register and write handlers
+# ALSO SEE: examples.py section 3 for a complete RFC 9457 implementation
+#   including AppError base class, NotFoundError, and both handler functions
+#
 # FastAPI's default error responses are minimal. Production APIs should return
 # consistent, structured error bodies -- ideally RFC 9457 Problem Details.
+#
+# What is RFC 9457?
+#   A standard JSON format for HTTP error responses. Instead of ad-hoc error
+#   bodies like {"error": "not found"}, you return a structured object:
+#     {
+#         "type": "/errors/not-found",      <- machine-readable error category
+#         "title": "Book Not Found",        <- human-readable short summary
+#         "status": 404,                    <- HTTP status code (redundant but useful)
+#         "detail": "Book with id '...'...",<- specific explanation
+#         "book_id": "..."                  <- optional extension fields
+#     }
+#   The Content-Type header should be "application/problem+json".
+#
+# How exception handlers work:
+#   1. Define a custom exception class (inherits from Exception)
+#   2. Write an async handler function:
+#        async def handler(request: Request, exc: YourError) -> JSONResponse:
+#            return JSONResponse(
+#                status_code=exc.status_code,
+#                content={...},
+#                media_type="application/problem+json",
+#            )
+#   3. Register it with the app:
+#        app.add_exception_handler(YourError, handler)
+#   4. Now any handler that raises YourError gets this response automatically
 #
 # Requirements:
 #   - BookstoreError: base exception class with fields:
 #       status_code (int), error_type (str), title (str), detail (str)
+#       Store these in __init__ as self.status_code, self.error_type, etc.
 #   - BookNotFoundError(BookstoreError): for 404s, includes book_id
+#       __init__(self, book_id: str) -> call super().__init__ with:
+#         status_code=404, error_type="/errors/not-found",
+#         title="Book Not Found", detail=f"Book with id '{book_id}' does not exist."
+#       Also store self.book_id = book_id for the extension field
 #   - InventoryFullError(BookstoreError): for 409s when store is at capacity
 #   - bookstore_error_handler: exception handler that returns Problem Details JSON
-#   - validation_error_handler: override for RequestValidationError
-#
-# The error response format (RFC 9457):
-#   {
-#       "type": "/errors/not-found",
-#       "title": "Book Not Found",
-#       "status": 404,
-#       "detail": "Book with id '...' does not exist.",
-#       "book_id": "..."
-#   }
-#
-# Hints:
-#   - Register handlers with app.add_exception_handler(ExcClass, handler_fn)
-#   - Return JSONResponse with media_type="application/problem+json"
-#   - The handler signature is: async def handler(request: Request, exc: ExcType)
+#   - exercise_validation_error_handler: override for RequestValidationError
 #
 # Expected behavior:
 #   raise BookNotFoundError(book_id="abc-123")
@@ -333,30 +430,65 @@ async def exercise_validation_error_handler(
 # EXERCISE 5: Implement Request Validation with Custom Validators
 # ============================================================================
 #
+# READ FIRST: 01-http-routing-and-decorators.md
+#   - "Field Validators and Model Validators" for @field_validator and
+#     @model_validator syntax and the difference between mode="before"/"after"
+#   - "Computed Fields and Custom Types" for Annotated validators
+# ALSO SEE: examples.py section 1 (UserCreate.password_strength) for a
+#   working @field_validator example
+#
 # Go beyond Field() constraints. Use @field_validator for custom logic and
 # @model_validator for cross-field validation.
 #
+# Execution order:
+#   1. Field() constraints run first (min_length, ge, etc.)
+#   2. @field_validator runs next on the already-validated value
+#   3. @model_validator(mode="after") runs last on the fully built model
+#
+# @field_validator rules:
+#   - Must be @classmethod
+#   - Receives (cls, v) where v is the field value
+#   - Must return the value (possibly transformed)
+#   - Raise ValueError to reject
+#   Example:
+#     @field_validator("query")
+#     @classmethod
+#     def normalize_query(cls, v: str) -> str:
+#         # strip + collapse multiple spaces using split/join trick
+#         return " ".join(v.split())
+#
+# @model_validator(mode="after") rules:
+#   - Receives self (the fully constructed model instance)
+#   - Has access to all fields via self.field_name
+#   - Must return self
+#   - Raise ValueError to reject
+#   Example:
+#     @model_validator(mode="after")
+#     def check_price_range(self) -> "BookSearchParams":
+#         if self.min_price is not None and self.max_price is not None:
+#             if self.min_price > self.max_price:
+#                 raise ValueError("max_price must be >= min_price")
+#         return self
+#
 # Requirements:
 #   - BookSearchParams: model for validating search query parameters
-#       query: str (1-200 chars, stripped of whitespace)
-#       min_price: float | None (>= 0 if provided)
-#       max_price: float | None (>= 0 if provided)
-#       genres: list[str] (default empty, each must be a valid genre)
-#       sort_by: one of "title", "price", "date" (default "title")
-#       page: int >= 1 (default 1)
-#       per_page: int 1-100 (default 20)
+#       query: str = Field(..., min_length=1, max_length=200)
+#       min_price: float | None = Field(None, ge=0)
+#       max_price: float | None = Field(None, ge=0)
+#       genres: list[str] = Field(default_factory=list)
+#       sort_by: Literal["title", "price", "date"] = "title"
+#       page: int = Field(1, ge=1)
+#       per_page: int = Field(20, ge=1, le=100)
 #
 #   Validators:
 #       @field_validator("query"): strip whitespace, collapse multiple spaces
+#           Hint: " ".join(v.split()) strips outer whitespace AND collapses
+#           inner runs of whitespace into single spaces.
 #       @field_validator("genres"): lowercase each genre, reject invalid ones
+#           Hint: lowered = [g.lower() for g in v], then check each against
+#           VALID_GENRES set. Raise ValueError if any are invalid.
 #       @model_validator(mode="after"): if both min_price and max_price are set,
 #           ensure min_price <= max_price
-#
-# Hints:
-#   - field_validator runs AFTER Field() constraints
-#   - model_validator(mode="after") receives the fully constructed model
-#   - Return the (possibly modified) value from field validators
-#   - Raise ValueError with a descriptive message on failure
 #
 # Expected behavior:
 #   BookSearchParams(query="  hello   world  ", page=1)

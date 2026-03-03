@@ -64,6 +64,18 @@ Go for senior TypeScript engineers. Covers Go's type system, concurrency model, 
 
 ---
 
+## Related Reading
+
+This course is designed to be worked through sequentially, but the modules interconnect heavily:
+
+- **Types and patterns** — Module 01 (Go Mental Model) establishes the type foundations that Module 08 (Advanced Patterns) builds on with generics and code generation
+- **Concurrency everywhere** — Module 02 (Concurrency Primitives) provides the goroutine and channel knowledge used in Module 04 (HTTP middleware, graceful shutdown) and Module 07 (production deployment)
+- **Stdlib to services** — Module 03 (Standard Library) covers `net/http` and `database/sql` that are the building blocks for Module 04 (HTTP Services) and Module 05 (Data & Storage)
+- **Testing the stack** — Module 06 (Testing) applies to every prior module and is best studied alongside the module you are currently working through
+- **Interview prep** — Module 09 synthesizes concepts from all modules; revisit specific module sections as you work through interview questions
+
+---
+
 ## Prerequisites
 - Strong programming fundamentals in any language
 - Understanding of concurrency concepts (event loop, async I/O)

@@ -576,6 +576,24 @@ Most production vector databases support pre-filtering that indexes metadata alo
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Basic RAG Pipeline** [1] -- Implements the end-to-end flow from "RAG Architecture Overview": ingest (embed + store), retrieve (vector search), and build prompt (prompt assembly with grounding instructions). Start here.
+- **Exercise 2: Document-Aware Chunking** [2] -- Builds the structural chunking strategy from "Chunking Strategies" section #4. Handles markdown headers, code blocks, and paragraph boundaries. Applies "Chunking Decision Matrix" and "Chunk Size Tradeoffs."
+- **Exercise 3: Hybrid Search with RRF** [2] -- Implements the hybrid search architecture from "Hybrid Search": vector ranking + keyword ranking + Reciprocal Rank Fusion. Uses the RRF formula directly.
+- **Exercise 5: Multi-Tenant Metadata Schema** [3] -- Designs the metadata schema described in "Metadata Filtering." Applies "Common Metadata Fields" and "Filter Strategies" (pre-filter vs post-filter).
+- **Exercise 6: Context Window Packing** [3] -- Solves the prompt assembly problem from "RAG Pipeline Prompt Assembly": given ranked chunks and a token budget, pack the most relevant content. Applies "Critical Design Decisions" (number of retrieved chunks K).
+
+See also `examples.py`:
+- `chunk_fixed_size()`, `chunk_recursive()`, `chunk_by_headers()`, `chunk_semantic_boundaries()` (Pattern 2) -- all four chunking strategies
+- `HybridSearcher` (Pattern 3) -- hybrid search with BM25 + vector + RRF
+- `cross_encoder_rerank()` (Pattern 4) -- reranking step that often precedes context packing
+- `RAGPipeline` (Pattern 7) -- full pipeline tying all components together
+
+---
+
 ## Interview Q&A: RAG Pipeline and Chunking
 
 **Q: Walk me through a RAG pipeline architecture.**

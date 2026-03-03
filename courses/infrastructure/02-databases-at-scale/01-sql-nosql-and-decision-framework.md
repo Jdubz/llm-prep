@@ -524,6 +524,17 @@ Redis Pub/Sub is fire-and-forget messaging -- no persistence, no replay, no cons
 
 ---
 
+## Related Reading
+
+- [Module 00: Computing Fundamentals](../00-computing-fundamentals.md) -- covers the ACID and CAP theorem basics that this module builds on
+- [Module 02: Indexing, Sharding, and Replication](02-indexing-sharding-and-replication.md) -- the practical scaling techniques (indexes, EXPLAIN plans, sharding strategies, replication) for the databases selected using this framework
+- [Module 02: Database Platforms and Scaling](03-database-platforms-and-scaling.md) -- platform-specific deep dives (PostgreSQL internals, DynamoDB, Redis) and specialized databases (NewSQL, time-series, graph, vector)
+- [Module 03: Caching Patterns and Redis Basics](../03-caching/01-caching-patterns-and-redis-basics.md) -- caching is the first line of defense before scaling the database itself; understand cache-aside and write-through patterns
+- [Module 04: Event Sourcing, CQRS, and Sagas](../04-message-queues/02-event-sourcing-cqrs-and-sagas.md) -- event sourcing uses append-only databases as the source of truth; CQRS separates read and write models across different database types
+- [Module 09: Authentication and Authorization](../09-security/01-authentication-and-authorization.md) -- data encryption at rest and field-level encryption for sensitive columns in your databases
+
+---
+
 ## Key Takeaways
 
 1. **The database is a tool, not an identity.** Choose based on access patterns, consistency needs, and scale requirements. Be prepared to use multiple databases in one system.

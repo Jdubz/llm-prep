@@ -386,6 +386,21 @@ commit/rollback semantics, composing with `get_current_user`.
 
 ---
 
+---
+
+## Practice Exercises
+
+The concepts in this document are tested in `exercises.py` in the same directory:
+
+- **Exercise 4** (Custom Exception Handlers): Build `BookstoreError`, `BookNotFoundError`, and
+  `InventoryFullError` exception classes, then write handler functions that return RFC 9457
+  Problem Details JSON. Uses the "Exception Handlers" section above.
+
+Also see `examples.py` section 3 for a complete RFC 9457 implementation with `AppError`,
+`NotFoundError`, `ConflictError`, and both handler functions registered on the app.
+
+---
+
 ## Key Takeaways
 
 - Starlette provides the ASGI foundation; FastAPI adds DI, validation, and OpenAPI on top.

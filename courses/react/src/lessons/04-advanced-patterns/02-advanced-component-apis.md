@@ -665,3 +665,19 @@ Micro-frontends are valuable when: (1) teams are large enough that a monorepo bu
 **Q: How do you type a component that can accept different prop shapes based on a discriminant?**
 
 Use TypeScript discriminated unions where a literal type property (the discriminant) narrows the type. Each variant branch can have required and `never`-typed props. The `never` type explicitly prevents consumers from passing invalid combinations. Use a `switch (props.discriminant)` in the implementation for exhaustive handling, and an `assertNever` utility to catch unhandled variants at compile time if you add new discriminant values later.
+
+---
+
+## Practice
+
+- **Inversion of Control exercise**: Take a rigid component (e.g., a `<DataTable>` with built-in sorting and filtering) and refactor it to follow IoC. Expose `renderRow`, `renderHeader`, and `sortFn` props so consumers control behavior.
+- **Generic list component**: Build a type-safe `<List<T>>` component where `items: T[]`, `renderItem: (item: T) => ReactNode`, and `keyFn: (item: T) => string`. Verify that TypeScript infers `T` from usage.
+- **Builder pattern**: Implement a `createField()` builder that produces form field components with chained configuration: `createField('email').required().validate(emailSchema).build()`.
+- **Design system slot pattern**: Build a `<Card>` component with named slots (`header`, `body`, `footer`) using the slot pattern. Verify that consumers can pass any content to each slot.
+- **Module federation sketch**: Design (on paper) a micro-frontend architecture for an e-commerce site with independently deployed product catalog, cart, and checkout apps. Identify shared dependencies and the federation config needed.
+
+### Related Lessons
+
+- [Component Patterns & Composition](01-component-patterns-and-composition.md) -- compound components, render props, headless hooks, and other foundational patterns
+- [Custom Hooks Fundamentals](../02-custom-hooks/01-custom-hooks-fundamentals.md) -- hook composition patterns used in headless component APIs
+- [State Management Fundamentals](../05-state-management/01-state-management-fundamentals.md) -- Context API, state colocation, and provider patterns that advanced components rely on

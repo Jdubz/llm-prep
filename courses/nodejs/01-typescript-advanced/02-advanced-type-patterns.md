@@ -461,3 +461,28 @@ type FunctionKeys<T> = {
 ### Q14: What is the `in out` variance annotation for?
 
 **Answer:** Marks a type parameter as invariant — no subtyping in either direction. Use when the type parameter appears in both input (contravariant) and output (covariant) positions. Without this annotation, TypeScript infers variance from usage, which is correct but slower and can be wrong for recursive types. Explicit `in out` makes the compiler enforce the constraint and catch definition-site errors rather than use-site errors.
+
+---
+
+## Related Reading
+
+- **Variance annotations** (Section 2) matter when designing typed event systems — see [Architecture — Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md) for how event handler types interact with covariance/contravariance
+- **Declaration merging** (Section 3) is used in practice for extending Express `Request` types in [Auth & Security — Session Management and Validation](../05-auth-security/02-session-management-and-validation.md) and for Prisma client extensions in [Database Patterns — Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md)
+- **Prisma type generation** (Section 7) connects directly to [Database Patterns — Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md) for practical usage of those generated types
+- **Discriminated unions** (Section 5) are the primary pattern for API response types in [REST API Design — HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md) and for GraphQL error unions in [GraphQL — Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md)
+- **Type-safe event emitters** (Section 5.4) are applied at scale in [Architecture — Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md) and [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (pub/sub patterns)
+- **Performance considerations** (Section 8) — the `--generateTrace` and `--diagnostics` flags — tie into broader application profiling in [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md)
+- For conditional types, mapped types, and template literals that this file builds on, see [Conditional and Mapped Types](01-conditional-and-mapped-types.md)
+
+---
+
+## Practice Suggestions
+
+These exercises cover both files in the TypeScript Advanced module:
+
+1. **Implement a type-safe ORM query builder**: Create a generic `QueryBuilder<T>` where `T` is your model type. Support `.select()` (returns a narrowed type with only selected fields), `.where()` (accepts only valid field names and type-appropriate values), and `.orderBy()` (accepts only keys of `T`). Use mapped types with key remapping and conditional types to make the return type of `.execute()` reflect exactly what was selected.
+2. **Build a branded type library**: Implement `Brand<T, B>`, smart constructors for `Email`, `UserId`, `PositiveInt`, and `NonEmptyString`. Then write a function that accepts only `PositiveInt` and verify that plain `number` is rejected at compile time. Add a `parse` function for each brand that validates at runtime.
+3. **Type-level JSON schema validator**: Given a JSON schema as a const object literal, write a type that extracts the TypeScript type it describes. Handle `type: 'string'`, `type: 'number'`, `type: 'object'` with `properties`, and `type: 'array'` with `items`. Use recursive conditional types and template literals.
+4. **Variance exploration**: Create `Producer<out T>`, `Consumer<in T>`, and `ReadWriteStore<in out T>` interfaces. Write assignment tests that prove covariant, contravariant, and invariant behavior. Then remove the annotations and show a case where TypeScript infers the wrong variance for a recursive type.
+5. **Declaration merging in practice**: Set up a minimal Express app with TypeScript. Use module augmentation to add `requestId`, `user`, and `traceId` to the Express `Request` interface. Verify that the augmented properties are available in route handlers with full type safety.
+6. **Performance audit**: Take a project with complex types (or create one with deeply nested generics). Run `tsc --generateTrace` and open the trace in `chrome://tracing`. Identify the most expensive type instantiations and refactor to reduce them — for example, replacing a deep intersection chain with an interface that extends multiple bases.

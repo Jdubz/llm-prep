@@ -555,6 +555,17 @@ You will not cover all of these in depth in a 45-minute interview. But signaling
 
 ---
 
+## Related Reading
+
+- [Module 01: System Design Framework Essentials](01-system-design-framework-essentials.md) -- the foundational framework (requirements, estimation, high-level design, deep dives) that this module extends
+- [Module 02: Databases at Scale](../02-databases-at-scale/01-sql-nosql-and-decision-framework.md) -- deep dive on database trade-offs referenced in the "data layer" step of the design framework
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- the resilience patterns (circuit breakers, bulkheads, retry budgets) discussed in the failure handling sections
+- [Module 08: SLOs, Alerting, and Incident Response](../08-observability/02-slos-alerting-and-incident-response.md) -- SLO-driven design is a staff-level expectation; this module covers defining SLIs, error budgets, and burn rate alerting
+- [Module 10: Classic Design Problems](../10-classic-problems/01-classic-design-problems.md) -- apply the full framework end-to-end on six classic problems, from estimation through trade-off discussion
+- [Module 10: Advanced Design Problems](../10-classic-problems/02-advanced-design-problems.md) -- three staff-level problems that exercise multi-region, exactly-once, and multi-pipeline architectures
+
+---
+
 ## Key Takeaways
 
 1. **The framework is a scaffold, not a script.** Adapt it to the interviewer and the problem. Some problems need more estimation; others need longer deep dives.

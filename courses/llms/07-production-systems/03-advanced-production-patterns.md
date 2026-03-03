@@ -925,6 +925,18 @@ Every production LLM system should have a runbook covering these scenarios:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file. Each exercise references specific sections above and relevant patterns in `examples.py`.
+
+- **Exercise 4: Model Router with Confidence-Based Escalation [3]** — Implement the Cascade Pattern described in the "Multi-Model Architectures" section above, including the confidence threshold check, multi-tier escalation, and the cascade economics calculation (savings vs. always using the most expensive tier). The Router Pattern heuristics and Confidence Estimation Methods sections directly inform the design. Reference: `examples.py` Section 4 (`ModelRouter` with keyword-based `classify` and `select_model`).
+
+- **Exercise 2: Response Cache with Semantic Similarity [3]** — The semantic caching approach connects to the Gateway Pattern's "nice-to-have features" (response caching, semantic matching) described in the "Gateway and Proxy Patterns" section. Understanding when semantic caching saves cost connects to the Token Budget Management section.
+
+- **Exercise 6: Observability Pipeline [3]** — The disaster recovery section's circuit breaker with gradual traffic recovery and the production runbook scenarios (provider outage, cost spike, quality degradation) describe the real-world contexts where the ObservabilityPipeline's alert rules and dashboard metrics would fire. The Capacity Planning section's TPM estimation math informs the rate-limiting alert rules.
+
+---
+
 ## Interview Deep-Dive Questions
 
 These questions probe deeper than standard production questions and expect specific technical details.

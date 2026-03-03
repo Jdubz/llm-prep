@@ -531,6 +531,21 @@ Quality
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 2: Implement an LLM-as-Judge Scorer with Calibration** -- The calibration step connects to this file's "Building Custom Benchmarks" section (rubric design) and "Common Eval Metric Pitfalls" (Goodhart's Law applies when over-optimizing for a single judge metric).
+- **Exercise 5: Design a Red Teaming Test Suite** -- Report generation requires prioritizing findings by severity, which practices the responsible disclosure and documentation concepts from this file.
+- **Exercise 6: Implement Eval Regression Testing** -- The full regression testing workflow connects to "A/B Testing for LLM Features" (statistical significance, gradual rollout) and "Common Eval Metric Pitfalls" (Simpson's Paradox -- why per-category metrics matter over aggregate).
+
+See also `examples.py` for reference implementations:
+- "Eval results reporter" section -- generate_eval_report with per-category breakdown and regression highlighting
+- "Simple A/B test analyzer" section -- analyze_ab_test with z-test, p-value, and effect size calculation
+- "Eval pipeline" section -- run_eval_pipeline with baseline comparison and regression detection
+
+---
+
 ## Interview Q&A: Responsible AI and Eval Operations
 
 **Q: How do you handle bias and fairness in LLM applications?**

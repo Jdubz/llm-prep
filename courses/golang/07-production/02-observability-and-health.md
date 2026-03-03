@@ -439,3 +439,13 @@ func initProfiling() {
     })
 }
 ```
+
+---
+
+## Related Reading
+
+- **slog foundations** — [Module 03: Time, Logging, and Additional Stdlib](../03-stdlib/03-time-logging-and-additional-stdlib.md), section 2 (log/slog) covers the slog API basics that section 1 extends with production handlers and OpenTelemetry integration
+- **HTTP middleware for instrumentation** — [Module 04: Handlers, Routing, and Middleware](../04-http-services/01-handlers-routing-and-middleware.md), section 4 (Middleware Implementations) shows how the logging and metrics middleware from sections 1–2 integrate into the middleware chain
+- **Health checks in HTTP services** — [Module 04: Request Handling and Validation](../04-http-services/02-request-handling-and-validation.md), section 6 (Health Check Handler) implements the basic health check pattern that section 4 extends with Kubernetes probe types
+- **Concurrency for graceful shutdown** — [Module 02: Synchronization and Context](../02-concurrency/02-synchronization-and-context.md), section 4 covers the `signal.NotifyContext` pattern used in section 5 (Graceful Shutdown)
+- **Profiling benchmarks** — [Module 06: Benchmarking, Profiling, and Advanced Testing](../06-testing/03-benchmarking-profiling-and-advanced-testing.md), section 2 (Profiling) covers the development-time pprof usage that complements the production profiling in section 6

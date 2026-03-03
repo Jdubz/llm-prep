@@ -768,3 +768,20 @@ function EmailPreview() {
   return <p>Preview: {email}</p>;
 }
 ```
+
+---
+
+## Practice
+
+- **State categorization exercise**: Take a page from your app (or a familiar app) and categorize every piece of state: local component state, shared UI state, server/cache state, URL state, or form state. Determine which tool is appropriate for each.
+- **Context splitting**: Build a theme context with `mode` (light/dark), `primaryColor`, and `fontSize`. Render 3 consumers that each read only one field. Observe that all 3 re-render on any change. Refactor into 3 separate contexts and verify only the relevant consumer re-renders.
+- **URL state with `useSearchParams`**: Build a product filter page where filters (category, price range, sort order) are stored in the URL. Verify that the URL is bookmarkable and shareable.
+- **`useReducer` for coupled transitions**: Build a multi-step form wizard where "next step" validates the current step, saves data, and advances. Model this with `useReducer` and write the reducer as a testable pure function.
+- **React Hook Form + Zod**: Build a registration form with email, password, and confirm-password fields using React Hook Form and Zod validation. Verify zero re-renders during typing.
+
+### Related Lessons
+
+- [Hooks & State Management](../01-hooks-deep-dive/01-hooks-and-state-management.md) -- `useState`, `useReducer`, `useRef` fundamentals that this lesson applies
+- [State Libraries & Solutions](02-state-libraries-and-solutions.md) -- Zustand, Jotai, Redux Toolkit, TanStack Query for when built-in state tools are not enough
+- [Advanced State Patterns](03-advanced-state-patterns.md) -- XState, optimistic updates, CRDTs, event sourcing
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- how state placement and Context usage affect re-render performance

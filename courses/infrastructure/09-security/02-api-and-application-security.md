@@ -372,6 +372,16 @@ A: Immediate: revoke the key, check audit logs for unauthorized usage, generate 
 
 A: Legitimate traffic: diverse geographic origins matching your user base, targets product/checkout pages, valid session cookies, normal browsing patterns. Attack traffic: concentrated IP ranges, targets resource-intensive endpoints, lacks valid sessions, uniform patterns. Mitigate with auto-scaling, per-IP/per-user rate limiting, WAF rules, challenge pages, and a runbook for escalation.
 
+### Related Reading
+
+- [Module 09: Authentication and Authorization](01-authentication-and-authorization.md) -- the authentication and encryption foundations that API security builds on
+- [Module 09: Compliance and Advanced Security](03-compliance-and-advanced-security.md) -- compliance requirements drive many of the API security controls described here; supply chain security, threat modeling, and network security
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- rate limiting at the API gateway and circuit breakers for downstream service protection complement the DDoS mitigation strategies covered here
+- [Module 06: Docker and Containerization](../06-containers-orchestration/01-docker-and-containerization.md) -- container image security (distroless, multi-stage builds, Trivy scanning) is the build-time counterpart to runtime container security
+- [Module 06: Kubernetes Advanced Patterns](../06-containers-orchestration/03-kubernetes-advanced-patterns.md) -- Pod Security Standards, OPA/Gatekeeper policies, and network policies enforce the container security posture at the orchestration level
+- [Module 07: Pipeline Design and Deployment Strategies](../07-cicd/01-pipeline-design-and-deployment-strategies.md) -- SAST, DAST, and SCA integrate into the CI pipeline stages; security scanning is a gate before deployment
+- [Module 07: Infrastructure and GitOps](../07-cicd/03-infrastructure-and-gitops.md) -- supply chain security (SLSA, Sigstore, SBOM generation) in the CI/CD pipeline
+
 ### Key Takeaways
 
 1. **Supply chain security is the new frontier.** SBOMs, signed artifacts, and SLSA are rapidly becoming table stakes.

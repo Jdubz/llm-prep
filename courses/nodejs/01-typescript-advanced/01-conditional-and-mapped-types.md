@@ -531,3 +531,18 @@ type Test2 = Apply<PromiseLambda, number>; // Promise<number>
 ```
 
 Exploits `this` type in interfaces — intersecting `F & { In: A }` makes `this['In']` resolve to `A`. More local than the URI pattern but harder to read. Neither substitutes for true HKTs.
+
+**When to use each approach:** The URI pattern (fp-ts style) is better when you need an open, extensible registry of type constructors — consumers add entries via declaration merging. The defunctionalization pattern (Effect style) is better when you want each type lambda to be self-contained and locally defined. The URI pattern is more established in the ecosystem; the defunctionalization pattern avoids a global registry but requires familiarity with `this`-type tricks. In an interview, being able to explain both and articulate the trade-off demonstrates genuine depth.
+
+**Common mistake:** Trying to build HKT abstractions for application code rather than library internals. The cognitive overhead of either pattern is only justified when you are writing a reusable library that needs to be polymorphic over type constructors (e.g., a generic `map` that works over Option, Array, Result). For application-level code, simple generics with concrete types are almost always the right call.
+
+---
+
+## Related Reading
+
+- **Branded types and phantom types** (Section 4) are used extensively for domain modeling in [Database Patterns — Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md) and for type-safe IDs in [REST API Design — HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md)
+- **Template literal type parsing** (Section 8) connects to route parameter extraction in [GraphQL — Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md) and type-safe routing in [REST API Design — API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md)
+- **Recursive conditional types** (Section 6) are the backbone of how Prisma generates types from schema — see [Advanced Type Patterns — How Prisma Types Work](02-advanced-type-patterns.md#7-how-prisma-types-work-deep-dive)
+- **Mapped types with key remapping** (Section 2) are applied in [Architecture — Clean Architecture and DDD](../09-architecture-patterns/01-clean-architecture-and-ddd.md) for building typed event maps and repository interfaces
+- **Type-level programming foundations** (Section 5) prepare you for the variance and compiler internals discussion in [Advanced Type Patterns — Variance Annotations](02-advanced-type-patterns.md#2-variance-annotations-ts-47)
+- For fundamentals that this file builds on (generics, narrowing, utility types), review [Module 00 — TypeScript Essentials](../00-ts-node-fundamentals.md#6-typescript-essentials)

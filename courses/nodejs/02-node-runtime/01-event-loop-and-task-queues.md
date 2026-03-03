@@ -297,3 +297,14 @@ Node.js 20+ uses a synchronous propagation implementation (3-5x faster than earl
 4. **Unhandled rejections crash** (Node 15+): Always `.catch()` or `try/catch` with `await`.
 5. **Default thread pool = 4**: Set `UV_THREADPOOL_SIZE` via env var before process starts. Setting in code has no effect after pool init.
 6. **ESM has no `__filename`/`__dirname`**: Use `fileURLToPath(import.meta.url)` and `dirname()`.
+
+---
+
+## Related Reading
+
+- **Event loop fundamentals** build on the mental model from [Module 00 — The Event Loop](../00-ts-node-fundamentals.md#4-the-event-loop) — this file adds libuv phases, starvation detection, and platform-specific I/O multiplexing
+- **Thread pool saturation** (Section 4) is a common production bottleneck explored further in [Performance — Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md) and [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md)
+- **Event loop starvation** (Section 5) — the `monitorEventLoopDelay` technique — ties directly into [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md) (Clinic.js, Chrome DevTools profiling)
+- **AsyncLocalStorage** (Section 7.2) is the foundation for request context propagation in [REST API Design — HTTP Semantics and Status Codes](../03-rest-api-design/01-http-semantics-and-status-codes.md) and distributed tracing in [Architecture — Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md)
+- **libuv internals** (Section 6) — epoll, kqueue, IOCP — are the underlying mechanism for all I/O discussed in [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (Redis connections, WebSocket scaling)
+- For worker threads, cluster module, and process management that build on these event loop concepts, continue to [Threading and Process Management](02-threading-and-process-management.md)

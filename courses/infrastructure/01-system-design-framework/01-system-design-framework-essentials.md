@@ -543,3 +543,12 @@ State your assumptions explicitly: "I'm going to assume X. Let me know if you'd 
 **The mistake:** Designing only the happy path.
 
 **The fix:** For each component, briefly address: "What happens when this fails?" A cache miss is not a failure -- it is expected. A database outage is a failure. What is the blast radius? How do you detect it? How do you recover?
+
+---
+
+## Related Reading
+
+- [Module 00: Computing Fundamentals](../00-computing-fundamentals.md) -- the latency numbers and distributed systems vocabulary used throughout the estimation and design steps
+- [Module 01: Advanced System Design](02-advanced-system-design.md) -- extends this framework with staff-level depth: multi-region design, migration strategies, cost estimation, and organizational considerations
+- [Module 10: Classic Design Problems](../10-classic-problems/01-classic-design-problems.md) -- applies this exact framework (requirements, estimation, high-level design, deep dives, trade-offs) to six end-to-end problems including URL shortener, chat system, and news feed
+- [Module 10: Advanced Design Problems](../10-classic-problems/02-advanced-design-problems.md) -- three more complex problems (distributed task scheduler, search autocomplete, video streaming) that exercise the advanced portions of the framework

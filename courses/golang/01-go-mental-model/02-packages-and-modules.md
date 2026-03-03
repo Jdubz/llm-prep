@@ -420,3 +420,12 @@ Key principles:
 - `pkg/` is for code that could reasonably be imported by other projects.
 - Avoid `utils/`, `helpers/`, `common/` — they are magnets for poorly organized code.
 - Keep `main.go` thin. Wire dependencies there, but put logic in packages.
+
+---
+
+## Related Reading
+
+- **Production project layout** — [Module 07: Project Structure and Configuration](../07-production/01-project-structure-and-configuration.md), section 1 (Project Layout Conventions) covers `cmd/`, `internal/`, `pkg/` in depth with real-world examples from Kubernetes, Docker, and HashiCorp
+- **Dependency injection wiring** — [Module 08: Patterns and Composition](../08-advanced-patterns/02-patterns-and-composition.md), section 4 (Dependency Injection) shows how package boundaries and constructor-based DI work together in `main()`
+- **Build tags and testing** — [Module 06: Table-Driven Tests and Mocking](../06-testing/01-table-driven-tests-and-mocking.md), section 6 (TestMain and Build Tags) covers `//go:build` for conditional compilation
+- **Go modules in the ecosystem** — [Module 09: System Design and Advanced Topics](../09-interview-prep/02-system-design-and-advanced-topics.md), section 8 (Staff-Level Discussions) discusses Go's module proxy, checksum database, and minimum version selection

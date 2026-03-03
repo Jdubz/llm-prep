@@ -5,6 +5,12 @@ Complete the TODO sections. Each exercise focuses on a core agent pattern
 you should be able to implement and explain in an interview.
 
 Run with: python exercises.py (uses assert-based tests at the bottom)
+
+Reference files in this directory:
+  - 01-function-calling-and-tool-use.md  (tool schemas, execution loops, validation)
+  - 02-agent-patterns-and-memory.md      (agent loop, ReAct, memory, guardrails, MCP)
+  - 03-advanced-agent-systems.md         (multi-agent, long-running, evaluation)
+  - examples.py                          (runnable reference implementations)
 """
 
 from __future__ import annotations
@@ -42,7 +48,20 @@ class LLMResponse:
 
 # ---------------------------------------------------------------------------
 # Exercise 1: Build a Complete Agent Loop
-# ---------------------------------------------------------------------------
+#
+# READ FIRST:
+#   02-agent-patterns-and-memory.md
+#     -> "## The Core Agent Loop" (architecture diagram + implementation)
+#     -> "## Exit Conditions and Safety" (when to stop looping)
+#   01-function-calling-and-tool-use.md
+#     -> "## Executing Tool Calls: OpenAI" (the while-loop pattern)
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Example 1: Complete Agent Loop with Tool Execution"
+#        - agent_loop()    (the async agent loop you will replicate synchronously)
+#        - execute_tool()  (how tool results are appended as Message objects)
+#
 # Implement the core agent loop that:
 # - Sends messages to an LLM (simulated)
 # - Detects tool calls in the response
@@ -95,18 +114,52 @@ def agent_loop(
     ]
 
     # TODO: Implement the agent loop
-    # Hint: Use llm_responses.pop(0) to get each response
-    # Hint: Use execute_tool_sync() to run tools
-    # Hint: Append Message objects to the messages list for:
-    #   - Assistant responses (with tool_calls if present)
-    #   - Tool results (role="tool", with tool_call_id)
+    #
+    # Step-by-step:
+    #   for iteration in range(max_iterations):
+    #       if not llm_responses:
+    #           break
+    #       response = llm_responses.pop(0)
+    #
+    #       # Append assistant message to history
+    #       messages.append(Message(
+    #           role="assistant",
+    #           content=response.content,
+    #           tool_calls=response.tool_calls,
+    #       ))
+    #
+    #       # If no tool calls -> final text answer
+    #       if not response.tool_calls:
+    #           return (response.content, messages)
+    #
+    #       # Execute each tool call and append result
+    #       for tc in response.tool_calls:
+    #           result = execute_tool_sync(tc.name, tc.arguments)
+    #           messages.append(Message(
+    #               role="tool",
+    #               content=result,
+    #               tool_call_id=tc.id,
+    #           ))
+    #
+    #   return ("Max iterations reached.", messages)
 
     pass  # Replace with your implementation
 
 
 # ---------------------------------------------------------------------------
 # Exercise 2: Implement the ReAct Pattern
-# ---------------------------------------------------------------------------
+#
+# READ FIRST:
+#   02-agent-patterns-and-memory.md
+#     -> "## The ReAct Pattern" (Thought -> Action -> Observation example)
+#     -> "### Explicit vs. Implicit ReAct" (formatting vs native tool use)
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Example 5: ReAct Pattern Implementation"
+#        - REACT_SYSTEM_PROMPT  (the prompt that structures Thought/Action/Observation)
+#        - react_agent()        (async ReAct loop with trace logging)
+#
 # Build a ReAct agent that maintains an explicit trace of
 # Thought -> Action -> Observation steps.
 # ---------------------------------------------------------------------------
@@ -146,16 +199,49 @@ def react_agent(
     trace: list[ReActStep] = []
 
     # TODO: Implement the ReAct loop
-    # Hint: Create a ReActStep for each iteration
-    # Hint: Use execute_tool_sync() for the Action step
-    # Hint: The Observation is the tool result
+    #
+    # Step-by-step:
+    #   for step in range(max_steps):
+    #       if not llm_responses:
+    #           break
+    #       response = llm_responses.pop(0)
+    #
+    #       # No tool calls -> final answer
+    #       if not response.tool_calls:
+    #           trace.append(ReActStep(thought=response.content))
+    #           return (response.content, trace)
+    #
+    #       # Has tool calls -> record Thought + Action + Observation
+    #       tc = response.tool_calls[0]  # one action per step
+    #       observation = execute_tool_sync(tc.name, tc.arguments)
+    #       trace.append(ReActStep(
+    #           thought=response.content,
+    #           action=tc.name,
+    #           action_input=tc.arguments,
+    #           observation=observation,
+    #       ))
+    #
+    #   return ("Max steps reached.", trace)
 
     pass  # Replace with your implementation
 
 
 # ---------------------------------------------------------------------------
 # Exercise 3: Design Tool Schemas for a Customer Service Agent
-# ---------------------------------------------------------------------------
+#
+# READ FIRST:
+#   01-function-calling-and-tool-use.md
+#     -> "## Tool Schema Design" -> "### OpenAI Format" (the JSON structure)
+#     -> "## Tool Design Best Practices"
+#        -> "### Write Descriptions That Guide the Model"
+#        -> "### Parameter Design Rules"
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Example 2: Tool Definitions with JSON Schema"
+#        - CUSTOMER_SERVICE_TOOLS  (three complete tool definitions to use as template)
+#        Each tool has: "type": "function", "function": {name, description, parameters}
+#
 # Define tool schemas for three customer service tools.
 # Focus on clear descriptions that guide the model.
 # ---------------------------------------------------------------------------
@@ -189,8 +275,27 @@ def create_customer_service_tools() -> list[dict]:
     """
 
     # TODO: Define the three tool schemas
-    # Hint: Use the format from examples.py as a template
-    # Hint: Descriptions should tell the model WHEN to use each tool
+    #
+    # Use the OpenAI format. Each tool follows this structure:
+    #   {
+    #       "type": "function",
+    #       "function": {
+    #           "name": "tool_name",
+    #           "description": "What it does. When to use it. What it returns.",
+    #           "parameters": {
+    #               "type": "object",
+    #               "properties": {
+    #                   "param_name": {"type": "string", "description": "..."},
+    #                   "enum_param": {"type": "string", "enum": ["a", "b", "c"]},
+    #                   "int_param":  {"type": "integer", "minimum": 1, "maximum": 10},
+    #               },
+    #               "required": ["param_name"]
+    #           }
+    #       }
+    #   }
+    #
+    # Key: descriptions should tell the model WHEN to use each tool and WHEN NOT to.
+    # See examples.py CUSTOMER_SERVICE_TOOLS for a complete working example.
 
     tools = []
 
@@ -208,7 +313,21 @@ def create_customer_service_tools() -> list[dict]:
 
 # ---------------------------------------------------------------------------
 # Exercise 4: Implement Conversation Memory with Sliding Window
-# ---------------------------------------------------------------------------
+#
+# READ FIRST:
+#   02-agent-patterns-and-memory.md
+#     -> "## Memory Systems" -> "### Memory Architecture" (diagram)
+#     -> "### Conversation History Strategies"
+#        - "Sliding Window" (keep last N turns)
+#        - "Summarization" (compress old messages)
+#     -> "### Memory System Comparison" (table of tradeoffs)
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Example 4: Conversation Memory with Summarization"
+#        - ConversationMemory class  (add, get_messages, needs_summarization, summarize)
+#        - agent_with_memory()       (how memory integrates into the agent loop)
+#
 # Build a memory system that keeps recent messages and summarizes old ones.
 # ---------------------------------------------------------------------------
 
@@ -227,6 +346,7 @@ class SlidingWindowMemory:
     def add_message(self, message: Message) -> None:
         """Add a message to the history."""
         # TODO: Append the message to self.messages
+        # One line: self.messages.append(message)
         pass
 
     def get_context(self) -> list[Message]:
@@ -239,14 +359,26 @@ class SlidingWindowMemory:
         3. Include only the last `window_size` non-system messages
         """
         # TODO: Implement context retrieval
-        # Hint: Separate system messages from non-system messages
-        # Hint: If self.summary exists, add it as a system message
-        # Hint: Take only the last window_size non-system messages
+        #
+        # Step-by-step:
+        #   system_msgs = [m for m in self.messages if m.role == "system"]
+        #   non_system  = [m for m in self.messages if m.role != "system"]
+        #
+        #   result = list(system_msgs)
+        #   if self.summary:
+        #       result.append(Message(
+        #           role="system",
+        #           content=f"Summary of earlier conversation:\n{self.summary}"
+        #       ))
+        #   result.extend(non_system[-self.window_size:])
+        #   return result
         pass
 
     def should_summarize(self) -> bool:
         """Return True if there are more non-system messages than 2x window_size."""
         # TODO: Check if summarization is needed
+        #   non_system = [m for m in self.messages if m.role != "system"]
+        #   return len(non_system) > self.window_size * 2
         pass
 
     def create_summary_prompt(self) -> list[Message]:
@@ -258,8 +390,17 @@ class SlidingWindowMemory:
         2. The messages that need summarization (everything before the window)
         """
         # TODO: Build the summarization prompt
-        # Hint: Non-system messages before the window are the ones to summarize
-        # Hint: The instruction should ask for a concise summary preserving key facts
+        #
+        # Step-by-step:
+        #   non_system = [m for m in self.messages if m.role != "system"]
+        #   to_summarize = non_system[:-self.window_size]
+        #   return [
+        #       Message(role="system", content=(
+        #           "Summarize the following conversation concisely. "
+        #           "Preserve key facts, decisions, and user preferences."
+        #       )),
+        #       *to_summarize,
+        #   ]
         pass
 
     def apply_summary(self, summary_text: str) -> None:
@@ -270,12 +411,30 @@ class SlidingWindowMemory:
         2. Remove the summarized messages (keep system + recent window_size)
         """
         # TODO: Apply the summary and trim old messages
+        #
+        # Step-by-step:
+        #   self.summary = summary_text
+        #   system_msgs = [m for m in self.messages if m.role == "system"]
+        #   non_system  = [m for m in self.messages if m.role != "system"]
+        #   self.messages = system_msgs + non_system[-self.window_size:]
         pass
 
 
 # ---------------------------------------------------------------------------
 # Exercise 5: Build a Tool Call Validator
-# ---------------------------------------------------------------------------
+#
+# READ FIRST:
+#   01-function-calling-and-tool-use.md
+#     -> "## Tool Call Validation" (Pydantic example, injection detection)
+#     -> "## Tool Design Best Practices" -> "### Parameter Design Rules"
+#        (types, enums, required vs optional)
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Example 6: Tool Call Validation and Error Handling"
+#        - validate_tool_call()  (checks required params, enum, type, range)
+#        - safe_execute_tool()   (validation + permission check + execution)
+#
 # Implement validation that checks tool call arguments against their schemas.
 # ---------------------------------------------------------------------------
 
@@ -313,28 +472,79 @@ def validate_tool_call(
 
     # TODO: Step 1 - Find the tool schema by name
     # If not found, return an error with field="tool_name"
+    #
+    #   schema = None
+    #   for tool in tool_schemas:
+    #       func_def = tool.get("function", tool)
+    #       if func_def.get("name") == tool_name:
+    #           schema = func_def
+    #           break
+    #   if not schema:
+    #       return [ValidationError(field="tool_name", message=f"Unknown tool: {tool_name}")]
 
     # TODO: Step 2 - Check required parameters
     # For each required param not in arguments, add a ValidationError
+    #
+    #   params = schema.get("parameters", {})
+    #   properties = params.get("properties", {})
+    #   for req in params.get("required", []):
+    #       if req not in arguments:
+    #           errors.append(ValidationError(field=req, message=f"Missing required: '{req}'"))
 
     # TODO: Step 3 - Check for unknown parameters
     # For each argument not in properties, add a ValidationError
+    #
+    #   for key in arguments:
+    #       if key not in properties:
+    #           errors.append(ValidationError(field=key, message=f"Unknown parameter: '{key}'"))
 
     # TODO: Step 4 - Validate enum values
     # If a property has an "enum" and the value isn't in it, add error
+    #
+    #   for key, value in arguments.items():
+    #       if key not in properties:
+    #           continue
+    #       prop = properties[key]
+    #       if "enum" in prop and value not in prop["enum"]:
+    #           errors.append(ValidationError(field=key, message=f"Invalid enum value: '{value}'"))
 
     # TODO: Step 5 - Validate integer constraints
     # Check "minimum" and "maximum" for integer/number types
+    #
+    #       if "minimum" in prop and isinstance(value, (int, float)):
+    #           if value < prop["minimum"]:
+    #               errors.append(ValidationError(field=key, message=f"Below minimum {prop['minimum']}"))
+    #       if "maximum" in prop and isinstance(value, (int, float)):
+    #           if value > prop["maximum"]:
+    #               errors.append(ValidationError(field=key, message=f"Above maximum {prop['maximum']}"))
 
     # TODO: Step 6 - Validate string types
     # If type is "string" and value isn't a string, add error
+    #
+    #       if prop.get("type") == "string" and not isinstance(value, str):
+    #           errors.append(ValidationError(field=key, message=f"Expected string, got {type(value).__name__}"))
 
     return errors
 
 
 # ---------------------------------------------------------------------------
 # Exercise 6: Implement a Simple Orchestrator
-# ---------------------------------------------------------------------------
+#
+# READ FIRST:
+#   03-advanced-agent-systems.md
+#     -> "## Multi-Agent Architectures"
+#        -> "### Architecture 1: Supervisor / Orchestrator" (diagram + when to use)
+#        -> "### Architecture Comparison" (single vs supervisor vs peer)
+#   02-agent-patterns-and-memory.md
+#     -> "## The Core Agent Loop" (the loop the specialist will run)
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Example 7: Simple Multi-Agent Pattern (Orchestrator + Specialists)"
+#        - OrchestratorAgent.route()          (classifies intent, delegates)
+#        - OrchestratorAgent._build_routing_prompt() (how routing decisions work)
+#        - AgentConfig / specialists dict     (specialist configuration)
+#
 # Build an orchestrator that classifies intent and delegates to specialists.
 # ---------------------------------------------------------------------------
 
@@ -367,10 +577,19 @@ def classify_intent(
         If no match, return the first specialist's name as default.
     """
     # TODO: Implement keyword-based intent classification
-    # Hint: Convert message to lowercase
-    # Hint: Check if any of the specialist's keywords appear in the message
-    # Hint: Return the specialist with the most keyword matches
-    # Hint: If no matches, return the first specialist's name
+    #
+    # Step-by-step:
+    #   msg_lower = message.lower()
+    #   best_name = specialists[0].name      # default to first
+    #   best_count = 0
+    #
+    #   for spec in specialists:
+    #       count = sum(1 for kw in spec.keywords if kw.lower() in msg_lower)
+    #       if count > best_count:
+    #           best_count = count
+    #           best_name = spec.name
+    #
+    #   return best_name
 
     pass
 
@@ -391,14 +610,26 @@ def orchestrator(
     Returns:
         Tuple of (specialist_name, final_response)
     """
-    # TODO: Step 1 - Classify intent to pick a specialist
-    # TODO: Step 2 - Get the specialist's config
-    # TODO: Step 3 - Run agent_loop with the specialist's tools and responses
-    # TODO: Step 4 - Return (specialist_name, response)
-
-    # Hint: Use classify_intent() for step 1
-    # Hint: Use agent_loop() for step 3 (you need to have implemented Exercise 1)
-    # Hint: Find the specialist config by matching name
+    # TODO: Implement the orchestrator
+    #
+    # Step-by-step:
+    #   # Step 1 - Classify intent
+    #   specialist_name = classify_intent(message, specialists)
+    #
+    #   # Step 2 - Find the specialist config
+    #   spec = next(s for s in specialists if s.name == specialist_name)
+    #
+    #   # Step 3 - Get the specialist's scripted LLM responses
+    #   responses = llm_responses.get(specialist_name, [])
+    #
+    #   # Step 4 - Run agent_loop with the specialist's tools and responses
+    #   response, _ = agent_loop(
+    #       llm_responses=responses,
+    #       tools=spec.tools,
+    #       initial_message=message,
+    #   )
+    #
+    #   return (specialist_name, response)
 
     pass
 

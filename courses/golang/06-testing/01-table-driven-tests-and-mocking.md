@@ -634,3 +634,13 @@ func TestExpensiveOperation(t *testing.T) {
 | Fuzzing crashes go to `testdata/fuzz/` | They become regression tests automatically |
 | `b.ResetTimer()` excludes setup | Call it after setup code to exclude from timing |
 | `testcontainers` requires Docker | Guard with `testing.Short()` or build tags in CI |
+
+---
+
+## Related Reading
+
+- **stdlib testing foundations** — [Module 03: Testing and IO](../03-stdlib/02-testing-and-io.md), section 1 covers the `testing` package basics that this file builds on with table-driven patterns and advanced mocking
+- **Repository pattern for testability** — [Module 05: Queries, Transactions, and Patterns](../05-data-storage/02-queries-transactions-and-patterns.md), section 3 (Repository Pattern) defines the interfaces that mocks from section 3 implement
+- **HTTP handler testing** — [Integration and HTTP Testing](02-integration-and-http-testing.md), section 1 covers `httptest` patterns for testing the HTTP handlers that depend on the mocked services from this file
+- **Interfaces enable mocking** — [Module 01: Types, Interfaces, and Structs](../01-go-mental-model/01-types-interfaces-and-structs.md), section 4 (Interfaces) explains Go's implicit interface satisfaction that makes the mock pattern from section 3 possible without explicit `implements`
+- **Build tags for test organization** — [Module 01: Packages and Modules](../01-go-mental-model/02-packages-and-modules.md) covers `//go:build` directives used in section 6 for separating integration tests

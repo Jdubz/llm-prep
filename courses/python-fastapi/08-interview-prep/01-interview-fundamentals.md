@@ -837,6 +837,21 @@ a is b  # False — different objects (outside cache range)
 
 ---
 
+## Practice Exercises
+
+The following timed coding challenges in `exercises.py` test concepts covered in this file. Use them to practice under interview conditions.
+
+| Exercise | Time | Concepts from this file |
+|----------|------|------------------------|
+| **Exercise 1: TODO API with CRUD + Filtering** | 15 min | Pydantic models (F3, Q18), Field validation, FastAPI route decorators (F1, F4), query parameter filtering, status codes |
+| **Exercise 2: User Registration with Validation** | 15 min | `@field_validator` (F3), password hashing (F1 dependency injection), Bearer token auth (F1), `HTTPException` status codes |
+| **Exercise 4: Debug Broken Code** | 10 min | `is None` vs `== None` (Q13), proper status codes, Pydantic validation, error handling patterns |
+| **Exercise 5: Code Review** | 10 min | Security (plaintext passwords), Pydantic models (Q18, F3), route ordering, type hints (Q10), HTTP method semantics |
+
+Exercises 3 (Rate Limiter) and 6 (Webhook Delivery) are covered in `02-system-design-and-code-review.md`.
+
+---
+
 ## Key Takeaways
 
 - Fixtures are composable, dependency-injected, and replace `beforeEach`/`afterEach` with a single function.

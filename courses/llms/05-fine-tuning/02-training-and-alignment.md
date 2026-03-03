@@ -461,6 +461,18 @@ Result: Model may produce harmful outputs despite the base model's training
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Approach Selection** -- Requires understanding of when fine-tuning is appropriate vs. simpler alternatives, which connects to the alignment concepts here (e.g., knowing that DPO-based fine-tuning changes behavior, not knowledge).
+- **Exercise 4: Evaluation Harness** -- Build a comparison harness for base vs. fine-tuned models. Practices the metrics tracking guidance from "What metrics do you track when fine-tuning?" (Interview Q&A) including per-category evaluation, regression detection, and quality-vs-baseline comparison.
+
+See also `examples.py` for reference implementations:
+- Section 5 "EVALUATION HARNESS" -- complete eval pipeline with exact match, ROUGE-L, per-class accuracy, and model comparison reporting
+
+---
+
 ## Interview Q&A: Training and Alignment
 
 **Q: What is DPO and how does it compare to RLHF?**

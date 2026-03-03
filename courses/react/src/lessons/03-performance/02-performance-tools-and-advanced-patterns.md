@@ -744,3 +744,20 @@ The key pattern is more declarative and less error-prone. The `useEffect` approa
 | `useDeferredValue` | Deferred derived values | Filtering/searching with received props |
 | Key reset | Force remount | Resetting all component state |
 | Profiler | Measure render performance | Before and after optimization |
+
+---
+
+## Practice
+
+- **Profiler exercise**: Open React DevTools Profiler on a real app. Record a session, identify the slowest component, and apply one optimization from this lesson. Compare flame graphs before and after.
+- **Code splitting**: Take a route in your app that loads a heavy library (chart, editor, map). Convert it to `React.lazy` + `Suspense`. Verify the main bundle shrinks using your bundler's analyzer.
+- **Virtualization**: Render a list of 10,000 items using `@tanstack/react-virtual`. Compare scroll performance against the naive `map` approach using the Profiler.
+- **Bundle analysis**: Run `npx webpack-bundle-analyzer` (or equivalent for your bundler) on your production build. Find the 3 largest dependencies and determine if any can be lazy-loaded or replaced with lighter alternatives.
+- **Case study walkthrough**: Pick one of the case studies from this lesson (e-commerce catalog, real-time dashboard, social feed). Sketch out which optimization techniques you would apply and in what order.
+
+### Related Lessons
+
+- [Rendering & Optimization](01-react-rendering-and-optimization.md) -- re-render triggers, memoization flowchart, `startTransition`, and `useDeferredValue`
+- [React Internals: Fiber & Rendering](../08-react-internals/01-react-fiber-and-rendering.md) -- Fiber architecture, reconciliation, and hydration that underpin the performance tools
+- [React Internals: Re-renders & Optimization](../08-react-internals/02-re-renders-and-optimization.md) -- priority lanes, time slicing, and the scheduler
+- [Hooks Internals & Advanced Patterns](../01-hooks-deep-dive/02-hooks-internals-and-advanced-patterns.md) -- rules of hooks, the fiber hook linked list, and advanced hook patterns

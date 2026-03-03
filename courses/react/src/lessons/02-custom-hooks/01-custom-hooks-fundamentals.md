@@ -599,6 +599,23 @@ Extract it. Name it after what it provides, not what it does internally.
 
 ---
 
+## Practice
+
+- **Implement `usePrevious`**: Open `src/hooks/usePrevious.js` and implement the hook. This file uses the derived-state pattern (`useState` with `[prev, curr]` tuple). Compare it to the `useRef` + `useEffect` approach described in the "usePrevious" section above.
+- **Implement `useFetch`**: Open `src/hooks/useFetch.js` and implement a data-fetching hook with `AbortController` for race condition handling and a `refetch` callback.
+- **Test interactively**: Run `npm run dev` and open the Custom Hooks Demo (`src/lessons/02-custom-hooks/CustomHooksDemo.jsx`). Use the PreviousValueDemo, FetchDemo, and RaceConditionTester components to verify your implementations.
+- **Build `useDebounce`**: Implement the debounced value hook shown in this lesson. Write a component that uses it for search-as-you-type. Verify that rapid typing only triggers one API call after the delay.
+- **Build `useLocalStorage`**: Implement the `useLocalStorage` hook from the examples. Handle SSR (return default when `window` is undefined), JSON serialization errors, and storage events from other tabs.
+- **Composition exercise**: Build `useSearchWithHistory` by composing `useDebounce`, `useLocalStorage`, and `useFetch`. This exercises the hook composition pattern.
+
+### Related Lessons
+
+- [Hooks & State Management](../01-hooks-deep-dive/01-hooks-and-state-management.md) -- understand `useRef`, `useEffect`, `useState`, and `useReducer` before building custom hooks on top of them
+- [Custom Hooks Testing & Advanced](02-custom-hooks-testing-and-advanced.md) -- testing hooks with `renderHook`, TanStack Query internals, TypeScript generics for hooks
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- understand memoization patterns for stable return values from hooks
+
+---
+
 ## Custom Hook Template
 
 ```tsx

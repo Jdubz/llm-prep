@@ -274,17 +274,19 @@ spec:
 
 ## Deployment Strategies
 
+The choice of deployment strategy depends on your risk tolerance, observability maturity, and resource budget. Each strategy makes a different trade-off between deployment speed, resource cost, and rollback capability.
+
 ### Rolling Updates
 
-Default strategy. Gradually replaces old pods. Set `maxUnavailable: 0` for zero-downtime.
+Default strategy. Gradually replaces old pods. Set `maxUnavailable: 0` for zero-downtime. This is the right choice for most services because it requires no extra tooling, uses minimal additional resources, and provides automatic rollback if pods fail readiness probes. The limitation is that both old and new versions run simultaneously during the rollout, so your application must handle running two versions at once (especially important for database schema changes).
 
 ### Blue-Green
 
-Run two environments (blue = current, green = new). Switch traffic atomically by updating the Service selector. Instant rollback. Requires 2x resources during transition.
+Run two environments (blue = current, green = new). Switch traffic atomically by updating the Service selector. Instant rollback. Requires 2x resources during transition. Use blue-green when you need to validate the entire new environment before sending any production traffic, or when an atomic cutover is required (no mixed-version traffic). The cost is double the infrastructure during the transition period.
 
 ### Canary with Istio/Flagger
 
-Route a small percentage of traffic to the new version, monitor metrics, gradually increase.
+Route a small percentage of traffic to the new version, monitor metrics, gradually increase. Canary is the safest strategy for high-traffic services because you catch regressions while they affect only a small percentage of users. It requires good observability (you must be able to compare error rates and latency between canary and stable versions) and a service mesh or Ingress controller that supports traffic splitting.
 
 ```yaml
 # Istio VirtualService: 95/5 traffic split
@@ -460,3 +462,15 @@ A: Start generous. Use VPA in recommendation mode over several days including pe
 4. **HPA vs KEDA?** HPA scales on metrics (min 1 replica). KEDA scales on external events and supports scale-to-zero.
 5. **Sidecar pattern?** Helper container in the same pod (Envoy proxy, log shipper).
 6. **Kustomize?** Template-free manifest customization using overlays. Built into kubectl.
+
+---
+
+## Related Reading
+
+- [Module 06: Docker and Containerization](01-docker-and-containerization.md) -- the container fundamentals (namespaces, cgroups, images) that Kubernetes orchestrates
+- [Module 06: Kubernetes Advanced Patterns](03-kubernetes-advanced-patterns.md) -- Helm, GitOps (ArgoCD/Flux), CRDs, operators, service mesh, and multi-cluster strategies
+- [Module 05: Load Balancing Fundamentals](../05-load-balancing/01-load-balancing-fundamentals.md) -- Kubernetes Services implement L4 load balancing; understanding load balancing algorithms helps you configure Ingress controllers and service meshes
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- nginx and Envoy configurations used as Kubernetes Ingress controllers
+- [Module 07: Pipeline Design and Deployment Strategies](../07-cicd/01-pipeline-design-and-deployment-strategies.md) -- CI/CD pipelines deploy to Kubernetes; deployment strategies (rolling, blue-green, canary) map directly to Kubernetes Deployment configurations
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- monitoring Kubernetes workloads with Prometheus (container CPU/memory metrics, pod restart counts) and the USE method for resource utilization
+- [Module 08: SLOs, Alerting, and Incident Response](../08-observability/02-slos-alerting-and-incident-response.md) -- defining SLOs for services running on Kubernetes and alerting on pod health, resource saturation, and deployment rollbacks

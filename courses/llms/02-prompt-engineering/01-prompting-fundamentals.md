@@ -508,6 +508,24 @@ Common mistakes that lead to unreliable outputs:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` directly practice concepts from this file:
+
+- **Exercise 1: Classification Chain for Ambiguous Inputs** -- Combines three concepts from this file: few-shot prompting (the Step 1 classification prompt uses few-shot examples), chain-of-thought prompting (Step 2 uses CoT to resolve ambiguity), and structured output (both steps return JSON validated against a Pydantic schema). Also practices prompt chaining from the "Prompt Chaining" section -- the output of Step 1 feeds into Step 2.
+
+- **Exercise 2: Few-Shot Example Selection** -- Directly practices the "Few-Shot Example Selection Strategies" section: diversity over similarity, coverage of decision boundaries, and quality over quantity. The `ensure_label_diversity` parameter implements the recommendation to cover different input types rather than using similar examples.
+
+- **Exercise 3: Reliable JSON Output for Complex Schema** -- Practices the "Structured Output" section end-to-end: provider-enforced schemas (json_schema mode), defense in depth with Pydantic validation, and retry-with-feedback for self-correction. Also uses the delimiter pattern from "Delimiters and Instruction Separation" to wrap input text.
+
+- **Exercise 4: Optimize a Poorly-Performing Prompt** -- Directly addresses the "Prompt Anti-Patterns" table (the baseline prompt has ambiguous instructions, no output format, no examples) and "Negative Prompting" (telling the model what NOT to include). Requires analyzing failure modes and writing a prompt that fixes them.
+
+- **Exercise 6: Prompt Injection Detector** -- Practices the "System Prompts" -> "Instruction Hierarchy" concepts and the "Delimiters and Instruction Separation" section. The detector must use delimiters to isolate analyzed input, and the `safe_process()` function implements the defense-in-depth approach from the injection Q&A.
+
+See also `examples.py` sections 1 (Classification), 2 (Entity Extraction), 3 (Multi-Step Chain), 5 (Prompt Template System), and 7 (Retry-with-Feedback) for runnable reference implementations.
+
+---
+
 ## Interview Q&A: Prompting Fundamentals
 
 **Q: What prompting techniques do you use and when?**

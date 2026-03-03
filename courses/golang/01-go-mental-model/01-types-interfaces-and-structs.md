@@ -668,3 +668,13 @@ func (u *User) GetName() string { return u.name }
 4. **Stop thinking in async/await.** Goroutines are not promises. They are concurrent threads of execution that communicate via channels.
 5. **Stop over-abstracting.** Write the concrete thing first. Extract an interface when you need to mock it or swap implementations.
 6. **Stop naming things verbosely.** Context provides meaning. A `User` method does not need `user` in every variable name.
+
+---
+
+## Related Reading
+
+- **Generics build on these foundations** — [Module 08: Generics and Code Generation](../08-advanced-patterns/01-generics-and-code-generation.md) covers type parameters, constraints, and when to use generics vs the interfaces described in section 4 above
+- **Embedding in practice** — [Module 08: Patterns and Composition](../08-advanced-patterns/02-patterns-and-composition.md), section 1 (Embedding and Composition) goes deeper into struct and interface embedding patterns
+- **Error handling in production** — [Module 07: Project Structure and Configuration](../07-production/01-project-structure-and-configuration.md), section 3 (Error Handling in Production) covers error wrapping with `%w`, sentinel errors, and error middleware
+- **Interfaces in the stdlib** — [Module 03: HTTP and JSON](../03-stdlib/01-http-and-json.md) shows how `io.Reader`, `io.Writer`, and `http.Handler` use the small-interface philosophy described in section 4
+- **Testing with interfaces** — [Module 06: Table-Driven Tests and Mocking](../06-testing/01-table-driven-tests-and-mocking.md) shows how interfaces enable dependency injection and mocking in tests

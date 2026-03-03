@@ -686,6 +686,22 @@ async def search(
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` directly apply concepts from this module:
+
+- **Exercise 1: Health Check Endpoint with Database Verification** -- Implements the liveness and readiness probe patterns from the "Health Checks and Readiness Probes" section. You will build endpoints that distinguish between "is the process alive?" (liveness) and "can it handle traffic?" (readiness), returning 200 or 503 based on dependency health.
+
+- **Exercise 2: Structured Logging Middleware** -- Implements the request ID propagation and structured logging patterns from the "Structured Logging with structlog" and "Request ID Propagation" sections. You will use `contextvars` (Python's `AsyncLocalStorage` equivalent) to propagate a request ID, time requests with `time.perf_counter()`, and produce structured log records with method, path, status code, and duration.
+
+- **Exercise 4: Configuration Class with Validation** -- Implements the typed, validated configuration pattern from the "Configuration Management with pydantic-settings" section. You will define a `ServiceConfig` class with `Field()` constraints (ge, le, min_length, pattern) and build a singleton `get_config()` function -- the same pattern used in production with `BaseSettings` and `@lru_cache`.
+
+- **Exercise 5: Request Rate Metrics Collector** -- Implements an in-memory version of the metrics patterns from the "Prometheus Metrics" and "Key Metrics to Track" sections. You will track request count, response time, and error rate per endpoint -- the RED method (Rate, Errors, Duration) that the production `prometheus_client` approach builds on.
+
+See `examples.py` for complete reference implementations of all these patterns.
+
+---
+
 ## Key Takeaways
 
 - `pydantic-settings` combines dotenv + zod-style validation: fails fast at startup with a clear error if config is invalid.

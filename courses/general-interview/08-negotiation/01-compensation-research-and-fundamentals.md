@@ -495,3 +495,20 @@ Use this to compare offers systematically:
 | **Year 1 TC** | | | | Sum of all components |
 | **Year 2+ TC** | | | | Without sign-on, with refreshers |
 | **4-Year Total** | | | | Full vesting period |
+
+---
+
+## Practice
+
+- Fill in the compensation comparison worksheet above with your current compensation and one target offer (real or researched from levels.fyi). Calculate Year 1, Year 2+, and 4-Year totals for each. Notice how sign-on bonuses and vesting schedules affect the comparison across years.
+- For a startup you are evaluating (or a hypothetical one), work through the startup equity valuation framework. Apply all four discounts (illiquidity, preferred-vs-common, failure risk, dilution). Compare the risk-adjusted equity value to a public company RSU offer.
+- Research your target role on levels.fyi across three companies. Note the P25, P50, and P75 for total compensation at each. Identify which components (base, equity, bonus) drive the differences between companies.
+- Complete the offer evaluation matrix with real or hypothetical offers. Weight each dimension by your personal priorities. This exercise often reveals that the highest-paying offer is not the best overall fit.
+
+---
+
+## Cross-References
+
+- **[Module 08 — Negotiation Strategy and Execution](02-negotiation-strategy-and-execution.md):** This companion file covers the execution layer: scripts, timing, leverage, counter-offer strategies, and how to accept or decline gracefully. Read this research and fundamentals guide first to understand WHAT you are negotiating, then the strategy guide for HOW to negotiate it.
+- **[Module 01 — Interview Strategy](../01-strategy/):** The compensation overview in Module 01 introduces negotiation at a high level. This file goes much deeper on equity mechanics, tax implications, and offer evaluation. The pipeline management strategies from Module 01 (clustering on-sites, creating competing offers) directly create the leverage you need for effective negotiation.
+- **[Module 04 — Questions to Ask Interviewers](../04-questions-to-ask/):** Several questions from Module 04 (career path, evaluation process, refresher grants, level expectations) gather compensation intelligence during the interview process. Ask these questions early so you have data for negotiation later.

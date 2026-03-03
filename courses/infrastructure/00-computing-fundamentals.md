@@ -288,7 +288,11 @@ Most real systems are tunable along this spectrum, not strictly one or the other
 | **Read-your-writes** | You see your own writes immediately, others may lag | Session-sticky routing |
 | **Causal consistency** | If A causes B, everyone sees A before B | Some distributed databases |
 
+**Choosing the right consistency model:** Strong consistency is the simplest to reason about but the most expensive in latency and availability. Use it for financial transactions, inventory counts, and any case where stale reads cause incorrect behavior. Eventual consistency is appropriate when showing slightly stale data is acceptable (user profile views, product catalog browsing, social media timelines). Read-your-writes is a pragmatic middle ground for user-facing applications -- the user always sees their own changes immediately, which feels correct even if other users see the change seconds later.
+
 ### Replication
+
+Replication serves two purposes: fault tolerance (survive node failure) and read scaling (distribute read load). The choice of replication strategy depends on your consistency requirements and whether you need multi-region writes.
 
 ```
 Leader-Follower (Primary-Replica):
@@ -308,7 +312,11 @@ Leaderless (Dynamo-style):
   - Used by Cassandra, DynamoDB
 ```
 
+**When to choose each:** Leader-follower is the default for most applications because it avoids write conflicts entirely. Multi-leader is necessary when you need low-latency writes in multiple geographic regions (accepting the complexity of conflict resolution). Leaderless is best when you need high write availability and can tolerate tunable consistency -- common for large-scale, write-heavy workloads like IoT data or activity feeds.
+
 ### Load Balancing
+
+A load balancer distributes incoming traffic across multiple servers to improve throughput, reduce latency, and provide fault tolerance. It is the first component to add when scaling beyond a single server.
 
 ```
 Client → Load Balancer → Server 1
@@ -322,6 +330,8 @@ Algorithms:
   IP hash:            same client IP always goes to the same server (sticky sessions)
   Random:             surprisingly effective at scale
 ```
+
+**When to choose each algorithm:** Round-robin is the simplest default when servers are homogeneous. Least-connections works better when request durations vary (long-running vs short requests). Weighted round-robin handles heterogeneous server sizes. IP hash is needed when sessions must be sticky (though stateless design eliminates this need). Random with two choices (pick two servers, send to the one with fewer connections) performs nearly as well as least-connections with less coordination overhead.
 
 ---
 
@@ -373,19 +383,29 @@ Authorization (AuthZ): WHAT can you do?
 
 ### Common Auth Patterns
 
+**Session-based authentication** stores user state on the server. It is simple and well-understood but requires a session store that all servers can access (Redis, database). This makes it harder to scale horizontally.
+
 ```
 Session-based:
   Client → POST /login (credentials)
   Server → Set-Cookie: session_id=abc123
   Client → GET /api/data (Cookie: session_id=abc123)
   Server → lookup session in store → identify user
+```
 
+**Token-based authentication (JWT)** stores user state in the token itself. The server does not need to look up sessions -- it just verifies the token signature. This makes it stateless and easy to scale, but tokens cannot be revoked before expiry without maintaining a deny-list (which re-introduces server-side state).
+
+```
 Token-based (JWT):
   Client → POST /login (credentials)
   Server → { "token": "eyJhbG..." }
   Client → GET /api/data (Authorization: Bearer eyJhbG...)
   Server → verify token signature → extract claims → identify user
+```
 
+**OAuth2** delegates authentication to a trusted identity provider (Google, GitHub). You never handle the user's password directly. Use this when you want "Sign in with Google" or need to access third-party APIs on behalf of the user.
+
+```
 OAuth2:
   User → redirect to Google/GitHub
   Google → redirect back with authorization code
@@ -402,6 +422,8 @@ OAuth2:
 
 ### Encryption
 
+Encryption protects data in three distinct dimensions. Each addresses a different threat model, and a production system typically needs all three.
+
 ```
 At rest:    data stored on disk is encrypted (AES-256, managed keys or KMS)
 In transit: data moving over the network is encrypted (TLS)
@@ -410,6 +432,8 @@ Field-level: specific sensitive fields encrypted separately (PII, passwords)
 Passwords: NEVER store plaintext. Use bcrypt/scrypt/argon2 (slow hashing).
 API keys:  store the hash, show the key once on creation.
 ```
+
+**Why all three matter:** Encryption at rest protects against physical disk theft or unauthorized access to storage volumes. Encryption in transit prevents network eavesdropping. Field-level encryption limits the blast radius of a database compromise -- even if an attacker accesses the database, they cannot read encrypted fields without the separate encryption key. In practice, cloud providers handle at-rest encryption transparently (e.g., S3 default encryption, EBS encryption), TLS 1.3 handles in-transit encryption, and field-level encryption is your responsibility for the most sensitive data (Social Security numbers, payment card numbers, health records).
 
 ---
 
@@ -510,6 +534,22 @@ Before starting Module 01, you should be able to answer:
 - [ ] Estimate: how many requests per second is 1 billion requests per day?
 
 If any of these are shaky, re-read that section. Module 01's system design framework builds directly on this vocabulary.
+
+---
+
+## Related Reading
+
+This module provides the foundational vocabulary used throughout the rest of the course. As you work through later modules, refer back here when concepts come up:
+
+- [Module 01: System Design Framework Essentials](01-system-design-framework/01-system-design-framework-essentials.md) -- applies these fundamentals to a structured interview approach, including back-of-the-envelope estimation using the latency numbers covered here
+- [Module 02: SQL, NoSQL, and Decision Framework](02-databases-at-scale/01-sql-nosql-and-decision-framework.md) -- expands on the database fundamentals (ACID, indexing, SQL vs NoSQL) introduced in Section 3
+- [Module 02: Indexing, Sharding, and Replication](02-databases-at-scale/02-indexing-sharding-and-replication.md) -- goes deep on the indexing and replication concepts introduced here
+- [Module 03: Caching Patterns and Redis Basics](03-caching/01-caching-patterns-and-redis-basics.md) -- builds on the caching concepts from Section 8 (Observability and Operations) and the latency numbers that motivate caching
+- [Module 04: Message Brokers](04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- covers the async processing patterns that build on the concurrency and distributed systems concepts from Sections 2 and 5
+- [Module 05: Load Balancing Fundamentals](05-load-balancing/01-load-balancing-fundamentals.md) -- expands on load balancing algorithms and health checks introduced in Section 5
+- [Module 06: Docker and Containerization](06-containers-orchestration/01-docker-and-containerization.md) -- dives deeper into the container concepts (namespaces, cgroups) mentioned in Section 6
+- [Module 09: Authentication and Authorization](09-security/01-authentication-and-authorization.md) -- builds on the security basics (TLS, encryption, zero trust) from Section 7
+- [Module 10: Classic Design Problems](10-classic-problems/01-classic-design-problems.md) -- applies all of these fundamentals to end-to-end system design problems
 
 ---
 

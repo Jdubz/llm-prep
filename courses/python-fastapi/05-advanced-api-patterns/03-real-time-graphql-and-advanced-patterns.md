@@ -521,6 +521,19 @@ Expected: connection manager, token auth during handshake, room tracking, cleanu
 
 ---
 
+## Practice Exercises
+
+The following exercise in `exercises.py` directly tests concepts from this file:
+
+- **Exercise 1 (WebSocket Echo Server)** -- Accept a WebSocket connection, track it in a list, receive text messages, and echo them back uppercased as JSON. Covers `ws.accept()`, `ws.receive_text()`, `ws.send_json()`, and `WebSocketDisconnect` handling from the "WebSocket Support" section above.
+
+Also related (these exercises use streaming/background patterns covered in `01-file-handling-and-streaming.md` but are worth attempting after reading the real-time comparison table here):
+
+- **Exercise 2 (SSE Progress Stream)** -- Server-push via SSE, the alternative to WebSocket for unidirectional streaming.
+- **Exercise 3 (Background Task System)** -- 202 Accepted + polling, relevant to the long-running operation patterns discussed in the interview questions section above.
+
+---
+
 ## Key Takeaways
 
 - WebSocket is for bidirectional communication; SSE is for server-push — choose correctly.

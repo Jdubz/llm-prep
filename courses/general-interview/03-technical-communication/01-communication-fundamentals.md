@@ -643,3 +643,13 @@ Every engineering decision involves trade-offs. Discussing them shows engineerin
 6. **Practice is non-negotiable.** Reading about communication skills is not the same as practicing them. Record yourself, practice with others, and get feedback.
 
 7. **Watch your audience.** Adapt your depth, pace, and vocabulary based on the signals you receive.
+
+---
+
+## Cross-References
+
+- **[Module 02 — Behavioral Interview Mastery](../02-behavioral/):** Behavioral answers ARE communication exercises. The STAR framework from Module 02 benefits directly from the layered explanation model, thinking out loud, and audience reading skills covered here. Practice both together.
+- **[Module 05 — Common Technical Questions](../05-common-technical/):** The technical knowledge from Module 05 is what you communicate during interviews. This module teaches you HOW to communicate it effectively. Pair studying: learn a concept in Module 05, then practice explaining it using the techniques from this guide.
+- **[Module 06 — Coding Patterns](../06-coding-patterns/):** Live coding requires continuous narration. The "thinking out loud" section in this guide is essential preparation for the coding rounds covered in Module 06.
+- **[Module 07 — Take-Home & Live Coding](../07-take-home-live-coding/):** The code explanation skills and architecture discussion frameworks in this guide are directly tested in take-home follow-up reviews and live coding sessions. Module 07 covers the mechanics; this module covers the communication layer.
+- **[Module 03 — Technical Presentation and Documentation](02-technical-presentation-and-documentation.md):** This companion file covers the written and presentation dimensions: RFC writing, technical writing for visibility, presenting to leadership, and code review communication. Read this fundamentals guide first.

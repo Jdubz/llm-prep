@@ -622,3 +622,20 @@ Use it when writing a library that wraps an external store (Zustand, Redux, Valt
 ### Q10: What is useEffectEvent and what problem does it solve?
 
 It creates a stable function reference that always reads the latest closure values but is excluded from effect dependency tracking. It solves the dilemma of having an effect that should re-run when certain deps change, but also needs access to other values (like callbacks) that change independently. Without it, you must either add the callback to deps (causing the effect to re-run too often) or omit it (stale closure).
+
+---
+
+## Practice
+
+- **Trace the hook linked list**: Draw the fiber node for a component with `useState`, `useRef`, and `useEffect`. Show how `memoizedState` points to the first hook and each hook's `.next` points to the subsequent one. Explain what happens if you add a conditional hook call.
+- **Build `useStableCallback`**: Implement a DIY `useEffectEvent` using `useRef` + `useLayoutEffect` + `useCallback`. Verify that the returned function always reads the latest closure values.
+- **Stale closure debugging**: Given the `setInterval` closure trap example in this file, write three tests (using `vitest` or `jest`) that prove the bug exists, then prove each fix works.
+- **`useSyncExternalStore` exercise**: Subscribe to `navigator.onLine` using `useSyncExternalStore`. Handle the server snapshot (return `true`). Verify it re-renders when the network state changes.
+- **Interview prep**: Without looking, explain: (1) Why can't hooks be called in conditions? (2) What are the two trees in Fiber's double-buffering? (3) What is tearing in concurrent rendering?
+
+### Related Lessons
+
+- [Hooks & State Management](01-hooks-and-state-management.md) -- the hook primitives (`useState`, `useRef`, `useEffect`, `useReducer`) that this lesson builds on
+- [Custom Hooks Fundamentals](../02-custom-hooks/01-custom-hooks-fundamentals.md) -- composing hook primitives into reusable abstractions
+- [React Internals: Fiber & Rendering](../08-react-internals/01-react-fiber-and-rendering.md) -- deeper dive into the Fiber architecture, reconciliation, and rendering phases
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- how memoization hooks interact with the render/commit cycle

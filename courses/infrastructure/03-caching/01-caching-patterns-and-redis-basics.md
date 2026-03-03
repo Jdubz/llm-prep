@@ -361,6 +361,17 @@ Avg Response = (hit_rate * cache_latency) + (miss_rate * db_latency)
 
 ---
 
+## Related Reading
+
+- [Module 02: SQL, NoSQL, and Decision Framework](../02-databases-at-scale/01-sql-nosql-and-decision-framework.md) -- understanding your database's query patterns and latency characteristics is essential for deciding what to cache and which caching pattern to use
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- Redis as a data store (Streams, sorted sets, pub/sub) beyond its role as a cache
+- [Module 03: Cache Invalidation and Performance](02-cache-invalidation-and-performance.md) -- strategies for keeping cached data fresh, CDN caching, and performance tuning
+- [Module 03: Advanced Caching Systems](03-advanced-caching-systems.md) -- stampede prevention, multi-tier caching, and production patterns at Facebook scale
+- [Module 05: Load Balancing Fundamentals](../05-load-balancing/01-load-balancing-fundamentals.md) -- consistent hashing, which Redis Cluster uses for key distribution, is also a core load balancing concept
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- monitoring cache hit rate, eviction rate, and memory usage with Prometheus metrics and the RED method
+
+---
+
 ## Key Takeaways
 
 1. **Cache-aside is your default pattern.** Only reach for write-through when you need read-after-write consistency, and write-behind when write throughput is the primary bottleneck.

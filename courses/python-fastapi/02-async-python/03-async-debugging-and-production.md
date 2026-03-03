@@ -294,6 +294,18 @@ use whichever secondary responds first.
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts related to this file's content. See also `examples.py` for fully working reference implementations.
+
+- **Exercise 4: Timeout Wrapper** -- Uses `asyncio.timeout` (or `asyncio.wait_for`) to implement a safe timeout pattern that returns a fallback instead of raising. Practices the "Testing Timeouts and Concurrency" patterns above. *(Also see: `02-concurrency-patterns.md` "Timeout Handling" section for the core API)*
+
+- **Exercise 5: Producer/Consumer Pipeline** -- Builds a pipeline with error handling that catches failures per-item without crashing the pipeline. Practices the error isolation patterns discussed in "Common Bugs in Async Code" above (catching exceptions properly in concurrent tasks). *(Also see: `examples.py` Example 3 -- Producer/Consumer with asyncio.Queue)*
+
+- **All exercises** serve as testable examples of the debugging concepts above. Run `python exercises.py` to see which pass and which fail -- the test runner demonstrates structured async testing patterns similar to the "Async Testing Patterns" section.
+
+---
+
 ## Key Takeaways
 
 - Enable debug mode (`PYTHONASYNCIODEBUG=1`) to catch unawaited coroutines and blocking calls.

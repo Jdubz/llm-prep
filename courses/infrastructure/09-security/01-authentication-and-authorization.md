@@ -334,6 +334,15 @@ A: Both. The gateway performs full validation (signature, expiry, audience, issu
 
 A: Describe dual-credential rotation: generate the new secret, configure the consumer to accept both old and new, verify the new credential works, then revoke the old one. For database passwords: create a new user, update the app config, drain connections using the old user, drop the old user. Vault's dynamic secrets solve this elegantly -- every credential is short-lived, so "rotation" is just getting a new lease.
 
+### Related Reading
+
+- [Module 09: API and Application Security](02-api-and-application-security.md) -- API gateway security (rate limiting, WAF), DDoS mitigation, and the OWASP API Security Top 10 build on the authentication and authorization foundations covered here
+- [Module 09: Compliance and Advanced Security](03-compliance-and-advanced-security.md) -- compliance frameworks (SOC 2, GDPR, HIPAA, PCI DSS) impose requirements on the authentication, encryption, and secrets management practices described here
+- [Module 02: SQL, NoSQL, and Decision Framework](../02-databases-at-scale/01-sql-nosql-and-decision-framework.md) -- data encryption at rest applies to all database choices; understanding data classification helps you decide which databases need field-level encryption
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- TLS 1.3 termination at the load balancer, mTLS between services, and HTTP security headers
+- [Module 06: Kubernetes Advanced Patterns](../06-containers-orchestration/03-kubernetes-advanced-patterns.md) -- Kubernetes RBAC, service mesh mTLS (Istio, Linkerd), and workload identity for pod-level authentication
+- [Module 07: Feature Flags and Migrations](../07-cicd/02-feature-flags-and-migrations.md) -- secrets management with Vault and External Secrets Operator, and rotation strategies for database credentials
+
 ### Key Takeaways
 
 1. **Zero trust is architectural.** It is not a product you buy. It is identity-based access, microsegmentation, least privilege, and continuous verification.

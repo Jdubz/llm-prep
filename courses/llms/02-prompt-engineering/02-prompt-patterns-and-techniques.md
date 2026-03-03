@@ -431,6 +431,24 @@ Prompt engineering has a direct cost impact. These practices reduce token usage:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Classification Chain for Ambiguous Inputs** -- Uses the "Standard Prompt Templates" -> "Classification: Single Label" template as the basis for Step 1. The ambiguity handling in Step 2 mirrors the "Chain-of-Thought Template" pattern. The two-step chain demonstrates the "Chaining vs. Monolithic Prompts" tradeoff -- more debuggable, more reliable per step.
+
+- **Exercise 2: Few-Shot Example Selection** -- The `classify_with_dynamic_few_shot()` function builds a "Classification Pipeline" (from "Common Prompt Patterns") with dynamically selected few-shot examples. The prompt structure follows the pattern shown in this file: system instructions with categories, selected examples in input/output format, then the actual input.
+
+- **Exercise 3: Reliable JSON Output for Complex Schema** -- Extends the "Entity Extraction" template pattern to a nested, multi-field schema. Practices using delimiters (from "Delimiter Quick Reference") to wrap input documents.
+
+- **Exercise 4: Optimize a Poorly-Performing Prompt** -- Applies the "Cost Optimization Checklist" -> structured output to reduce tokens, stop sequences, and max_tokens settings. The exercise requires using techniques from "Standard Prompt Templates" to write a well-structured extraction prompt.
+
+- **Exercise 5: Self-Consistency with Majority Voting** -- Implements the "Self-Consistency Wrapper" code pattern shown in this file. Requires understanding the CoT template, answer extraction, and majority voting. The "Stop Sequences Reference" is relevant for clean answer extraction.
+
+See also `examples.py` sections 1 (Classification), 4 (Summarization with configurable detail), 5 (Prompt Template System), and 6 (Self-Consistency) for runnable reference implementations of these patterns.
+
+---
+
 ## Interview Q&A: Patterns and Techniques
 
 **Q: Explain chain-of-thought prompting and when it helps.**

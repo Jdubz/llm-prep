@@ -4,7 +4,11 @@ Module 03: RAG & Retrieval -- Exercises
 Skeleton functions with TODOs. Implement each function following the docstrings.
 Test your implementations by running this file: python exercises.py
 
-Reference: README.md, deep-dive.md, examples.py in this directory.
+Reference files in this directory:
+  - 01-embeddings-and-vector-databases.md  (embeddings, similarity metrics, vector DBs)
+  - 02-rag-pipeline-and-chunking.md        (RAG architecture, chunking, hybrid search, reranking)
+  - 03-advanced-rag-patterns.md            (query transformation, multi-hop, evaluation)
+  - examples.py                            (runnable reference implementations)
 
 Difficulty ratings:
   [1] Foundational -- should be quick for senior engineers
@@ -64,6 +68,18 @@ def mock_embed(text: str, dims: int = 64) -> Vector:
 
 # ===========================================================================
 # Exercise 1: Basic RAG Pipeline [1]
+#
+# READ FIRST:
+#   02-rag-pipeline-and-chunking.md
+#     -> "## RAG Architecture Overview" (end-to-end flow diagram)
+#     -> "## RAG Pipeline Prompt Assembly" (prompt format with grounding)
+#   01-embeddings-and-vector-databases.md
+#     -> "## Similarity Metrics" -> "### Cosine Similarity"
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Pattern 1: In-Memory Vector Store" (InMemoryVectorStore.add, .search)
+#     -> "Pattern 7: Complete RAG Pipeline" (RAGPipeline.ingest, .retrieve, .build_prompt)
 # ===========================================================================
 
 class BasicRAGPipeline:
@@ -98,6 +114,18 @@ class BasicRAGPipeline:
            - metadata: corresponding metadata dict (or empty dict)
         2. Append each Document to self.documents
         3. Return the count of new documents added
+
+        Step-by-step:
+            metadatas = metadatas or [{}] * len(texts)
+            for i, (text, meta) in enumerate(zip(texts, metadatas)):
+                doc = Document(
+                    id=f"doc-{len(self.documents)}",
+                    text=text,
+                    vector=self.embed_fn(text),   # call the embedding function
+                    metadata=meta,
+                )
+                self.documents.append(doc)
+            return len(texts)
         """
         raise NotImplementedError("Implement ingest()")
 
@@ -116,6 +144,15 @@ class BasicRAGPipeline:
         2. Compute cosine similarity between query vector and every document vector
         3. Sort by similarity score (highest first)
         4. Return top_k results as SearchResult objects
+
+        Step-by-step:
+            query_vector = self.embed_fn(query)
+            results = []
+            for doc in self.documents:
+                score = cosine_similarity(query_vector, doc.vector)
+                results.append(SearchResult(document=doc, score=score))
+            results.sort(key=lambda r: r.score, reverse=True)
+            return results[:top_k]
         """
         raise NotImplementedError("Implement retrieve()")
 
@@ -138,12 +175,45 @@ class BasicRAGPipeline:
            - The context chunks (numbered, separated by "---")
            - The user's question
         3. Return as [{"role": "system", "content": ...}, {"role": "user", "content": ...}]
+
+        Step-by-step:
+            # Build context string from results
+            context_parts = []
+            for i, result in enumerate(results, 1):
+                source = result.document.metadata.get("source", "unknown")
+                context_parts.append(f"[Source {i}: {source}]\n{result.document.text}")
+            context = "\n---\n".join(context_parts)
+
+            system_msg = {
+                "role": "system",
+                "content": "Answer the user's question using ONLY the provided context. "
+                           "If the context doesn't contain enough information, say so."
+            }
+            user_msg = {
+                "role": "user",
+                "content": f"Context:\n{context}\n\nQuestion: {query}"
+            }
+            return [system_msg, user_msg]
         """
         raise NotImplementedError("Implement build_prompt()")
 
 
 # ===========================================================================
 # Exercise 2: Document-Aware Chunking [2]
+#
+# READ FIRST:
+#   02-rag-pipeline-and-chunking.md
+#     -> "## Chunking Strategies" (all four strategies, especially #4 Structural)
+#     -> "### Chunking Decision Matrix" (which strategy for which doc type)
+#     -> "### Chunk Size Tradeoffs"
+#   02-rag-pipeline-and-chunking.md
+#     -> "## Advanced Chunking Patterns" -> "### Contextual Chunk Headers"
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Pattern 2: Chunking Strategies" -> chunk_by_headers()
+#        (splits markdown on headers, preserves section hierarchy as metadata)
+#     -> chunk_recursive() (fallback splitting logic when sections are too large)
 # ===========================================================================
 
 def chunk_document_aware(
@@ -200,12 +270,48 @@ def chunk_document_aware(
             {"text": "# Next Section\nMore text.",
              "metadata": {"heading": "Next Section", "has_code": False}},
         ]
+
+    Step-by-step approach:
+        chunks = []
+        current_text = ""
+        current_heading = ""
+        has_code = False
+        in_code_block = False
+
+        for line in text.split("\\n"):
+            # Detect code fence: line.strip().startswith("```")
+            #   If in_code_block is False -> entering code block, set in_code_block = True, has_code = True
+            #   If in_code_block is True  -> closing code block, set in_code_block = False
+            #   Always append the line to current_text and continue
+
+            # Detect header (only when NOT inside a code block):
+            #   header_match = re.match(r'^(#{1,6})\\s+(.+)', line)
+            #   If match: flush current chunk, start new chunk with this heading
+
+            # Append line to current_text
+            # Check if len(current_text) > max_chunk_size and not in_code_block:
+            #   Try splitting current_text on "\\n\\n" to flush a paragraph-sized piece
+
+        # Don't forget to flush the final chunk
     """
     raise NotImplementedError("Implement chunk_document_aware()")
 
 
 # ===========================================================================
 # Exercise 3: Hybrid Search with RRF [2]
+#
+# READ FIRST:
+#   02-rag-pipeline-and-chunking.md
+#     -> "## Hybrid Search" (why pure vector search misses things)
+#     -> "### Hybrid Search Architecture" (vector + BM25 + RRF code)
+#     -> "### RRF Formula" (the formula and worked example)
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Pattern 3: Hybrid Search (Vector + Keyword)"
+#        - bm25_score()              (simplified keyword scoring)
+#        - reciprocal_rank_fusion()  (merging ranked lists with RRF)
+#        - HybridSearcher.search()   (full hybrid search pipeline)
 # ===========================================================================
 
 def hybrid_search_rrf(
@@ -251,12 +357,55 @@ def hybrid_search_rrf(
        - Sort by RRF_score descending
 
     4. Return top_k results as SearchResult objects (score = RRF score)
+
+    Step-by-step:
+        # 1. Vector ranking
+        query_vector = embed_fn(query)
+        vec_scored = [(doc, cosine_similarity(query_vector, doc.vector)) for doc in documents]
+        vec_scored.sort(key=lambda x: x[1], reverse=True)
+        vec_ranked = [doc.id for doc, _ in vec_scored]  # ordered IDs
+
+        # 2. Keyword ranking
+        query_terms = query.lower().split()
+        kw_scored = []
+        for doc in documents:
+            doc_lower = doc.text.lower()
+            count = sum(1 for t in query_terms if t in doc_lower)
+            kw_scored.append((doc, count))
+        kw_scored.sort(key=lambda x: x[1], reverse=True)
+        kw_ranked = [doc.id for doc, _ in kw_scored]
+
+        # 3. RRF fusion -- iterate through both ranked lists
+        rrf_scores = {}  # doc_id -> float
+        for rank, doc_id in enumerate(vec_ranked, start=1):
+            rrf_scores[doc_id] = rrf_scores.get(doc_id, 0.0) + 1.0 / (rrf_k + rank)
+        for rank, doc_id in enumerate(kw_ranked, start=1):
+            rrf_scores[doc_id] = rrf_scores.get(doc_id, 0.0) + 1.0 / (rrf_k + rank)
+
+        # 4. Sort and return top_k as SearchResult objects
+        doc_map = {doc.id: doc for doc in documents}
+        sorted_ids = sorted(rrf_scores, key=rrf_scores.get, reverse=True)
+        return [SearchResult(document=doc_map[did], score=rrf_scores[did]) for did in sorted_ids[:top_k]]
     """
     raise NotImplementedError("Implement hybrid_search_rrf()")
 
 
 # ===========================================================================
 # Exercise 4: Retrieval Evaluation [2]
+#
+# READ FIRST:
+#   03-advanced-rag-patterns.md
+#     -> "## RAGAS: RAG Evaluation Framework" -> "### Four Core Metrics"
+#        (faithfulness, answer relevance, context precision, context recall)
+#     -> "### Running RAGAS" (how the framework is used in code)
+#   03-advanced-rag-patterns.md
+#     -> "## RAG Failure Modes and Debugging" -> "### Debugging Checklist"
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Pattern 6: RAG Evaluation"
+#        - evaluate_retrieval()    (computes recall@K, precision@K, MRR, hit_rate)
+#        - evaluate_faithfulness() (checks if answer is grounded in context)
 # ===========================================================================
 
 def evaluate_retrieval_quality(
@@ -300,12 +449,62 @@ def evaluate_retrieval_quality(
     Handle edge cases:
     - Empty relevant_doc_ids: skip (or count as perfect if no relevant docs exist)
     - retrieve_fn returns fewer than K results: evaluate on what's returned
+
+    Step-by-step:
+        per_query = []
+        for tq in test_queries:
+            query = tq["query"]
+            relevant = tq["relevant_doc_ids"]
+            k = tq["k"]
+            retrieved = retrieve_fn(query)[:k]     # truncate to K
+
+            relevant_found = len(set(retrieved) & relevant)
+            recall = relevant_found / len(relevant) if relevant else 0.0
+            precision = relevant_found / k if k > 0 else 0.0
+
+            mrr = 0.0
+            for i, doc_id in enumerate(retrieved, start=1):
+                if doc_id in relevant:
+                    mrr = 1.0 / i
+                    break
+
+            hit_rate = 1.0 if relevant_found > 0 else 0.0
+
+            per_query.append({
+                "query": query, "recall_at_k": recall,
+                "precision_at_k": precision, "mrr": mrr, "hit_rate": hit_rate,
+            })
+
+        n = len(per_query)
+        return {
+            "mean_recall_at_k":    sum(q["recall_at_k"] for q in per_query) / n,
+            "mean_precision_at_k": sum(q["precision_at_k"] for q in per_query) / n,
+            "mean_mrr":            sum(q["mrr"] for q in per_query) / n,
+            "mean_hit_rate":       sum(q["hit_rate"] for q in per_query) / n,
+            "num_queries": n,
+            "per_query": per_query,
+        }
     """
     raise NotImplementedError("Implement evaluate_retrieval_quality()")
 
 
 # ===========================================================================
 # Exercise 5: Multi-Tenant Metadata Schema [3]
+#
+# READ FIRST:
+#   02-rag-pipeline-and-chunking.md
+#     -> "## Metadata Filtering" (common fields, pre- vs post-filter)
+#     -> "### Filter Strategies" (Pinecone filter syntax examples)
+#   01-embeddings-and-vector-databases.md
+#     -> "## Vector Databases" -> "### Extended Feature Comparison"
+#        (which DBs support which filtering modes)
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Pattern 1: In-Memory Vector Store" -> InMemoryVectorStore.search()
+#        (metadata_filter parameter shows how filtering integrates with search)
+#     -> "Pattern 7: Complete RAG Pipeline" -> RAGPipeline.query()
+#        (metadata_filter passed through the full pipeline)
 # ===========================================================================
 
 @dataclass
@@ -357,12 +556,46 @@ def design_metadata_schema(doc: TenantDocument) -> dict:
     Interview tip: This exercise tests your system design thinking.
     The schema itself matters less than your reasoning about tradeoffs.
     Be prepared to explain WHY you included each field.
+
+    Step-by-step:
+        return {
+            # --- Required fields ---
+            "tenant_id":      doc.tenant_id,          # partition key for data isolation
+            "doc_type":       "guide",                 # e.g., "policy", "api_doc", "guide"
+            "created_at":     "2024-01-15T00:00:00Z",  # ISO 8601 for date-range queries
+            "updated_at":     "2024-01-15T00:00:00Z",
+            "access_level":   "internal",              # "public" | "internal" | "confidential"
+            "version":        1,                       # integer, monotonically increasing
+            "tags":           ["api", "rate-limiting"], # list of strings for flexible filtering
+            "source_doc_id":  "doc-abc-123",           # groups all chunks from one source doc
+            "chunk_index":    0,                       # position within the source document
+            # --- Additional production fields (your design choices) ---
+            # "language":     "en",                    # for multilingual corpora
+            # "expires_at":   None,                    # TTL for auto-deletion
+            # "content_hash": "sha256...",             # detect duplicate/unchanged content
+        }
     """
     raise NotImplementedError("Implement design_metadata_schema()")
 
 
 # ===========================================================================
 # Exercise 6: Context Window Packing [3]
+#
+# READ FIRST:
+#   02-rag-pipeline-and-chunking.md
+#     -> "## RAG Pipeline Prompt Assembly" (how context is formatted for the LLM)
+#     -> "### Critical Design Decisions" (number of retrieved chunks K)
+#   03-advanced-rag-patterns.md
+#     -> "## RAG Failure Modes and Debugging"
+#        -> "### Common Failure Mode 4: Lost in the Middle"
+#        (why stuffing too many chunks hurts quality)
+#
+# ALSO SEE:
+#   examples.py
+#     -> "Pattern 7: Complete RAG Pipeline" -> RAGPipeline.build_prompt()
+#        (formats selected chunks into the prompt -- your packing result feeds this)
+#     -> "Pattern 4: Cross-Encoder Reranker" -> cross_encoder_rerank()
+#        (the reranking step that precedes packing: top_n parameter)
 # ===========================================================================
 
 def pack_context_window(
@@ -411,6 +644,45 @@ def pack_context_window(
     Interview context: This is a bin-packing problem. Greedy (highest relevance
     first) is good enough -- optimal packing is NP-hard and not worth it for
     <100 chunks. The deduplication logic is the interesting design decision.
+
+    Step-by-step:
+        if not results:
+            return []
+
+        count_fn = token_counter or (lambda text: len(text) // 4)
+        budget = max_tokens - reserved_tokens
+        packed = []
+        seen_sources = set()
+
+        for result in results:
+            src_id = result.document.metadata.get("source_doc_id")
+            if src_id and src_id in seen_sources:
+                continue  # deduplicate
+
+            tokens = count_fn(result.document.text)
+
+            if tokens > budget and not packed:
+                # First chunk exceeds budget -- truncate it
+                # Approximate: keep budget*4 chars (inverse of len//4)
+                truncated_text = result.document.text[:budget * 4]
+                result = SearchResult(
+                    document=Document(
+                        id=result.document.id,
+                        text=truncated_text,
+                        vector=result.document.vector,
+                        metadata=result.document.metadata,
+                    ),
+                    score=result.score,
+                )
+                tokens = count_fn(result.document.text)
+
+            if tokens <= budget:
+                packed.append(result)
+                budget -= tokens
+                if src_id:
+                    seen_sources.add(src_id)
+
+        return packed
     """
     raise NotImplementedError("Implement pack_context_window()")
 

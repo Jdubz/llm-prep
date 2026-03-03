@@ -328,7 +328,7 @@ async function processOrder(order) {
 
 ### Sampling Strategies
 
-At scale, tracing 100% of requests is prohibitively expensive.
+At scale, tracing 100% of requests is prohibitively expensive. A service handling 10,000 RPS generates 864M spans/day -- storing all of them is wasteful because most represent healthy, uninteresting requests.
 
 | Strategy | Description | Tradeoff |
 |----------|------------|----------|
@@ -336,6 +336,8 @@ At scale, tracing 100% of requests is prohibitively expensive.
 | **Tail-based** | Decide after completion (keep errors, slow) | Captures all interesting, requires buffering |
 | **Rate-limiting** | N traces per second | Predictable cost, may miss bursts |
 | **Priority** | Always sample errors and slow requests | Best signal, more complex setup |
+
+**Choosing a strategy:** Head-based sampling is the simplest to implement (a random decision at the trace root) but it cannot distinguish interesting traces from uninteresting ones until it is too late -- an error that occurs 3 services deep was already sampled or not at the entry point. Tail-based sampling solves this by buffering complete traces before making the sampling decision, keeping 100% of errors and slow requests while sampling a small percentage of healthy traffic. The trade-off is that tail-based sampling requires the OTel Collector Gateway to hold traces in memory until they complete (typically 10-30 seconds), which increases infrastructure cost. The recommended production approach is tail-based sampling with rules: keep all errors, keep all requests above a latency threshold, and probabilistically sample 1-5% of the rest.
 
 ### Tracing Backends
 
@@ -345,3 +347,19 @@ At scale, tracing 100% of requests is prohibitively expensive.
 | **Grafana Tempo** | Open source | Cost-efficient (object storage), integrates with Grafana |
 | **Datadog APM** | SaaS | Full-stack integration, strong analytics |
 | **Honeycomb** | SaaS | High-cardinality queries, BubbleUp for anomaly detection |
+
+**Choosing a backend:** If you are already using the Grafana stack (Prometheus, Loki), Tempo is the natural choice -- it stores traces in object storage (S3) which is dramatically cheaper than Elasticsearch-backed Jaeger at scale. If you want a zero-ops SaaS experience with deep integration across logs, metrics, and traces, Datadog APM is the fastest to adopt but the most expensive long-term. Honeycomb excels at exploratory debugging with high-cardinality data (query by user ID, request ID, or any attribute) but is a specialized tool rather than a full observability platform. Regardless of backend, instrument with OpenTelemetry -- this makes switching backends a configuration change rather than a re-instrumentation effort.
+
+---
+
+## Related Reading
+
+- [Module 08: SLOs, Alerting, and Incident Response](02-slos-alerting-and-incident-response.md) -- builds on the metrics and PromQL covered here to define SLIs, SLOs, error budgets, and burn rate alerting rules
+- [Module 08: Advanced Observability](03-advanced-observability.md) -- the OTel Collector architecture, continuous profiling, RUM, synthetic monitoring, and cost management for the telemetry data described here
+- [Module 00: Computing Fundamentals](../00-computing-fundamentals.md) -- the latency numbers and networking fundamentals that inform what to measure and where to place instrumentation
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- monitoring database performance (connection pool utilization, query latency, replication lag) with the Prometheus metric types and PromQL queries covered here
+- [Module 03: Caching Patterns and Redis Basics](../03-caching/01-caching-patterns-and-redis-basics.md) -- cache hit rate is a critical metric; the RED method applies to cache performance monitoring
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- distributed tracing spans message producers and consumers; consumer lag and DLQ depth are key metrics to monitor
+- [Module 05: Load Balancing Fundamentals](../05-load-balancing/01-load-balancing-fundamentals.md) -- the RED method (Rate, Errors, Duration) is how you monitor services behind load balancers
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- circuit breaker state transitions and retry rates should be instrumented as metrics
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- Kubernetes exposes container-level metrics (CPU, memory, restarts) that feed into the USE method for resource monitoring

@@ -459,3 +459,15 @@ func main() {
 4. Add `sync.WaitGroup` for goroutine lifecycle
 5. Close channels correctly (sender closes, receiver ranges)
 6. Mention what you would test (`-race`, table tests, edge cases)
+
+---
+
+## Related Reading
+
+This file synthesizes concepts from the entire course. Here are the most relevant deep-dive references for each topic area:
+
+- **Concurrency questions (Q1–Q6, Puzzles)** — [Module 02: Goroutines and Channels](../02-concurrency/01-goroutines-and-channels.md) and [Synchronization and Context](../02-concurrency/02-synchronization-and-context.md) cover the goroutine, channel, and sync primitives tested in section 6
+- **Idiomatic Go rules** — [Module 01: Types, Interfaces, and Structs](../01-go-mental-model/01-types-interfaces-and-structs.md), section 9 (Naming Conventions) covers the naming and style rules from section 5
+- **Error handling** — [Module 07: Project Structure and Configuration](../07-production/01-project-structure-and-configuration.md), section 3 (Error Handling in Production) covers the `%w` wrapping and sentinel error patterns from section 2
+- **Code review patterns** — [Module 06: Table-Driven Tests and Mocking](../06-testing/01-table-driven-tests-and-mocking.md) covers the testing patterns that section 4 (Code Review Red Flags) calls out as missing
+- **Context usage** — [Module 02: Synchronization and Context](../02-concurrency/02-synchronization-and-context.md), section 3 provides the deep context.Context coverage for the context-related questions in sections 1–2

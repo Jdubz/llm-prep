@@ -536,3 +536,20 @@ The key insight: `setState` does not immediately update state. It **schedules** 
 ### Q6: "What is selective hydration and why does it matter?"
 
 **Answer:** Selective hydration (React 18) allows different parts of the page to hydrate independently using `Suspense` boundaries. Without it, hydration is all-or-nothing: the entire page must hydrate before any part is interactive. With selective hydration, React can skip `Suspense` boundaries whose content has not arrived yet, hydrate the rest, and come back to the skipped parts later. If a user interacts with an un-hydrated region, React bumps its hydration priority. This dramatically improves Time to Interactive for large pages because users can start interacting with hydrated parts while other parts are still loading.
+
+---
+
+## Practice
+
+- **Fiber tree visualization**: Draw the fiber tree for a simple component tree: `<App>` -> `<Header />` + `<Main>` -> `<Sidebar />` + `<Content />`. Label each fiber's `tag`, `child`, `sibling`, and `return` pointers.
+- **Render vs Commit drill**: For each scenario, identify whether it happens in the render phase or commit phase: (1) calling your component function, (2) diffing the old and new trees, (3) applying DOM mutations, (4) running `useLayoutEffect`, (5) scheduling `useEffect`.
+- **Reconciliation experiment**: Build a list component. Render it with keys `[A, B, C]`, then re-render with `[C, A, B]`. Trace through the two-pass reconciliation algorithm from the "Key-Based Reconciliation" section to determine how many DOM moves occur.
+- **Hydration mismatch debugging**: Intentionally create a hydration mismatch (e.g., render `Date.now()` during SSR). Observe the console warning. Fix it using the `useEffect` + state pattern.
+- **Batching verification**: Write a component that calls `setState` twice inside a `setTimeout`. Verify with `console.log` that React 18 batches both updates into one re-render.
+
+### Related Lessons
+
+- [Re-renders & Optimization](02-re-renders-and-optimization.md) -- the 6 re-render triggers, concurrent features, scheduler, and priority lanes
+- [React Internals Deep Dive](03-react-internals-deep-dive.md) -- fiber node structure, work loop, lane model, Suspense internals, effect tracking
+- [Hooks Internals & Advanced Patterns](../01-hooks-deep-dive/02-hooks-internals-and-advanced-patterns.md) -- how hooks are stored on fiber nodes as a linked list
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- practical implications of the render/commit cycle for performance

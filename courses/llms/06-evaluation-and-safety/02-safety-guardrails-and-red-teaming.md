@@ -506,6 +506,21 @@ class LLMGuardrails:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 3: Create a Prompt Injection Detector** -- Implement a multi-layer detection system (regex pattern matching + structural analysis + combined scoring). Practices the attack patterns table, defense layers, and input guard pipeline from this file.
+- **Exercise 4: Build an Output Guardrail Pipeline** -- Build individual guard functions (content policy check, PII redaction, schema validation) and compose them into an ordered pipeline. Practices output guardrails, defense in depth, and the guardrails implementation pattern.
+- **Exercise 5: Design a Red Teaming Test Suite** -- Create test cases across all five red team categories (jailbreaking, injection, extraction, harmful content, DoS), implement behavior detection, and generate prioritized reports. Practices the red teaming process, attack categories, and multi-turn jailbreaking concepts.
+
+See also `examples.py` for reference implementations:
+- "Input validation" section -- INJECTION_PATTERNS, detect_prompt_injection, PII_PATTERNS, detect_pii, redact_pii
+- "Output validation" section -- validate_json_schema, content_safety_filter, hallucination_flag
+- "Full guardrail pipeline" section -- input_guardrail_pipeline, output_guardrail_pipeline with ordered guards
+
+---
+
 ## Interview Q&A: Safety and Guardrails
 
 **Q: What is your approach to LLM safety and guardrails?**

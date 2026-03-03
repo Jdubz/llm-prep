@@ -782,3 +782,19 @@ Browser Paint
   ▼
 User sees the screen
 ```
+
+---
+
+## Practice
+
+- **Implement `usePrevious`**: Build the hook from scratch using `useRef` + `useEffect`. Then try the derived-state approach (`useState` with a `[prev, curr]` tuple). Compare the two. See `src/hooks/usePrevious.js` for the exercise file.
+- **Implement `useFetch`**: Build a data-fetching hook with `AbortController` for race condition handling. See `src/hooks/useFetch.js` for the exercise file and `src/lessons/02-custom-hooks/CustomHooksDemo.jsx` to test it interactively.
+- **Stale closure drill**: Write a component with `setInterval` inside `useEffect([])` that logs `count`. Click to increment. Observe that the log is always 0. Fix it with: (1) `setCount(c => c + 1)`, (2) adding `count` to deps, (3) storing `count` in a ref.
+- **useReducer refactor**: Take a component with 3+ related `useState` calls and refactor to `useReducer`. Write the reducer as a pure function and test it without React.
+- **Quick-fire interview answers**: Explain without looking: What is the difference between `useLayoutEffect` and `useEffect`? Why is `dispatch` referentially stable? What does `useSyncExternalStore` solve?
+
+### Related Lessons
+
+- [Hooks Internals & Advanced Patterns](02-hooks-internals-and-advanced-patterns.md) -- rules of hooks, fiber hook linked list, closure traps, `useSyncExternalStore`, React 19 hooks
+- [Custom Hooks Fundamentals](../02-custom-hooks/01-custom-hooks-fundamentals.md) -- how to compose the primitives from this lesson into reusable hooks
+- [Performance: Rendering & Optimization](../03-performance/01-react-rendering-and-optimization.md) -- memoization hooks (`useMemo`, `useCallback`) in depth, when and how to use them

@@ -325,6 +325,22 @@ Essential vocabulary for technical LLM interviews:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Multi-Model Cost Estimator** -- The prompt caching discount logic (cached_input_discount field) directly practices the "Prefix Caching (Provider-Side)" concept: Anthropic's 90% discount vs OpenAI's 50% discount on cached tokens. Understanding when and how caching reduces cost is central to this exercise.
+
+- **Exercise 2: Model Router** -- The reasoning model routing pattern from "Reasoning Models" -> "Model routing design" informs how the router should classify complex vs. simple tasks. The router's budget-aware downgrade logic practices the cost-quality tradeoff described in "Practical Trade-offs" (standard models for most tasks, reasoning models for hard problems).
+
+- **Exercise 3: Context Window Truncation Strategies** -- The `split_into_chunks()` function practices the chunking concept needed for RAG pipelines, which relates to the retrieval patterns discussed throughout this file. The overlap parameter addresses the "lost in the middle" problem mentioned in the Glossary.
+
+- **Exercise 4: Embedding Similarity Search** -- The Glossary's "Embeddings and Retrieval Terms" defines all the concepts implemented in this exercise: cosine similarity, embedding normalization, and Matryoshka embeddings. The `semantic_search()` function builds the core retrieval operation, and `diversity_rerank()` (MMR) addresses the quality concern of returning diverse, relevant results.
+
+See also `examples.py` sections 5 (Embedding Similarity), 6 (Streaming Response Handler for TTFT concepts), and 7 (Token Budget Planner) for related runnable examples.
+
+---
+
 ## Interview Q&A: Advanced Concepts
 
 **Q: What is speculative decoding and when would you use it?**

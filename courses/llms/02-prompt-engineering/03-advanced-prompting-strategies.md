@@ -654,6 +654,24 @@ def ensemble_classify(text: str) -> dict:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Classification Chain for Ambiguous Inputs** -- The two-step classification chain is a simplified version of the "Self-Refinement Loop" pattern (generate, evaluate, refine). Step 2 re-examines the Step 1 result using CoT reasoning, similar to the critique-and-revise approach in "Constitutional AI Prompting."
+
+- **Exercise 3: Reliable JSON Output for Complex Schema** -- The retry-with-feedback pattern directly implements the "Retry with Error Feedback" advanced pattern from this file. The `robust_structured_call()` code template shown here is exactly the pattern needed for handling validation failures.
+
+- **Exercise 4: Optimize a Poorly-Performing Prompt** -- Practices the "Prompt Optimization Workflow" -> "6-Step Process." The FAILURE_CASES in the exercise serve as the test set (Step 2). Analyzing failure modes (Step 4: change one variable at a time) and using the "What Actually Moves the Needle" ranking guides which improvements to try first.
+
+- **Exercise 5: Self-Consistency with Majority Voting** -- Directly implements the "Self-Consistency" section of this file. All production considerations apply: temperature 0.5-0.7, parallel execution, confidence threshold for low-agreement detection. The exercise extends the basic pattern with domain-specific logic (defaulting to "breaking" when uncertain).
+
+- **Exercise 6: Prompt Injection Detector** -- The detector benefits from the "Constitutional AI Prompting" pattern: you can structure the detection prompt as a principled evaluation (does the input violate principle X?). The "Directional Stimulus Prompting" technique is useful for guiding the detector to focus on intent rather than keywords.
+
+See also `examples.py` sections 6 (Self-Consistency with majority voting) and 7 (Retry-with-Feedback for structured output) for complete runnable implementations of these advanced patterns.
+
+---
+
 ## Interview Q&A: Advanced Strategies
 
 **Q: What is self-consistency and when do you use it in production?**

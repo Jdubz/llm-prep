@@ -442,6 +442,21 @@ If any of these gave you pause, review that section before moving on.
 
 ---
 
+## Practice
+
+- **Self-test**: Work through the checklist above. For any item you cannot explain confidently, re-read that section.
+- **Build from scratch**: Create a small counter app using only `useState`, `useEffect`, and `useRef` -- no libraries. Focus on correct cleanup and functional updates.
+- **Debug a closure trap**: Intentionally write a `setInterval` inside `useEffect([])` that reads stale state. Fix it three ways: (1) functional updater, (2) add deps, (3) useRef.
+- **Reconciliation experiment**: Render a list with `index` as key, then reorder items. Observe the bug. Switch to stable IDs and compare behavior.
+
+### Related Lessons
+
+- [Lesson 01: Hooks Deep Dive](src/lessons/01-hooks-deep-dive/01-hooks-and-state-management.md) -- goes deeper on every hook introduced here
+- [Lesson 02: Custom Hooks](src/lessons/02-custom-hooks/01-custom-hooks-fundamentals.md) -- learn to compose hooks into reusable abstractions
+- [Lesson 08: React Internals](src/lessons/08-react-internals/01-react-fiber-and-rendering.md) -- understand the Fiber architecture behind reconciliation and rendering
+
+---
+
 ## Next Steps
 
 You're ready for [Lesson 01: Hooks Deep Dive](src/lessons/01-hooks-deep-dive/README.md) — `useState` pitfalls, `useEffect` mastery, rules of hooks internals, and the closure traps that catch even experienced engineers.

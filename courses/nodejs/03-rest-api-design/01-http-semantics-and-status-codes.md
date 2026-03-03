@@ -303,3 +303,16 @@ export default app; // Works on Workers, Deno, Bun, Node
 - [ ] Conditional requests supported (If-None-Match, If-Match)
 - [ ] Bulk endpoints for batch operations
 - [ ] 202 Accepted + polling for long-running operations
+
+---
+
+## Related Reading
+
+- **Idempotency keys** (Section 2.3) require distributed locking, which is implemented with Redis in [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (cache stampede protection using `SET NX`)
+- **Rate limiting headers** (Section 4.1) — the algorithms (token bucket, sliding window) are implemented in detail in [Auth & Security — Session Management and Validation](../05-auth-security/02-session-management-and-validation.md) and [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (Redis-backed rate limiter)
+- **ETags and conditional requests** (Section 4.2) connect to caching strategies in [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (cache invalidation, CDN/edge caching)
+- **Error handling and status codes** (Section 3) — the `AppError` pattern ties to [Module 00 — Error Handling Patterns](../00-ts-node-fundamentals.md#8-error-handling-patterns) and the RFC 9457 implementation in [API Design Patterns and Versioning](03-api-design-patterns-and-versioning.md)
+- **Express vs Fastify vs Hono** (Section 7) — framework choice affects testing strategy in [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md) (supertest patterns)
+- **Resource modeling** (Section 1) — the sub-resource vs top-level decision maps directly to database schema design in [Database Patterns — Prisma and Drizzle](../06-database-patterns/01-prisma-and-drizzle.md)
+- For the GraphQL alternative to REST, see [GraphQL — Schema Design and Resolvers](../04-graphql/01-schema-design-and-resolvers.md) and the decision framework in [API Design Patterns — GraphQL vs REST](03-api-design-patterns-and-versioning.md#7-graphql-vs-rest-decision-framework)
+- For securing these endpoints, see [Auth & Security — JWT and OAuth2](../05-auth-security/01-jwt-and-oauth2.md)

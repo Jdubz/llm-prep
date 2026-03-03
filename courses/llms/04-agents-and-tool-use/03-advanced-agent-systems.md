@@ -427,6 +427,21 @@ tools = [
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 6: Implement a Simple Orchestrator** [multi-agent] -- Implements the "Supervisor / Orchestrator" architecture from "Multi-Agent Architectures." You will build keyword-based intent classification and delegate to specialist agents -- the simplest version of the orchestrator pattern shown in the architecture diagram. Applies "Architecture Comparison" (supervisor is most common and debuggable).
+- **Exercise 5: Build a Tool Call Validator** [safety] -- Supports the error handling patterns from "Error Handling in Agents." Validation prevents invalid arguments from reaching tool execution, which is critical for the "Error Taxonomy" (invalid arguments -> retry with corrected schema).
+- **Exercise 1: Build a Complete Agent Loop** [core] -- The foundation that "Long-Running Agents" and "Human-in-the-Loop Patterns" build upon. Understanding the basic loop is prerequisite to adding checkpointing, idempotent tool calls, and approval workflows.
+
+See also `examples.py`:
+- `OrchestratorAgent` (Example 7) -- LLM-based routing to specialist agents with tool definitions
+- `AgentConfig` and `specialists` dict (Example 7) -- specialist configuration and delegation
+- `safe_execute_tool()` (Example 6) -- validation + approval check before execution
+
+---
+
 ## Interview Q&A: Advanced Agent Systems
 
 **Q: Compare different multi-agent architectures.**

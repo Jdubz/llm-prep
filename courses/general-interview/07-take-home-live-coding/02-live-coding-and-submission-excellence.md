@@ -322,3 +322,27 @@ Best,
 - **Write down what went well and what did not** — for next time
 - **Follow up** — a brief thank-you email is professional and appropriate
 - **Keep your take-home code** — you might want to reference it later or reuse the template
+
+---
+
+## Practice
+
+### Live Coding Drills
+
+1. **Timed problem-solving with narration:** Pick a LeetCode medium problem and solve it in 35 minutes while recording yourself (screen + audio). Play it back and evaluate: Did you narrate continuously? Did you state your approach before coding? Did you test at the end?
+2. **Mock pair programming:** Find a study partner and take turns being the interviewer and candidate. The interviewer should provide a problem, give hints when the candidate is stuck, and evaluate collaboration signals.
+3. **Environment speed drill:** Set up a fresh project from scratch in your primary language in under 5 minutes. You should be able to create a file, write a function, and run a test without hesitation.
+
+### Take-Home Review Preparation
+
+1. **Plant watering project review:** Complete the [plant-watering project](../projects/plant-watering/) and then practice the follow-up review discussion. Have a friend ask you the common review discussion questions from this guide: "Walk me through your architecture," "Why did you choose X over Y?", "How would this scale?"
+2. **Self-critique exercise:** After completing any take-home, write down three things a reviewer might question about your code. Prepare answers for each using the framework: acknowledge the concern, explain your reasoning, describe how you would fix it.
+
+---
+
+## Cross-References
+
+- **[Module 06 — Coding Patterns](../06-coding-patterns/):** Live coding interviews test the same patterns covered in Module 06. The pattern recognition decision tree, time management timeline, and edge case checklists are essential preparation for live sessions.
+- **[Module 03 — Technical Communication](../03-technical-communication/):** Thinking out loud, explaining trade-offs, and narrating your approach are all communication skills. Module 03's guidance on the layered explanation model and voicing trade-offs applies directly to live coding.
+- **[Module 05 — Common Technical Questions](../05-common-technical/):** Live coding often includes questions about data structures, complexity analysis, and system design patterns. Module 05 provides the foundational knowledge you will draw on.
+- **[Plant Watering Project](../projects/plant-watering/):** Use this real take-home exercise to practice the follow-up review discussion. After completing it, rehearse explaining your decisions as if you were in the review session described in this guide.

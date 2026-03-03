@@ -25,6 +25,17 @@ from typing import AsyncIterator, Optional
 # ===========================================================================
 # Exercise 1: SSE Streaming Parser with Tool Call Support [2]
 #
+# READ FIRST:
+#   01-caching-cost-optimization-and-observability.md
+#     -> "## Streaming" — SSE format, the [DONE] sentinel, tool-call
+#        fragment reassembly, and streaming with structured output.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Section 1 "Streaming Response Handler (SSE Parser)"
+#        — stream_sse_response() for content-only parsing
+#        — collect_streamed_tool_calls() for tool-call accumulation
+#
 # Build a streaming parser that handles both content tokens and tool calls.
 # The parser should:
 # - Yield content tokens as they arrive
@@ -81,19 +92,35 @@ class SSEStreamParser:
         #
         # For each line:
         # 1. Skip empty lines and lines that don't start with "data: "
-        # 2. Handle the "[DONE]" sentinel -- yield a "done" event and return
-        # 3. Parse the JSON data
-        # 4. Extract the delta from choices[0].delta
-        # 5. If delta has "content", yield a "content" event
-        # 6. If delta has "tool_calls", process each tool call:
-        #    a. If this is a new tool call index, yield "tool_call_start"
-        #       and initialize the buffer
-        #    b. If arguments are present, yield "tool_call_delta"
-        #       and append to the buffer
-        # 7. Handle JSON parse errors by yielding an "error" event
-        #
-        # Hint: Tool calls have an "index" field. Multiple tool calls can
-        # be in progress simultaneously (parallel tool use).
+        #    → if not line.strip() or not line.startswith("data: "): continue
+        # 2. Extract the payload: data_str = line[len("data: "):]
+        # 3. Handle the "[DONE]" sentinel:
+        #    → if data_str == "[DONE]": yield StreamEvent(event_type="done"); return
+        # 4. Parse JSON: parsed = json.loads(data_str)
+        # 5. Extract delta: delta = parsed["choices"][0].get("delta", {})
+        # 6. If delta has "content":
+        #    → yield StreamEvent(event_type="content", content=delta["content"])
+        # 7. If delta has "tool_calls", iterate over the list:
+        #    for tc in delta["tool_calls"]:
+        #      idx = tc["index"]
+        #      a. New index? Initialize buffer and yield:
+        #         self._tool_call_buffers[idx] = {
+        #             "id": tc.get("id", ""), "name": tc.get("function",{}).get("name",""),
+        #             "arguments": ""
+        #         }
+        #         yield StreamEvent(event_type="tool_call_start",
+        #                           tool_call_index=idx,
+        #                           tool_call_id=tc.get("id"),
+        #                           tool_call_name=tc.get("function",{}).get("name"))
+        #      b. Accumulate arguments fragment:
+        #         args_delta = tc.get("function",{}).get("arguments","")
+        #         if args_delta:
+        #             self._tool_call_buffers[idx]["arguments"] += args_delta
+        #             yield StreamEvent(event_type="tool_call_delta",
+        #                               tool_call_index=idx,
+        #                               tool_call_arguments_delta=args_delta)
+        # 8. Wrap the JSON parse in try/except json.JSONDecodeError:
+        #    → yield StreamEvent(event_type="error", content=str(e))
 
         raise NotImplementedError("Implement SSE parser")
 
@@ -107,12 +134,34 @@ class SSEStreamParser:
         # TODO: Iterate over self._tool_call_buffers, parse the
         # accumulated argument strings into JSON, and return the results.
         # Handle JSON parse errors gracefully.
+        #
+        # Step-by-step:
+        #   results = []
+        #   for idx in sorted(self._tool_call_buffers):
+        #       buf = self._tool_call_buffers[idx]
+        #       try:
+        #           args = json.loads(buf["arguments"])
+        #       except json.JSONDecodeError:
+        #           args = {"_raw": buf["arguments"]}  # preserve raw string
+        #       results.append({"id": buf["id"], "name": buf["name"], "arguments": args})
+        #   return results
 
         raise NotImplementedError("Implement tool call aggregation")
 
 
 # ===========================================================================
 # Exercise 2: Response Cache with Semantic Similarity [3]
+#
+# READ FIRST:
+#   01-caching-cost-optimization-and-observability.md
+#     -> "## Caching Strategies" — exact-match caching (hash-based), semantic
+#        caching (embedding similarity + threshold), and the Caching Decision
+#        Tree for when to use each approach.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Section 2 "Response Cache with TTL" — ResponseCache class showing
+#        hash-based _make_key(), get/put with TTL expiration.
 #
 # Build a cache that supports both exact-match and semantic similarity
 # lookups. When an exact match misses, fall back to finding semantically
@@ -158,13 +207,23 @@ class SemanticCache:
         """Create a deterministic hash for exact-match lookup."""
         # TODO: Hash the query, model, and any other relevant parameters.
         # Use SHA-256. Sort keys for determinism.
+        #
+        # Step-by-step:
+        #   key_data = json.dumps({"query": query, "model": model, **kwargs}, sort_keys=True)
+        #   return hashlib.sha256(key_data.encode()).hexdigest()
         raise NotImplementedError
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Compute cosine similarity between two vectors."""
         # TODO: Implement cosine similarity.
-        # cos_sim = dot(a, b) / (norm(a) * norm(b))
-        # Handle zero vectors gracefully.
+        #
+        # Step-by-step:
+        #   dot_product = sum(x * y for x, y in zip(a, b))
+        #   norm_a = math.sqrt(sum(x * x for x in a))
+        #   norm_b = math.sqrt(sum(x * x for x in b))
+        #   if norm_a == 0 or norm_b == 0:
+        #       return 0.0
+        #   return dot_product / (norm_a * norm_b)
         raise NotImplementedError
 
     def get(self, query: str, model: str, **kwargs) -> Optional[dict]:
@@ -181,17 +240,32 @@ class SemanticCache:
         # TODO: Implement the two-tier lookup.
         #
         # Exact match:
-        #   - Hash the query
-        #   - Look up in self._exact_cache
-        #   - Check TTL (expired entries should be removed)
+        #   key = self._hash_query(query, model, **kwargs)
+        #   entry = self._exact_cache.get(key)
+        #   if entry and time.time() < entry.expires_at:
+        #       entry.hit_count += 1
+        #       return entry.response
+        #   elif entry:  # expired
+        #       del self._exact_cache[key]
         #
         # Semantic match (if exact miss):
-        #   - Embed the query using self._embed_fn
-        #   - Iterate over self._semantic_entries
-        #   - Compute cosine similarity with each entry's embedding
-        #   - If similarity > self._similarity_threshold, return the response
-        #   - Return the highest-similarity match above threshold
-        #   - Remove expired entries as you encounter them
+        #   query_embedding = self._embed_fn(query)
+        #   best_entry, best_sim = None, 0.0
+        #   expired_indices = []
+        #   for i, entry in enumerate(self._semantic_entries):
+        #       if time.time() >= entry.expires_at:
+        #           expired_indices.append(i)
+        #           continue
+        #       sim = self._cosine_similarity(query_embedding, entry.query_embedding)
+        #       if sim > self._similarity_threshold and sim > best_sim:
+        #           best_entry, best_sim = entry, sim
+        #   # Clean up expired
+        #   for i in reversed(expired_indices):
+        #       self._semantic_entries.pop(i)
+        #   if best_entry:
+        #       best_entry.hit_count += 1
+        #       return best_entry.response
+        #   return None
 
         raise NotImplementedError
 
@@ -203,11 +277,22 @@ class SemanticCache:
         """
         # TODO: Implement cache insertion.
         #
-        # 1. Compute the query hash for exact cache
-        # 2. Compute the query embedding for semantic cache
-        # 3. Create a CacheEntry
-        # 4. Store in both self._exact_cache and self._semantic_entries
-        # 5. If over max_entries, evict the oldest entry
+        # Step-by-step:
+        #   key = self._hash_query(query, model, **kwargs)
+        #   embedding = self._embed_fn(query)
+        #   entry = CacheEntry(
+        #       query_text=query,
+        #       query_embedding=embedding,
+        #       response=response,
+        #       created_at=time.time(),
+        #       expires_at=time.time() + self._default_ttl,
+        #   )
+        #   self._exact_cache[key] = entry
+        #   self._semantic_entries.append(entry)
+        #   # Evict oldest if over max_entries:
+        #   if len(self._semantic_entries) > self._max_entries:
+        #       oldest = self._semantic_entries.pop(0)
+        #       # Also remove from exact cache (find matching key)
 
         raise NotImplementedError
 
@@ -217,12 +302,33 @@ class SemanticCache:
         #   - exact_entries: number of entries in exact cache
         #   - semantic_entries: number of entries in semantic cache
         #   - total_hits: sum of hit_count across all entries
+        #
+        # Step-by-step:
+        #   return {
+        #       "exact_entries": len(self._exact_cache),
+        #       "semantic_entries": len(self._semantic_entries),
+        #       "total_hits": sum(e.hit_count for e in self._semantic_entries),
+        #   }
 
         raise NotImplementedError
 
 
 # ===========================================================================
 # Exercise 3: Cost Monitoring System with Anomaly Detection [2]
+#
+# READ FIRST:
+#   01-caching-cost-optimization-and-observability.md
+#     -> "## Cost Optimization" — pricing tables, the worked cost example,
+#        model routing economics, and the cost-per-request formula:
+#        cost = (input_tokens * input_price + output_tokens * output_price) / 1M
+#     -> "## Observability" — what to log, dashboard metrics table (especially
+#        "Cost per hour" with alert threshold "> 2x trailing avg").
+#
+# ALSO SEE:
+#   examples.py
+#     -> Section 3 "Cost Tracker" — CostTracker class with MODEL_PRICING dict,
+#        record() method computing cost, per-feature/per-user/per-model
+#        aggregations, and check_alerts() for budget thresholds.
 #
 # Track LLM costs by feature and detect anomalies using a rolling average.
 # Alert when a feature's cost deviates significantly from its baseline.
@@ -263,6 +369,10 @@ class CostMonitor:
         """Compute the USD cost for a single API call."""
         # TODO: Look up the model in PRICING. If not found, use a reasonable
         # default. Compute: (input_tokens * input_price + output_tokens * output_price) / 1M
+        #
+        # Step-by-step:
+        #   input_price, output_price = self.PRICING.get(model, (5.0, 15.0))
+        #   return input_tokens * input_price / 1_000_000 + output_tokens * output_price / 1_000_000
         raise NotImplementedError
 
     def record(
@@ -275,6 +385,16 @@ class CostMonitor:
     ) -> CostRecord:
         """Record a single API call and compute its cost."""
         # TODO: Compute cost, create a CostRecord, append to self._records, return it.
+        #
+        # Step-by-step:
+        #   cost = self.compute_cost(model, input_tokens, output_tokens)
+        #   record = CostRecord(
+        #       timestamp=time.time(), feature=feature, model=model,
+        #       user_id=user_id, input_tokens=input_tokens,
+        #       output_tokens=output_tokens, cost_usd=cost,
+        #   )
+        #   self._records.append(record)
+        #   return record
         raise NotImplementedError
 
     def get_hourly_cost_by_feature(self, hours_back: int = 1) -> dict[str, float]:
@@ -286,6 +406,14 @@ class CostMonitor:
         """
         # TODO: Filter self._records to the last N hours.
         # Group by feature, sum costs.
+        #
+        # Step-by-step:
+        #   cutoff = time.time() - hours_back * 3600
+        #   costs: dict[str, float] = defaultdict(float)
+        #   for r in self._records:
+        #       if r.timestamp >= cutoff:
+        #           costs[r.feature] += r.cost_usd
+        #   return dict(costs)
         raise NotImplementedError
 
     def get_trailing_average(self, feature: str, days: int = 7) -> float:
@@ -300,6 +428,13 @@ class CostMonitor:
         # 2. Compute total cost
         # 3. Divide by (N * 24) to get average hourly cost
         # Handle the case where there's no historical data.
+        #
+        # Step-by-step:
+        #   cutoff = time.time() - days * 86400
+        #   total = sum(r.cost_usd for r in self._records
+        #               if r.feature == feature and r.timestamp >= cutoff)
+        #   hours = days * 24
+        #   return total / hours if hours > 0 else 0.0
         raise NotImplementedError
 
     def check_anomalies(self) -> list[str]:
@@ -317,6 +452,20 @@ class CostMonitor:
         # 2. For each feature, compute trailing average
         # 3. If current > multiplier * average, generate an alert
         # 4. Also alert if there's no historical baseline (new feature spike)
+        #
+        # Step-by-step:
+        #   alerts = []
+        #   current_costs = self.get_hourly_cost_by_feature(hours_back=1)
+        #   for feature, current_cost in current_costs.items():
+        #       avg = self.get_trailing_average(feature)
+        #       if avg == 0.0:
+        #           if current_cost > 0:
+        #               alerts.append(f"ALERT: New feature '{feature}' "
+        #                             f"spending ${current_cost:.4f}/hr with no baseline")
+        #       elif current_cost > self._anomaly_multiplier * avg:
+        #           alerts.append(f"ALERT: '{feature}' cost ${current_cost:.4f}/hr "
+        #                         f"exceeds {self._anomaly_multiplier}x avg ${avg:.4f}/hr")
+        #   return alerts
         raise NotImplementedError
 
     def get_top_users(self, feature: str, top_n: int = 5) -> list[tuple[str, float]]:
@@ -327,11 +476,34 @@ class CostMonitor:
             List of (user_id, total_cost) tuples, sorted descending by cost.
         """
         # TODO: Filter by feature, group by user_id, sum costs, sort, return top N.
+        #
+        # Step-by-step:
+        #   user_costs: dict[str, float] = defaultdict(float)
+        #   for r in self._records:
+        #       if r.feature == feature:
+        #           user_costs[r.user_id] += r.cost_usd
+        #   sorted_users = sorted(user_costs.items(), key=lambda x: x[1], reverse=True)
+        #   return sorted_users[:top_n]
         raise NotImplementedError
 
 
 # ===========================================================================
 # Exercise 4: Model Router with Confidence-Based Escalation [3]
+#
+# READ FIRST:
+#   03-advanced-production-patterns.md
+#     -> "## Multi-Model Architectures" — the Router Pattern (keyword
+#        heuristics, embedding classifier, small-LLM router), the Cascade
+#        Pattern diagram with confidence thresholds, and Cascade Economics
+#        showing 50-70% savings.
+#   01-caching-cost-optimization-and-observability.md
+#     -> "## Cost Optimization" -> "### Model Routing" — routing table
+#        and the ComplexityClassifier example.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Section 4 "Model Router" — ModelRouter class with COMPLEX_SIGNALS
+#        and MODERATE_SIGNALS lists, classify() method, and select_model().
 #
 # Implement a cascade router that tries a cheap model first and escalates
 # to a more expensive model if the response confidence is low.
@@ -393,22 +565,47 @@ class CascadeRouter:
         """
         # TODO: Implement the cascade routing logic.
         #
-        # Track all attempts for observability:
+        # Step-by-step:
         #   attempts = []
-        #   for each tier up to self._max_tier:
-        #     response = await self._call_fn(tier["model"], prompt)
-        #     confidence = self._confidence_fn(response)
-        #     cost = compute cost from token counts
-        #     attempts.append({model, response_text, confidence, cost})
-        #     if confidence >= threshold: return result
+        #   best_attempt = None
+        #   total_cost = 0.0
         #
-        # If no tier met the threshold, return the attempt with highest confidence.
+        #   for tier in self.TIERS[:self._max_tier]:
+        #       response = await self._call_fn(tier["model"], prompt)
+        #       confidence = self._confidence_fn(response)
         #
-        # Hint: extract response text and token counts from the response dict.
-        # The response dict follows OpenAI's format:
-        #   response["choices"][0]["message"]["content"] -> text
-        #   response["usage"]["prompt_tokens"] -> input tokens
-        #   response["usage"]["completion_tokens"] -> output tokens
+        #       # Extract text and token counts (OpenAI format):
+        #       response_text = response["choices"][0]["message"]["content"]
+        #       input_tokens = response["usage"]["prompt_tokens"]
+        #       output_tokens = response["usage"]["completion_tokens"]
+        #
+        #       # Compute cost for this call:
+        #       cost = (input_tokens * tier["input_price"] / 1_000_000
+        #               + output_tokens * tier["output_price"] / 1_000_000)
+        #       total_cost += cost
+        #
+        #       attempt = {"model": tier["model"], "response_text": response_text,
+        #                  "confidence": confidence, "cost": cost}
+        #       attempts.append(attempt)
+        #
+        #       # Track best seen so far:
+        #       if best_attempt is None or confidence > best_attempt["confidence"]:
+        #           best_attempt = attempt
+        #
+        #       # If confidence meets threshold, stop here:
+        #       if confidence >= self._confidence_threshold:
+        #           return RoutingResult(
+        #               model_used=tier["model"], response=response_text,
+        #               confidence=confidence, escalated=(len(attempts) > 1),
+        #               total_cost=total_cost, attempts=attempts,
+        #           )
+        #
+        #   # No tier met threshold — return the best attempt:
+        #   return RoutingResult(
+        #       model_used=best_attempt["model"], response=best_attempt["response_text"],
+        #       confidence=best_attempt["confidence"], escalated=True,
+        #       total_cost=total_cost, attempts=attempts,
+        #   )
 
         raise NotImplementedError
 
@@ -430,12 +627,43 @@ class CascadeRouter:
         # 2. Estimate what it would have cost using only the most expensive tier
         # 3. Compute savings percentage
         # 4. Compute escalation rate (% of requests that went beyond tier 1)
+        #
+        # Step-by-step:
+        #   actual_cost = sum(r.total_cost for r in routing_results)
+        #   # Max-tier cost: sum the last attempt's cost equivalent for all
+        #   # requests as if they all used the most expensive tier.
+        #   # Rough estimate: use each request's total token count at top-tier pricing.
+        #   top_tier = self.TIERS[-1]
+        #   max_tier_cost = 0.0
+        #   for r in routing_results:
+        #       # Use the first attempt's token volume as a proxy
+        #       if r.attempts:
+        #           a = r.attempts[0]
+        #           max_tier_cost += a["cost"] * (top_tier["output_price"]
+        #                           / (self.TIERS[0]["output_price"] or 1))
+        #   savings_pct = (1 - actual_cost / max_tier_cost) * 100 if max_tier_cost > 0 else 0
+        #   escalation_rate = sum(1 for r in routing_results if r.escalated) / len(routing_results) if routing_results else 0
+        #   return {"actual_cost": actual_cost, "max_tier_cost": max_tier_cost,
+        #           "savings_pct": savings_pct, "escalation_rate": escalation_rate}
 
         raise NotImplementedError
 
 
 # ===========================================================================
 # Exercise 5: Dual Rate Limiter (RPM + TPM) [2]
+#
+# READ FIRST:
+#   01-caching-cost-optimization-and-observability.md
+#     -> "## Rate Limiting" — client-side rate limiting with token bucket,
+#        sliding window for TPM, and the Provider Rate Limits Reference
+#        tables for OpenAI and Anthropic tier limits.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Section 5 "Rate Limiter (Token Bucket)" — TokenBucketRateLimiter
+#        class with _refill(), try_acquire(estimated_tokens), and
+#        wait_and_acquire(). Shows the refill-rate math:
+#        refill_rate = max_rpm / 60.0 tokens per second.
 #
 # Build a rate limiter that enforces both requests-per-minute and
 # tokens-per-minute limits, matching how providers actually rate limit.
@@ -470,6 +698,19 @@ class DualRateLimiter:
         #   - last_refill_time: float
         #   - refill_rate: float (tokens per second)
         #   - max_capacity: float
+        #
+        # Step-by-step:
+        #   now = time.monotonic()
+        #   # RPM bucket
+        #   self._rpm_tokens = float(max_rpm)
+        #   self._rpm_max = float(max_rpm)
+        #   self._rpm_rate = max_rpm / 60.0        # refill per second
+        #   self._rpm_last_refill = now
+        #   # TPM bucket
+        #   self._tpm_tokens = float(max_tpm)
+        #   self._tpm_max = float(max_tpm)
+        #   self._tpm_rate = max_tpm / 60.0
+        #   self._tpm_last_refill = now
 
         raise NotImplementedError
 
@@ -479,6 +720,19 @@ class DualRateLimiter:
         # 1. Calculate elapsed time since last refill
         # 2. Add elapsed * refill_rate tokens (capped at max_capacity)
         # 3. Update last_refill_time
+        #
+        # Step-by-step:
+        #   now = time.monotonic()
+        #   # RPM bucket
+        #   elapsed_rpm = now - self._rpm_last_refill
+        #   self._rpm_tokens = min(self._rpm_max,
+        #                          self._rpm_tokens + elapsed_rpm * self._rpm_rate)
+        #   self._rpm_last_refill = now
+        #   # TPM bucket
+        #   elapsed_tpm = now - self._tpm_last_refill
+        #   self._tpm_tokens = min(self._tpm_max,
+        #                          self._tpm_tokens + elapsed_tpm * self._tpm_rate)
+        #   self._tpm_last_refill = now
         raise NotImplementedError
 
     def try_acquire(
@@ -502,6 +756,19 @@ class DualRateLimiter:
         # 3. Check if BOTH buckets have sufficient capacity
         # 4. If yes, consume from both buckets and return True
         # 5. If no, return False (do NOT consume)
+        #
+        # Step-by-step:
+        #   self._refill_buckets()
+        #   boost = 1.0 + self._priority_boost_pct if priority == "high" else 1.0
+        #   rpm_needed = 1.0 / boost   # high priority needs less capacity
+        #   tpm_needed = estimated_tokens / boost
+        #   # Actually: boost means allowing slightly more — interpret as:
+        #   # high priority can proceed when buckets are lower
+        #   if self._rpm_tokens >= (1 / boost) and self._tpm_tokens >= (estimated_tokens / boost):
+        #       self._rpm_tokens -= 1
+        #       self._tpm_tokens -= estimated_tokens
+        #       return True
+        #   return False
 
         raise NotImplementedError
 
@@ -521,6 +788,15 @@ class DualRateLimiter:
         # 1. Try to acquire immediately
         # 2. If failed, poll every 100ms until acquired or timeout
         # 3. Return True on success, False on timeout
+        #
+        # Step-by-step:
+        #   deadline = time.monotonic() + timeout_seconds
+        #   while True:
+        #       if self.try_acquire(estimated_tokens, priority):
+        #           return True
+        #       if time.monotonic() >= deadline:
+        #           return False
+        #       await asyncio.sleep(0.1)
         raise NotImplementedError
 
     def get_status(self) -> dict:
@@ -532,11 +808,40 @@ class DualRateLimiter:
         #   - tpm_max: int
         #   - rpm_utilization_pct: float
         #   - tpm_utilization_pct: float
+        #
+        # Step-by-step:
+        #   self._refill_buckets()
+        #   return {
+        #       "rpm_available": int(self._rpm_tokens),
+        #       "rpm_max": self._max_rpm,
+        #       "tpm_available": int(self._tpm_tokens),
+        #       "tpm_max": self._max_tpm,
+        #       "rpm_utilization_pct": (1 - self._rpm_tokens / self._rpm_max) * 100,
+        #       "tpm_utilization_pct": (1 - self._tpm_tokens / self._tpm_max) * 100,
+        #   }
         raise NotImplementedError
 
 
 # ===========================================================================
 # Exercise 6: Observability Pipeline [3]
+#
+# READ FIRST:
+#   01-caching-cost-optimization-and-observability.md
+#     -> "## Observability" — LLMCallLog dataclass (all fields to capture),
+#        Dashboard Metrics table (error rate, P95 latency, TTFT, cost/hr,
+#        cache hit rate), Distributed Tracing with OpenTelemetry spans.
+#   02-latency-reliability-and-error-handling.md
+#     -> "## Error Handling and Reliability" — Error Classification table
+#        (which errors are retryable), the Circuit Breaker pattern, and
+#        Graceful Degradation levels.
+#
+# ALSO SEE:
+#   examples.py
+#     -> Section 7 "Request/Response Logger" — LLMLogEntry dataclass and
+#        LLMLogger.log_call() computing cost, extracting tool call names,
+#        hashing prompts, and emitting structured JSON.
+#     -> Section 3 "Cost Tracker" — CostTracker with per-feature, per-user,
+#        per-model aggregations and check_alerts().
 #
 # Design a complete observability pipeline that captures, aggregates, and
 # reports on all relevant LLM metrics. This is the glue that ties together
@@ -592,6 +897,12 @@ class ObservabilityPipeline:
         4. Log to your structured logging pipeline
         """
         # TODO: Store the metrics and check alert rules.
+        #
+        # Step-by-step:
+        #   self._metrics.append(metrics)
+        #   triggered = self._check_alerts()
+        #   for alert in triggered:
+        #       logger.warning(alert)  # or emit to your alerting system
         raise NotImplementedError
 
     def add_alert_rule(
@@ -610,6 +921,13 @@ class ObservabilityPipeline:
             # Alert if error rate > 5% in the last 5 minutes
         """
         # TODO: Store the alert rule for checking on each record().
+        #
+        # Step-by-step:
+        #   self._alert_rules.append({
+        #       "name": name, "metric": metric,
+        #       "threshold": threshold, "window_minutes": window_minutes,
+        #       "comparison": comparison,
+        #   })
         raise NotImplementedError
 
     def _check_alerts(self) -> list[str]:
@@ -628,6 +946,36 @@ class ObservabilityPipeline:
         #    - "cache_hit_rate": count(cache_hit) / total_count
         # 3. Compare against threshold using the comparison operator
         # 4. If triggered, generate an alert message
+        #
+        # Step-by-step:
+        #   alerts = []
+        #   now = time.time()
+        #   for rule in self._alert_rules:
+        #       cutoff = now - rule["window_minutes"] * 60
+        #       window = [m for m in self._metrics if m.timestamp >= cutoff]
+        #       if not window:
+        #           continue
+        #       # Compute the metric:
+        #       if rule["metric"] == "error_rate":
+        #           value = sum(1 for m in window if m.status != "success") / len(window)
+        #       elif rule["metric"] == "p95_latency":
+        #           latencies = sorted(m.total_latency_ms for m in window)
+        #           value = latencies[int(len(latencies) * 0.95)]
+        #       elif rule["metric"] == "hourly_cost":
+        #           window_cost = sum(m.cost_usd for m in window)
+        #           minutes_in_window = rule["window_minutes"]
+        #           value = window_cost * (60 / minutes_in_window)  # extrapolate
+        #       elif rule["metric"] == "cache_hit_rate":
+        #           value = sum(1 for m in window if m.cache_hit) / len(window)
+        #       else:
+        #           continue
+        #       # Compare:
+        #       triggered = (value > rule["threshold"] if rule["comparison"] == "gt"
+        #                    else value < rule["threshold"])
+        #       if triggered:
+        #           alerts.append(f"ALERT [{rule['name']}]: {rule['metric']}="
+        #                         f"{value:.4f} {rule['comparison']} {rule['threshold']}")
+        #   return alerts
 
         raise NotImplementedError
 
@@ -653,10 +1001,46 @@ class ObservabilityPipeline:
         """
         # TODO: Filter to the time window, compute all metrics.
         #
-        # For percentiles, sort the values and index:
-        #   p95 = sorted_values[int(len(sorted_values) * 0.95)]
+        # Step-by-step:
+        #   cutoff = time.time() - window_minutes * 60
+        #   window = [m for m in self._metrics if m.timestamp >= cutoff]
+        #   if not window:
+        #       return {k: 0 for k in ["total_requests","error_rate","p50_latency_ms",
+        #               "p95_latency_ms","p99_latency_ms","p50_ttft_ms","p95_ttft_ms",
+        #               "total_cost_usd","avg_cost_per_request","cache_hit_rate",
+        #               "output_parse_success_rate","top_models","top_features",
+        #               "top_error_types"]}
         #
-        # Handle empty windows gracefully (return zeros).
+        #   # Helper for percentiles:
+        #   def percentile(vals, pct):
+        #       s = sorted(vals)
+        #       return s[int(len(s) * pct)] if s else 0
+        #
+        #   latencies = [m.total_latency_ms for m in window]
+        #   ttfts = [m.ttft_ms for m in window if m.ttft_ms is not None]
+        #
+        #   # Counts by model/feature/error:
+        #   from collections import Counter
+        #   model_counts = Counter(m.model for m in window)
+        #   feature_counts = Counter(m.feature for m in window)
+        #   error_counts = Counter(m.error_type for m in window if m.error_type)
+        #
+        #   return {
+        #       "total_requests": len(window),
+        #       "error_rate": sum(1 for m in window if m.status != "success") / len(window),
+        #       "p50_latency_ms": percentile(latencies, 0.5),
+        #       "p95_latency_ms": percentile(latencies, 0.95),
+        #       "p99_latency_ms": percentile(latencies, 0.99),
+        #       "p50_ttft_ms": percentile(ttfts, 0.5) if ttfts else 0,
+        #       "p95_ttft_ms": percentile(ttfts, 0.95) if ttfts else 0,
+        #       "total_cost_usd": sum(m.cost_usd for m in window),
+        #       "avg_cost_per_request": sum(m.cost_usd for m in window) / len(window),
+        #       "cache_hit_rate": sum(1 for m in window if m.cache_hit) / len(window),
+        #       "output_parse_success_rate": ...,  # similar pattern
+        #       "top_models": model_counts.most_common(5),
+        #       "top_features": feature_counts.most_common(5),
+        #       "top_error_types": error_counts.most_common(5),
+        #   }
 
         raise NotImplementedError
 
@@ -673,6 +1057,19 @@ class ObservabilityPipeline:
             }
         """
         # TODO: Filter to window, group and sum costs.
+        #
+        # Step-by-step:
+        #   cutoff = time.time() - window_minutes * 60
+        #   window = [m for m in self._metrics if m.timestamp >= cutoff]
+        #   by_model, by_feature, by_user = defaultdict(float), defaultdict(float), defaultdict(float)
+        #   for m in window:
+        #       by_model[m.model] += m.cost_usd
+        #       by_feature[m.feature] += m.cost_usd
+        #       by_user[m.user_id] += m.cost_usd
+        #   # Top 10 users only:
+        #   top_users = dict(sorted(by_user.items(), key=lambda x: x[1], reverse=True)[:10])
+        #   return {"by_model": dict(by_model), "by_feature": dict(by_feature),
+        #           "by_user": top_users, "total": sum(m.cost_usd for m in window)}
         raise NotImplementedError
 
     def get_latency_breakdown(
@@ -696,6 +1093,36 @@ class ObservabilityPipeline:
         """
         # TODO: Filter by feature and window. Compute percentiles overall
         # and sliced by model and cache hit/miss.
+        #
+        # Step-by-step:
+        #   cutoff = time.time() - window_minutes * 60
+        #   window = [m for m in self._metrics
+        #             if m.feature == feature and m.timestamp >= cutoff]
+        #   if not window:
+        #       return {"count": 0}  # empty result
+        #
+        #   def pct(vals, p):
+        #       s = sorted(vals)
+        #       return s[int(len(s) * p)] if s else 0
+        #
+        #   latencies = [m.total_latency_ms for m in window]
+        #   ttfts = [m.ttft_ms for m in window if m.ttft_ms is not None]
+        #   # By model: group latencies per model, compute p50/p95 for each
+        #   by_model = defaultdict(list)
+        #   for m in window: by_model[m.model].append(m.total_latency_ms)
+        #   # Cache hit vs miss latency:
+        #   hits = [m.total_latency_ms for m in window if m.cache_hit]
+        #   misses = [m.total_latency_ms for m in window if not m.cache_hit]
+        #   return {
+        #       "count": len(window),
+        #       "p50_ms": pct(latencies, 0.5), "p95_ms": pct(latencies, 0.95),
+        #       "p99_ms": pct(latencies, 0.99),
+        #       "ttft_p50_ms": pct(ttfts, 0.5), "ttft_p95_ms": pct(ttfts, 0.95),
+        #       "by_model": {m: {"p50": pct(v, 0.5), "p95": pct(v, 0.95)}
+        #                    for m, v in by_model.items()},
+        #       "cache_hit_latency_p50": pct(hits, 0.5) if hits else 0,
+        #       "cache_miss_latency_p50": pct(misses, 0.5) if misses else 0,
+        #   }
         raise NotImplementedError
 
 

@@ -417,3 +417,19 @@ const require = createRequire(import.meta.url); // require() in ESM
 ### 7.7 Caching
 
 CJS: `require.cache` keyed by resolved absolute path. Deletable (fragile hot-reload). ESM: Cached by URL. No public API to clear. Intentionally evaluated once.
+
+**Common mistake with CJS cache deletion:** Developers sometimes delete `require.cache` entries for "hot reload" during development, but the loaded module's exports may still be referenced by other modules. This creates a state where some parts of the app use the old module and some use the new one. For development hot-reload, tools like `tsx watch` or `nodemon` that restart the entire process are more reliable.
+
+**When to use `createRequire` in ESM:** The `createRequire` escape hatch is primarily useful for loading JSON files (which ESM cannot import natively without `--experimental-json-modules` or an import assertion) and for interop with libraries that only expose CJS. Avoid it for new code — it re-introduces synchronous loading semantics.
+
+---
+
+## Related Reading
+
+- **Event loop phases and microtask queues** that underpin all the threading and process models here are covered in [Event Loop and Task Queues](01-event-loop-and-task-queues.md)
+- **Worker threads for CPU-bound work** connect to the performance optimization strategies in [Performance — Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md) and the profiling techniques in [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md)
+- **Cluster module and PM2** are production scaling patterns explored further in [Performance — Clustering and Scaling](../08-performance-scaling/02-clustering-and-scaling.md) (load testing, sticky sessions, zero-downtime deployments)
+- **Graceful shutdown** (Section 4) is critical for Kubernetes environments discussed in [Architecture — Microservices and Advanced Patterns](../09-architecture-patterns/03-microservices-and-advanced-patterns.md) and for queue worker shutdown in [Performance — Caching and Redis](../08-performance-scaling/01-caching-and-redis.md) (BullMQ graceful shutdown)
+- **V8 compilation pipeline and hidden classes** (Section 5) directly affect the optimization strategies in [Performance — Profiling and Advanced Performance](../08-performance-scaling/03-profiling-and-advanced-performance.md)
+- **Module system internals** (Section 7) — CJS vs ESM — are the foundation for the module fundamentals in [Module 00 — Module System](../00-ts-node-fundamentals.md#7-module-system)
+- For memory management, streams, and GC that complete the runtime picture, continue to [Memory, Streams, and Runtime Internals](03-memory-streams-and-runtime-internals.md)

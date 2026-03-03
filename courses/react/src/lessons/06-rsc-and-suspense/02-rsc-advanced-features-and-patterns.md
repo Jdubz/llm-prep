@@ -493,3 +493,19 @@ _error.tsx -> error.tsx per segment
 - Client components need explicit `"use client"` -- nothing is implicitly client anymore.
 - Global CSS imports must go in `app/layout.tsx`.
 - Middleware works with both routers; no changes needed.
+
+---
+
+## Practice
+
+- **Caching strategy exercise**: For a blog with posts and comments, design the caching strategy: which routes use `force-cache`, which use `no-store`, and which use `revalidate`? Justify each choice.
+- **Server action**: Build a form that submits via a server action (not an API route). Use `useActionState` to track pending state and display form-level errors. Verify it works with and without JavaScript.
+- **PPR mental model**: Take an e-commerce product page and identify: (1) the static shell (product name, images, description), (2) the dynamic holes (price, stock status, reviews). Sketch how PPR would serve this.
+- **Migration planning**: If you have a Next.js Pages Router project, plan the migration to App Router for one route. Identify: `getServerSideProps` to replace, `useRouter` imports to update, and providers to move to `layout.tsx`.
+- **Flight protocol trace**: Open the Network tab on a Next.js App Router app and navigate between pages. Find the RSC payload requests (look for `?_rsc=` or `text/x-component`). Examine the payload format.
+
+### Related Lessons
+
+- [Server Components & Suspense](01-server-components-and-suspense.md) -- fundamentals of server vs client components, Suspense boundaries, streaming SSR
+- [Performance: Tools & Advanced Patterns](../03-performance/02-performance-tools-and-advanced-patterns.md) -- code splitting, selective hydration, and bundle optimization in the context of SSR
+- [State Management Libraries](../05-state-management/02-state-libraries-and-solutions.md) -- TanStack Query for client-side data caching alongside RSC server-side fetching

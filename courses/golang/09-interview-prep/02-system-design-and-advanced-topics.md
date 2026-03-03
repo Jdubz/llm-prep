@@ -143,22 +143,30 @@ func (c *Crawler) processJob(ctx context.Context, job crawlJob, jobs chan<- craw
 
 ## 3. System Design: Pub/Sub Message Broker
 
+**Prompt:** "Design an in-process pub/sub message broker in Go that supports multiple topics and subscribers."
+
 **Key Go-specific decisions:**
-- Use channels for in-process pub/sub, gRPC streams for cross-process
-- Protect subscriber maps with `sync.RWMutex`
-- Use buffered channels per subscriber to handle slow consumers (with `select`/`default` to drop when full)
-- For shutdown: close subscriber channels and drain in-flight messages
+- Use channels for in-process pub/sub, gRPC streams for cross-process. Channels are the natural Go primitive for this because each subscriber gets its own channel, and the Go scheduler handles the concurrency of delivering messages to multiple subscribers.
+- Protect subscriber maps with `sync.RWMutex`. The subscriber registry (`map[string][]chan Message`) is read-heavy (every publish reads it) and write-infrequent (subscribe/unsubscribe), making `RWMutex` the right choice over a regular `Mutex`.
+- Use buffered channels per subscriber to handle slow consumers. The publisher uses `select` with a `default` case to drop messages for subscribers whose buffers are full, preventing one slow subscriber from blocking all others. The buffer size becomes a tunable parameter that trades memory for resilience.
+- For shutdown: close subscriber channels and drain in-flight messages. Closing a channel signals all receivers to exit their `range` loop. The broker should track active goroutines with a `sync.WaitGroup` to wait for all subscribers to finish processing before returning.
+
+**Discussion points:** Why channels instead of callbacks? Channels decouple the publisher from subscriber timing — the publisher does not block waiting for subscriber processing. They also compose naturally with `select` for timeout and cancellation semantics.
 
 ---
 
 ## 4. System Design: Distributed Cache
 
+**Prompt:** "Design a distributed in-memory cache in Go with consistent hashing and cache stampede prevention."
+
 **Key Go-specific decisions:**
-- Consistent hashing for key distribution
-- `sync.Map` or sharded maps (map per hash bucket with per-shard `sync.RWMutex`) for concurrent access
-- Use `singleflight` to deduplicate concurrent cache misses for the same key (prevents thundering herd)
-- gRPC for inter-node communication
-- TTL enforcement via a background goroutine with a `time.Ticker`
+- Consistent hashing for key distribution. A hash ring determines which node owns each key. When nodes are added or removed, only a fraction of keys need to be redistributed. Go's `hash/crc32` or `hash/fnv` packages provide the hash functions.
+- `sync.Map` or sharded maps (map per hash bucket with per-shard `sync.RWMutex`) for concurrent access. Sharding reduces lock contention compared to a single mutex protecting the entire map. The number of shards should be a power of 2 for fast modulo via bitwise AND.
+- Use `singleflight` to deduplicate concurrent cache misses for the same key (prevents thundering herd). When 100 goroutines request the same uncached key simultaneously, `singleflight` ensures only one goroutine fetches from the source of truth. The other 99 share the result.
+- gRPC for inter-node communication. When a node receives a request for a key it does not own, it forwards the request to the owning node via gRPC. Bidirectional streaming can be used for bulk transfers during rebalancing.
+- TTL enforcement via a background goroutine with a `time.Ticker`. Lazy expiration (checking TTL on access) is simpler but leaves expired entries in memory. Active expiration (a periodic sweep goroutine) reclaims memory proactively. Most production caches use both: lazy expiration for correctness, active expiration for memory management.
+
+**Discussion points:** Why not use `sync.Map` for everything? `sync.Map` is optimized for two patterns: write-once-read-many and disjoint key sets. A cache with frequent updates to the same keys is better served by a sharded map with `RWMutex`.
 
 ---
 
@@ -565,3 +573,35 @@ Be honest. Good answers:
 - "gofmt ending all style debates"
 - "Compilation speed — the feedback loop is nearly instant"
 - "The tooling: go vet, go test -race, pprof, all built in"
+
+---
+
+## Related Reading
+
+This file draws on every module in the course. Here are the key references for each system design area:
+
+- **Concurrency design (Sections 2–4)** — [Module 02: Advanced Concurrency Patterns](../02-concurrency/03-advanced-concurrency-patterns.md) covers worker pools, fan-out/fan-in, and singleflight that the web crawler, pub/sub, and distributed cache designs rely on
+- **HTTP service patterns (Sections 1, 6)** — [Module 04: Advanced HTTP Patterns](../04-http-services/03-advanced-http-patterns.md) covers graceful shutdown, gRPC, WebSockets, and reverse proxy for the service architectures in the system design template
+- **Data layer (Section 1, Challenge 4)** — [Module 05: Queries, Transactions, and Patterns](../05-data-storage/02-queries-transactions-and-patterns.md) covers keyset pagination, transactions, and the repository pattern used in section 6 challenges
+- **Observability (Section 1)** — [Module 07: Observability and Health](../07-production/02-observability-and-health.md) covers slog, Prometheus, OpenTelemetry, and health checks referenced in the system design template
+- **Deployment (Section 1)** — [Module 07: Deployment and Scaling](../07-production/03-deployment-and-scaling.md) covers Docker, Kubernetes, GOMAXPROCS, and GOMEMLIMIT from the deployment section of the system design template
+- **Generics and patterns (Section 7)** — [Module 08: Patterns and Composition](../08-advanced-patterns/02-patterns-and-composition.md) covers functional options, embedding, and DI patterns referenced in the code review exercises
+- **Testing (Section 5)** — [Module 06: Table-Driven Tests and Mocking](../06-testing/01-table-driven-tests-and-mocking.md) covers the testing patterns needed to evaluate the code review exercises in section 5
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the interview preparation concepts from this module (Interview Essentials through System Design and Advanced Topics):
+
+1. **System design walkthrough** — Pick one of the three system designs (web crawler, pub/sub broker, distributed cache) and implement it end-to-end. Use the template from section 1: define requirements, design the API, model the data, choose a concurrency strategy, and implement with proper context cancellation and error handling.
+
+2. **Timed concurrency puzzles** — Set a 15-minute timer and work through each concurrency puzzle from Module 09 section 6 (Interview Essentials). For each puzzle: identify the bug, explain why it happens, and implement the fix. Practice explaining your reasoning aloud as you would in an interview.
+
+3. **Code review practice** — Take each code review exercise from section 5 and write a complete review comment listing every issue, explaining why each matters, and providing the corrected code. Then time yourself doing the same exercise in 5 minutes (interview pace).
+
+4. **Mock interview: system design** — Pick a system design prompt and practice the full 35-minute flow: 5 minutes for requirements, 5 for API design, 10 for architecture (including Go-specific decisions like goroutine model and channel usage), 5 for concurrency design, 5 for observability, and 5 for deployment. Write out the Go structs, interface definitions, and key function signatures.
+
+5. **"Why Go" elevator pitch** — Write a 2-minute explanation for each of the three company scenarios (already using Go, transitioning to Go, infrastructure company). Practice delivering them naturally. Prepare honest answers for "what do you miss from TypeScript" and "what do you prefer about Go."
+
+6. **Live coding simulation** — Use the live coding template from section 7 and implement a circuit breaker, rate limiter, or load balancer from scratch in 30 minutes. Use `context.Context`, proper error handling, `sync.WaitGroup`, and channel direction types in function signatures. Test with `-race`.

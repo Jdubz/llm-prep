@@ -583,6 +583,22 @@ Observability:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Build a Complete Agent Loop** [core] -- Directly implements "The Core Agent Loop" architecture: send messages to LLM, detect tool calls, execute tools, append results, loop until text or max iterations. Also applies "Exit Conditions and Safety" (max iteration limit).
+- **Exercise 2: Implement the ReAct Pattern** [reasoning] -- Implements "The ReAct Pattern": explicit Thought/Action/Observation trace. You will track each reasoning step, execute tool calls, record observations, and detect the final answer.
+- **Exercise 4: Implement Conversation Memory with Sliding Window** [memory] -- Implements the memory strategies from "Memory Systems": sliding window (keep last N messages) + summarization (compress older messages). Applies "Conversation History Strategies" and "Memory System Comparison."
+- **Exercise 6: Implement a Simple Orchestrator** [multi-agent] -- Uses the agent loop from this file as the execution engine for specialist agents. The orchestrator classifies intent and delegates -- applying patterns from "The Core Agent Loop" at the specialist level.
+
+See also `examples.py`:
+- `agent_loop()` (Example 1) -- async agent loop with tool execution
+- `react_agent()` and `REACT_SYSTEM_PROMPT` (Example 5) -- ReAct pattern with trace logging
+- `ConversationMemory` and `agent_with_memory()` (Example 4) -- memory with summarization
+
+---
+
 ## Interview Q&A: Agent Patterns and Memory
 
 **Q: Design an agent loop. What are the key considerations?**

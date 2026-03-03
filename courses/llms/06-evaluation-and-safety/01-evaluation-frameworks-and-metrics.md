@@ -540,6 +540,22 @@ Compare to the cost of deploying a bad prompt that degrades user experience.
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice concepts from this file:
+
+- **Exercise 1: Build an Eval Suite for a Customer Service Chatbot** -- Build a comprehensive eval dataset following the golden test set guidelines and dataset composition rules (60/20/10/10 split). Practices building eval cases, scoring functions (contains-based matching), running the full eval pipeline, and detecting regressions.
+- **Exercise 2: Implement an LLM-as-Judge Scorer with Calibration** -- Build judge rubrics for multiple quality dimensions, implement the LLM-as-judge scoring pipeline (prompt -> call -> parse JSON -> normalize), and calibrate against human annotations targeting >80% within-1 agreement.
+- **Exercise 6: Implement Eval Regression Testing** -- Compare eval results across prompt versions, detect regressions (>2% drop), and generate CI-friendly reports. Directly practices "Eval-Driven Development Workflow" Step 5 and the CI/CD integration pattern.
+
+See also `examples.py` for reference implementations:
+- "Scoring functions" section -- exact_match_scorer, contains_scorer, regex_scorer
+- "Eval pipeline" section -- run_eval_pipeline with regression detection
+- "LLM-as-judge scorer" section -- full judge implementation with configurable rubrics
+- "Simple A/B test analyzer" section -- z-test comparison with significance testing
+
+---
+
 ## Interview Q&A: Evaluation Frameworks
 
 **Q: How do you build and maintain an eval suite for LLM features?**

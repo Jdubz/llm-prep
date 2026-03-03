@@ -396,3 +396,14 @@ spec:
     - type: Resource
       resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
 ```
+
+---
+
+## Related Reading
+
+- [Module 06: Docker and Containerization](01-docker-and-containerization.md) -- container fundamentals that Helm charts and operators build on
+- [Module 06: Kubernetes Core and Operations](02-kubernetes-core-and-operations.md) -- the core Kubernetes concepts (Deployments, Services, volumes, scaling) that these advanced patterns extend
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- service mesh (Istio, Linkerd) implements circuit breakers, retry budgets, and traffic management at the infrastructure level
+- [Module 07: Infrastructure and GitOps](../07-cicd/03-infrastructure-and-gitops.md) -- GitOps principles, ArgoCD ApplicationSets, and sync waves for managing Kubernetes deployments declaratively
+- [Module 08: Advanced Observability](../08-observability/03-advanced-observability.md) -- the OTel Collector deployed as a DaemonSet and Gateway in Kubernetes, and service mesh telemetry integration
+- [Module 09: Compliance and Advanced Security](../09-security/03-compliance-and-advanced-security.md) -- Kubernetes RBAC, Pod Security Standards, OPA/Gatekeeper policies, and network policies for securing multi-tenant clusters

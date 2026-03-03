@@ -437,6 +437,23 @@ app = FastAPI(
 
 ---
 
+---
+
+## Practice Exercises
+
+The concepts in this document are tested in `exercises.py` in the same directory:
+
+- **Exercise 1** (Pydantic Models): Build `BookBase`, `BookCreate`, `BookUpdate`, and `BookResponse`
+  schemas using `Field()`, `@field_validator`, and `@computed_field` from the sections above.
+- **Exercise 3** (CRUD Router): Build a full CRUD router using `APIRouter`, `response_model`,
+  `status_code`, `Path` parameters, and `HTTPException` from the routing sections above.
+- **Exercise 5** (Custom Validators): Build `BookSearchParams` using `@field_validator` and
+  `@model_validator` from the "Field Validators and Model Validators" section.
+
+Also see `examples.py` for complete, runnable implementations of all these patterns.
+
+---
+
 ## Key Takeaways
 
 - Every function parameter contributes to automatic OpenAPI documentation.

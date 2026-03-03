@@ -681,3 +681,21 @@ Use `jest.useFakeTimers()` before the test. Wrap timer advances in `act(() => je
 **Q: How do you handle a custom hook that calls another hook that needs a provider?**
 
 Pass a `wrapper` to `renderHook`. The wrapper is a React component that renders the required providers. All hooks rendered inside `renderHook` will have access to the context from the wrapper.
+
+---
+
+## Practice
+
+- **Test `usePrevious`**: Write a test using `renderHook` that verifies `usePrevious` returns `undefined` on first render and the old value after re-rendering with a new value. See `src/hooks/usePrevious.js` for the implementation.
+- **Test `useFetch`**: Write tests for `src/hooks/useFetch.js` covering: (1) successful fetch, (2) error handling, (3) race condition (rapidly change URL and assert only the last result is set), (4) `refetch` triggers a new request. Use MSW or mock `fetch`.
+- **Test interactively**: Run `npm run dev` and open `src/lessons/02-custom-hooks/CustomHooksDemo.jsx` to manually verify your hook implementations.
+- **Build a mini TanStack Query**: Following the "Building a Mini Data-Fetching Library" section, implement `useQuery` with: cache, staleTime, background refetch on focus, and deduplication. Test each feature with `renderHook`.
+- **TypeScript generics exercise**: Add TypeScript generics to your `useFetch` so that `useFetch<User>('/api/user')` returns `{ data: User | null, ... }`. Verify type inference works at call sites.
+- **Refactor class to hooks**: Take a class component with `componentDidMount`, `componentDidUpdate`, and `componentWillUnmount` and convert it to a function component with hooks. Write tests that verify identical behavior.
+
+### Related Lessons
+
+- [Custom Hooks Fundamentals](01-custom-hooks-fundamentals.md) -- the patterns and design decisions behind `usePrevious`, `useFetch`, and other hooks tested here
+- [Hooks & State Management](../01-hooks-deep-dive/01-hooks-and-state-management.md) -- the hook primitives that custom hooks compose
+- [Testing: RTL Fundamentals](../07-testing/01-react-testing-library-fundamentals.md) -- React Testing Library patterns, MSW setup, and test organization
+- [Testing: Strategies & Mocking](../07-testing/02-testing-strategies-and-mocking.md) -- testing hooks in isolation with `renderHook`, E2E with Playwright

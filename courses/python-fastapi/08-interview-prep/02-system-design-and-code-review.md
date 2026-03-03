@@ -745,6 +745,21 @@ async def predict(request: PredictionRequest):
 
 ---
 
+## Practice Exercises
+
+The following timed coding challenges in `exercises.py` test concepts covered in this file. Use them to practice under interview conditions.
+
+| Exercise | Time | Concepts from this file |
+|----------|------|------------------------|
+| **Exercise 3: Rate-Limited API Endpoint** | 20 min | Token bucket algorithm (Pattern 4: Rate Limiting Middleware), middleware pattern (ASGI lifecycle, F7), per-client IP tracking, `429` + `Retry-After` headers |
+| **Exercise 4: Debug Broken Code** | 10 min | Code Review Checklist (all categories: validation, status codes, identity checks, error handling), Code Review Exercises 1-5 |
+| **Exercise 5: Code Review** | 10 min | Code Review Checklist (security, types, errors, API design, routing), Code Review Exercises patterns |
+| **Exercise 6: Webhook Delivery System with Retry** | 20 min | System Design (Design 2: Notification Service), retry with backoff (Advanced Async Patterns), CRUD patterns (Pattern 1: Complete CRUD Endpoint), status tracking (Pattern 3: Background Task Processor) |
+
+Exercises 1 (TODO API) and 2 (User Registration) are covered in `01-interview-fundamentals.md`.
+
+---
+
 ## Key Takeaways
 
 - Use the system design template: requirements → API design → data model → architecture → Python-specific → scale.

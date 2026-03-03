@@ -352,6 +352,14 @@ connection pooling and raw SQL integration.
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` practice the concepts from this file. Also see `examples.py` Section 2 (Model Definitions with Relationships) for complete working models you can reference.
+
+- **Exercise 1 — Define SQLAlchemy Models**: Build `User`, `Article`, and `Tag` models using `Mapped[]` and `mapped_column()` syntax. Practices column definitions, one-to-many relationships with `back_populates` and `cascade`, many-to-many via an association `Table`, and `ForeignKey` with `ondelete` behavior. Covers the Declarative Mapping, Relationship Patterns, and Lazy vs Eager Loading sections above.
+
+---
+
 ## Key Takeaways
 
 - `Mapped[str]` with Python types replaces verbose column decorators — the type IS the column.

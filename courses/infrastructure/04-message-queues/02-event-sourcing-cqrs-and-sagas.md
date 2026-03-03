@@ -235,3 +235,13 @@ saga = Saga("order-123", [
 6. **Notification system (email, push, SMS) resilient to failures, no duplicates.**
 
    SNS topic, separate SQS per channel, idempotency key per (user, type, event_id), DLQ per channel, circuit breaker per provider.
+
+---
+
+## Related Reading
+
+- [Module 04: Message Brokers](01-message-brokers-kafka-sqs-rabbitmq.md) -- the broker fundamentals (Kafka, SQS, RabbitMQ) that event sourcing, CQRS, and sagas are built on
+- [Module 04: Message Queue Operations](03-message-queue-operations-and-patterns.md) -- the outbox pattern for reliable event publishing, CDC with Debezium for capturing state changes, and schema evolution for event contracts
+- [Module 02: SQL, NoSQL, and Decision Framework](../02-databases-at-scale/01-sql-nosql-and-decision-framework.md) -- event stores require append-optimized databases; CQRS read models use denormalized databases (DynamoDB, Elasticsearch) optimized for query patterns
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- PostgreSQL as an event store (append-only table with sequence numbers), and DynamoDB for CQRS read models with single-table design
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- saga compensating transactions need circuit breakers and retry logic for each service call in the saga chain

@@ -239,6 +239,20 @@ Savings from routing 80% to mini, 20% to Sonnet:
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` directly practice concepts from this file:
+
+- **Exercise 1: Multi-Model Cost Estimator** -- Uses the per-request cost formula from the "Cost Estimation" section and the pricing data from the "Model Comparison Table." You will implement `estimate_request_cost()` which mirrors the worked example in "Cost Estimation" but adds prompt caching discounts and batch API discounts. The `find_cheapest_model()` function practices the model selection decision described in "Choosing a Model Family."
+
+- **Exercise 2: Model Router** -- Directly applies the model routing concepts from "Choosing a Model Family" (capability, cost, latency, deployment constraints). The `infer_task_type()` function classifies requests to route them to appropriate model tiers per the "Recommended Parameter Presets" table. The `route_request()` function implements the "default approach: start with capable model, then downgrade" pattern.
+
+- **Exercise 5: Parameter Configuration Designer** -- Uses the "Recommended Parameter Presets" table to design generation parameters for different task types (classification, code, creative writing, etc.). Each sub-function requires choosing temperature, top-p, max_tokens, and penalties appropriate for the task.
+
+See also `examples.py` sections 1 (Token Counting and Cost Estimation), 2 (Model Selection / Routing), and 4 (Parameter Tuning Examples) for runnable reference implementations of these patterns.
+
+---
+
 ## Interview Q&A: Training and Model Families
 
 **Q: Explain the training pipeline: pre-training, SFT, RLHF.**

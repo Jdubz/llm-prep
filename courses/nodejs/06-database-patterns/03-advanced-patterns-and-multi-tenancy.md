@@ -634,3 +634,29 @@ Strong answer pattern:
 5. **Optimistic locking by default**: Switch to pessimistic only when contention is proven high.
 6. **Multi-tenancy starts simple**: Shared schema with `tenant_id`, add RLS, evolve to schema-per-tenant only when needed.
 7. **Monitor everything**: Slow query logs, connection pool metrics, index usage statistics.
+
+---
+
+## Related Reading
+
+- **Multi-tenancy with AsyncLocalStorage** (Section 1) — the context propagation pattern is covered in [Node.js Runtime — Event Loop and Task Queues](../02-node-runtime/01-event-loop-and-task-queues.md#7-async_hooks-and-asynclocalstorage)
+- **Multi-tenant API design** — the API-level patterns for multi-tenancy (tenant from auth token, per-tenant rate limits) are in [REST API Design — API Design Patterns and Versioning](../03-rest-api-design/03-api-design-patterns-and-versioning.md#83-multi-tenant-saas-api-design)
+- **Row-Level Security** — RLS enforcement at the database level complements application-level auth in [Auth & Security — JWT and OAuth2](../05-auth-security/01-jwt-and-oauth2.md)
+- **Repository pattern** — the repository interface (port) and adapter connect to [Architecture — Clean Architecture and DDD](../09-architecture-patterns/01-clean-architecture-and-ddd.md) (hexagonal architecture, dependency inversion)
+- **Event sourcing** (Section 4) — the architectural patterns (CQRS, aggregate root, event bus) are explored in [Architecture — Event-Driven and Async Patterns](../09-architecture-patterns/02-event-driven-and-async-patterns.md)
+- **Audit tables** — the audit trigger pattern connects to the structured audit logging in [Auth & Security — Advanced Security and Secrets](../05-auth-security/03-advanced-security-and-secrets.md#6-audit-logging)
+- **Soft deletes middleware** — the Prisma middleware pattern is from [Prisma and Drizzle](01-prisma-and-drizzle.md)
+- For testing these database patterns, see [Testing — Integration Testing and Mocking](../07-testing/02-integration-testing-and-mocking.md) (test containers, transaction rollback)
+
+---
+
+## Practice Suggestions
+
+These exercises cover the entire Database Patterns module (files 01-03):
+
+1. **ORM comparison**: Build the same API endpoint (list users with posts, cursor pagination, filtering by role) using both Prisma and Drizzle. Compare the generated SQL, response times, and developer experience. Run `EXPLAIN ANALYZE` on both and identify any query plan differences.
+2. **Transaction isolation lab**: Create a scenario with two concurrent inventory updates. Demonstrate the double-spend bug with Read Committed, then fix it with (a) optimistic locking (version column), (b) pessimistic locking (`SELECT ... FOR UPDATE`), and (c) Serializable isolation. Measure the retry rate for each approach under load.
+3. **Zero-downtime migration**: Implement a column rename (`name` to `display_name`) using the expand/contract pattern. Write application code for each phase (expand: dual-write, migrate: read from new, contract: drop old). Verify that the API never returns errors during the migration.
+4. **Multi-tenancy implementation**: Build a shared-schema multi-tenant system with `tenant_id` on every table. Implement isolation using (a) Prisma middleware and (b) PostgreSQL Row-Level Security. Write a test that proves one tenant cannot access another tenant's data, including via raw SQL queries.
+5. **Event sourcing exercise**: Implement an event-sourced Order aggregate with `OrderCreated`, `ItemAdded`, `OrderSubmitted`, and `OrderCancelled` events. Build a read model (projection) that maintains denormalized order summaries. Add snapshot support after every 50 events. Verify that replaying from scratch produces the same state as snapshots + recent events.
+6. **Index optimization audit**: Take a table with 1M+ rows and 10+ queries against it. Run `EXPLAIN ANALYZE` on each query. Identify missing indexes, redundant indexes, and opportunities for partial/covering indexes. Measure before and after query times. Check `pg_stat_user_indexes` for unused indexes.

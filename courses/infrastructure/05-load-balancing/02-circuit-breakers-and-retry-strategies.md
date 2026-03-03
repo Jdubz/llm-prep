@@ -416,3 +416,14 @@ Instead of one monolithic API gateway, create purpose-built API layers for each 
 10. **When would you choose gRPC over REST for a new microservice?**
 
     Choose gRPC when the service is internal (no browser clients), requires streaming (bidirectional updates), needs high throughput with low latency (binary serialization matters), or operates in a polyglot environment where code-generated clients reduce integration bugs. Choose REST when the API is public-facing, needs to be browsable/debuggable with standard tools, benefits from HTTP caching, or the team is not experienced with protobuf/gRPC tooling. In practice, many organizations use gRPC for internal service-to-service and REST/GraphQL at the edge.
+
+---
+
+## Related Reading
+
+- [Module 05: Load Balancing Fundamentals](01-load-balancing-fundamentals.md) -- the load balancing algorithms and health check patterns that circuit breakers complement
+- [Module 05: Advanced Load Balancing Patterns](03-advanced-load-balancing-patterns.md) -- service mesh (Istio, Linkerd) externalizes circuit breakers and retries into the infrastructure layer, and Envoy implements many of these patterns natively
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- DLQ and retry patterns for message consumers mirror the retry and circuit breaker patterns for synchronous calls
+- [Module 06: Kubernetes Advanced Patterns](../06-containers-orchestration/03-kubernetes-advanced-patterns.md) -- service mesh deep dive covers how Istio and Linkerd implement circuit breakers, retry budgets, and bulkheads as sidecar proxies
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- monitoring circuit breaker state changes, retry rates, and error budgets with Prometheus metrics and distributed tracing
+- [Module 08: SLOs, Alerting, and Incident Response](../08-observability/02-slos-alerting-and-incident-response.md) -- burn rate alerting detects when circuit breakers should be opening; SLO error budgets quantify how much failure is acceptable

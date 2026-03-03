@@ -467,6 +467,34 @@ Expected: Remove `i` prefix, remove `Get` prefix, consider whether the interface
 
 ---
 
+## Related Reading
+
+- **Generics and type system extensions** — [Module 08: Generics and Code Generation](../08-advanced-patterns/01-generics-and-code-generation.md) covers type parameters and constraints that interact with the interface internals described in section 4
+- **Reflection at the application level** — [Module 08: Reflection and Advanced Abstractions](../08-advanced-patterns/03-reflection-and-advanced-abstractions.md) covers `reflect.TypeOf`, struct tags, and when reflection is justified vs the runtime cost discussed in section 5
+- **GC tuning in production** — [Module 07: Deployment and Scaling](../07-production/03-deployment-and-scaling.md), section 3 (Runtime Tuning) covers `GOGC` and `GOMEMLIMIT` for the garbage collector described in section 3
+- **Memory profiling** — [Module 06: Benchmarking, Profiling, and Advanced Testing](../06-testing/03-benchmarking-profiling-and-advanced-testing.md), section 2 (Profiling) shows how to use pprof to measure escape analysis and allocation behavior described in section 2
+- **Concurrency runtime** — [Module 02: Advanced Concurrency Patterns](../02-concurrency/03-advanced-concurrency-patterns.md), section 1 (The GMP Scheduler Model) explains the goroutine scheduling that sits on top of the runtime internals covered here
+
+---
+
+## Practice Suggestions
+
+These exercises reinforce the internals concepts from this module (Types, Interfaces, and Structs through Advanced Go Internals):
+
+1. **Escape analysis investigation** — Write a function that allocates a struct and returns a pointer to it. Run `go build -gcflags="-m" ./...` and observe which allocations escape to the heap. Modify the function to keep the struct on the stack and verify with the compiler output.
+
+2. **Interface cost measurement** — Write a benchmark that compares calling a method on a concrete type vs through an interface. Measure the difference with `go test -bench=.` and explain the indirect call overhead from the itable dispatch described in section 4.
+
+3. **Zero value explorer** — Create structs with various field types (slices, maps, pointers, channels, interfaces) and write tests that verify the zero value behavior for each. Confirm which zero values are usable immediately and which require initialization.
+
+4. **Custom Stringer and error types** — Implement the `fmt.Stringer` and `error` interfaces for a set of domain types. Write table-driven tests that verify both the string representation and error unwrapping chain (`errors.Is`, `errors.As`).
+
+5. **Memory layout visualization** — Create a struct with fields of varying sizes and use `unsafe.Sizeof` and `unsafe.Offsetof` to map out the memory layout including padding. Rearrange fields for minimal padding and measure the size difference.
+
+6. **Build a small reflection-based struct validator** — Use `reflect` to read custom struct tags (e.g., `validate:"required,min=3"`) and validate field values. Compare performance against a hand-written validator using benchmarks.
+
+---
+
 ## Further Reading
 
 - [Effective Go](https://go.dev/doc/effective_go)

@@ -18,6 +18,16 @@ from typing import Any
 # ============================================================================
 # EXERCISE 1: Approach Selection
 #
+# READ FIRST:
+#   01-fine-tuning-fundamentals.md
+#     -> "When to Fine-Tune" -- decision tree, approach comparison table
+#     -> "The Anti-Pattern: Fine-Tuning for Knowledge"
+#
+# ALSO SEE:
+#   examples.py -> Section 6 "FINE-TUNING DECISION ENGINE" (FineTuningDecisionEngine
+#     class, recommend() method with the full decision tree logic)
+#   examples.py -> Section 7 "COST ESTIMATOR" (estimate_monthly_cost helper)
+#
 # Given a use case description and constraints, determine the right approach:
 # prompt engineering, RAG, fine-tuning, or distillation. Provide reasoning.
 #
@@ -60,15 +70,47 @@ def select_approach(scenario: Scenario) -> dict[str, Any]:
     5. Is cost optimization the primary driver? -> Distillation
     """
     # TODO: Implement the decision logic
-    # Consider:
-    # - knowledge needs vs behavior needs
-    # - knowledge update frequency (static knowledge can be fine-tuned,
-    #   frequently changing knowledge needs RAG)
-    # - data availability (< 50 examples: prompt engineering or synthetic data,
-    #   50-200: synthetic augmentation + fine-tuning,
-    #   200+: direct fine-tuning)
-    # - budget constraints
-    # - latency requirements (fine-tuned models can use shorter prompts = faster)
+    #
+    # Step 1 -- Check if prompt engineering suffices:
+    #   If NOT needs_private_knowledge AND NOT needs_custom_output_format
+    #   AND NOT needs_custom_tone_or_style AND labeled_examples_available < 50:
+    #     -> return "prompt_engineering"
+    #
+    # Step 2 -- Check knowledge needs:
+    #   If needs_private_knowledge AND knowledge_update_frequency != "static":
+    #     -> RAG is needed (knowledge changes too often for fine-tuning)
+    #
+    # Step 3 -- Check behavior needs:
+    #   If needs_custom_output_format OR needs_custom_tone_or_style:
+    #     -> fine-tuning is needed for behavioral changes
+    #
+    # Step 4 -- Combine:
+    #   If BOTH knowledge and behavior needs -> "rag_plus_fine_tuning"
+    #   If only knowledge needs -> "rag"
+    #   If only behavior needs -> "fine_tuning"
+    #
+    # Step 5 -- Cost optimization check:
+    #   If monthly_request_volume > 20000 AND budget_usd is tight
+    #   AND labeled_examples_available > 200:
+    #     -> consider "distillation" (smaller model, cheaper inference)
+    #
+    # Step 6 -- Data strategy:
+    #   labeled_examples_available < 50:  "synthetic data generation + few-shot"
+    #   50-200: "synthetic augmentation to reach 500+ then fine-tune"
+    #   200+: "direct fine-tuning with held-out test set"
+    #
+    # Step 7 -- Cost estimation:
+    #   Rough formula: monthly_request_volume * avg_tokens_per_request * cost_per_token
+    #   Fine-tuned models use shorter prompts (~50% fewer tokens)
+    #
+    # Return dict structure:
+    #   {
+    #       "approach": "prompt_engineering" | "rag" | "fine_tuning" |
+    #                   "rag_plus_fine_tuning" | "distillation",
+    #       "reasoning": ["reason 1", "reason 2", ...],
+    #       "data_strategy": "description of how to get/augment data",
+    #       "estimated_monthly_cost": float,
+    #   }
     raise NotImplementedError("Implement select_approach")
 
 
@@ -145,6 +187,23 @@ def verify_exercise_1():
 # ============================================================================
 # EXERCISE 2: Data Preparation Pipeline
 #
+# READ FIRST:
+#   01-fine-tuning-fundamentals.md
+#     -> "Data Preparation" -- data formats (OpenAI chat, Alpaca, DPO),
+#        data volume guidance table, quality checklist
+#     -> "Training Fundamentals" -> "Data Splitting" (80/10/10 split)
+#
+# ALSO SEE:
+#   examples.py -> Section 1 "DATA PREPARATION PIPELINE":
+#     - to_openai_chat_format(), to_alpaca_format()  (format converters)
+#     - clean_text(), remove_control_chars()          (cleaning helpers)
+#     - deduplicate_by_input()                        (dedup logic)
+#     - validate_example()                            (validation checks)
+#     - train_val_test_split()                        (splitting logic)
+#     - full_preparation_pipeline()                   (end-to-end pipeline)
+#   examples.py -> Section 2 "DATA QUALITY SCORING":
+#     - DataQualityScorer class (score_example method, length/diversity checks)
+#
 # Given raw, messy data, clean it, validate it, format it, and split it
 # for training. This is the most time-consuming part of real fine-tuning
 # work and the most likely to determine success or failure.
@@ -176,22 +235,52 @@ def prepare_for_fine_tuning(
     """
     # TODO: Implement the full pipeline
     #
-    # Cleaning hints:
-    # - Collapse multiple whitespace characters into one
-    # - Strip leading/trailing whitespace
-    # - Remove null bytes and zero-width characters
+    # Step 1 -- Clean text:
+    #   def clean(text: str) -> str:
+    #       import re
+    #       text = text.replace("\x00", "")          # Remove null bytes
+    #       text = text.replace("\u200b", "")         # Remove zero-width spaces
+    #       text = re.sub(r"\s+", " ", text)          # Collapse whitespace
+    #       return text.strip()
+    #   Apply clean() to both "input" and "output" of each example.
+    #   Track: cleaned_count (how many were modified)
     #
-    # Validation hints:
-    # - Both input and output must be non-empty after cleaning
-    # - Output should be at least 2 words (single-word outputs are suspicious)
+    # Step 2 -- Filter invalid examples:
+    #   Remove if: clean(input) == "" or clean(output) == ""
+    #   Remove if: len(output.split()) < 2  (single-word outputs are suspicious)
+    #   Track: removed_empty, removed_short
     #
-    # Deduplication hints:
-    # - Deduplicate by normalized input text (lowercase, stripped)
-    # - Keep the first occurrence
+    # Step 3 -- Deduplicate by input:
+    #   seen_inputs = set()
+    #   For each example, normalize key = input.lower().strip()
+    #   If key already in seen_inputs, skip it.
+    #   Track: duplicates_removed
     #
-    # Format hints:
-    # - "openai" format: {"messages": [{"role": "system", ...}, {"role": "user", ...}, {"role": "assistant", ...}]}
-    # - "alpaca" format: {"instruction": system_prompt, "input": ..., "output": ...}
+    # Step 4 -- Convert to requested format:
+    #   if output_format == "openai":
+    #       formatted = {
+    #           "messages": [
+    #               {"role": "system", "content": system_prompt},
+    #               {"role": "user", "content": cleaned_input},
+    #               {"role": "assistant", "content": cleaned_output},
+    #           ]
+    #       }
+    #   elif output_format == "alpaca":
+    #       formatted = {
+    #           "instruction": system_prompt,
+    #           "input": cleaned_input,
+    #           "output": cleaned_output,
+    #       }
+    #
+    # Step 5 -- Split into train/validation/test:
+    #   random.shuffle(formatted_examples)
+    #   n = len(formatted_examples)
+    #   test_n = max(1, int(n * test_ratio))
+    #   val_n = max(1, int(n * val_ratio))
+    #   train_n = n - val_n - test_n
+    #   return {"train": [...], "validation": [...], "test": [...]}
+    #
+    # Step 6 -- Print stats at each step (optional but helpful for debugging)
     raise NotImplementedError("Implement prepare_for_fine_tuning")
 
 
@@ -232,6 +321,22 @@ def verify_exercise_2():
 
 # ============================================================================
 # EXERCISE 3: Synthetic Data Generation Pipeline Design
+#
+# READ FIRST:
+#   01-fine-tuning-fundamentals.md
+#     -> "Synthetic Data Generation" -- teacher model pattern, risks
+#        (model collapse, distribution shift, quality ceiling, hallucination),
+#        mitigation strategies
+#     -> "How Much Data Do You Need?" table (minimum/typical counts by task)
+#
+# ALSO SEE:
+#   examples.py -> Section 3 "SYNTHETIC DATA GENERATION PIPELINE":
+#     - SyntheticDataGenerator class
+#     - build_generation_prompt() (shows how to include seed examples)
+#     - generate_batch() (batch generation pattern)
+#     - quality_filter() (post-generation filtering)
+#     - diversity_check() (ensuring output variety)
+#     - estimate_generation_cost() (token-based cost calculation)
 #
 # Design a pipeline that generates training data for a specific domain
 # using a teacher model. You won't call an actual API -- instead, build
@@ -274,14 +379,59 @@ def design_synthetic_pipeline(
     """
     # TODO: Implement the pipeline design
     #
-    # Key considerations:
-    # - Generate 2-3x more examples than you need (filtering will remove some)
-    # - Each prompt should have a different "diversity focus"
-    #   (common cases, edge cases, adversarial cases, etc.)
-    # - Include 2-3 seed examples in each prompt as demonstrations
-    # - Quality checks should cover: format compliance, factual plausibility,
-    #   diversity (not too similar to other examples), length appropriateness
-    # - Cost estimation: ~500 tokens per example, use pricing for teacher model
+    # Step 1 -- Calculate generation volume:
+    #   target = config.num_examples_target
+    #   overshoot_factor = 2.5  # Generate 2.5x to account for filtering
+    #   total_to_generate = int(target * overshoot_factor)
+    #   examples_per_batch = 20  # Typical batch size for structured generation
+    #   num_batches = math.ceil(total_to_generate / examples_per_batch)
+    #
+    # Step 2 -- Build diverse generation prompts (at least 3):
+    #   Each prompt should:
+    #   - State the domain and task type from config
+    #   - Include 2-3 seed examples from config.seed_examples as demonstrations
+    #   - Have a different diversity focus:
+    #     Prompt 1: "Generate typical/common cases" (happy path)
+    #     Prompt 2: "Generate edge cases and unusual inputs" (boundary conditions)
+    #     Prompt 3: "Generate adversarial/tricky cases" (near misses, ambiguous)
+    #   - If config.output_labels, mention all labels and request balanced coverage
+    #   - Request output in JSON format: [{"input": "...", "label": "..."}]
+    #
+    #   Example prompt structure:
+    #     f"You are a training data generator for {config.domain} {config.task_type}.\n"
+    #     f"Labels: {config.output_labels}\n"
+    #     f"Examples:\n{seed_examples_str}\n"
+    #     f"Generate {examples_per_batch} NEW diverse examples..."
+    #
+    # Step 3 -- Define quality checks (at least 3):
+    #   - "format_compliance": output matches expected schema (has "input" and "label" keys)
+    #   - "label_validity": label is in config.output_labels (for classification)
+    #   - "length_check": input is between 5 and 500 characters
+    #   - "diversity_check": no two inputs share > 80% token overlap
+    #   - "factual_plausibility": input makes sense for the domain
+    #
+    # Step 4 -- Estimate cost:
+    #   tokens_per_example = 500  # ~250 input + ~250 output per example
+    #   total_tokens = total_to_generate * tokens_per_example
+    #   Model pricing (approx per 1M tokens):
+    #     "gpt-4o": input=$2.50, output=$10.00
+    #     "gpt-4o-mini": input=$0.15, output=$0.60
+    #   cost = (total_tokens / 1_000_000) * (input_price + output_price) / 2
+    #
+    # Step 5 -- Define diversity strategy:
+    #   Describe your approach, e.g.: "Rotate through prompt variants per batch,
+    #   require label balance, filter near-duplicates via token overlap"
+    #
+    # Return:
+    #   {
+    #       "generation_prompts": [prompt1, prompt2, prompt3, ...],
+    #       "num_batches": int,
+    #       "examples_per_batch": int,
+    #       "quality_checks": ["check1 description", "check2", ...],
+    #       "estimated_cost_usd": float,
+    #       "diversity_strategy": "description string",
+    #       "filtering_criteria": "description of good vs bad examples",
+    #   }
     raise NotImplementedError("Implement design_synthetic_pipeline")
 
 
@@ -327,6 +477,21 @@ def verify_exercise_3():
 
 # ============================================================================
 # EXERCISE 4: Evaluation Harness
+#
+# READ FIRST:
+#   01-fine-tuning-fundamentals.md
+#     -> "Evaluation After Fine-Tuning" -- quantitative metrics table,
+#        evaluation hierarchy (Levels 1-5)
+#   02-training-and-alignment.md
+#     -> "What metrics do you track when fine-tuning?" (Interview Q&A)
+#
+# ALSO SEE:
+#   examples.py -> Section 5 "EVALUATION HARNESS":
+#     - EvalHarness class (run_eval, compare_models methods)
+#     - compute_exact_match(), compute_rouge_l()  (metric implementations)
+#     - per_class_accuracy()                       (per-category breakdown)
+#     - generate_comparison_report()               (report formatting)
+#     - break_even_analysis()                      (cost analysis helper)
 #
 # Build a harness that compares a base model (with prompting) against a
 # fine-tuned model on the same test set. Compute metrics and determine
@@ -374,18 +539,79 @@ def evaluate_and_compare(
     """
     # TODO: Implement the evaluation harness
     #
-    # Hints:
-    # - Exact match: normalize both strings (lowercase, strip) before comparing
-    # - ROUGE-L: longest common subsequence / reference length
-    # - Per-class accuracy: group by expected output, compute accuracy per group
-    # - Latency comparison: average latency for each model
-    # - Cost savings: fine-tuned models often use fewer tokens (shorter prompts needed)
-    #   Estimate savings as (baseline_avg_tokens - finetuned_avg_tokens) * cost_per_token
-    # - Break-even: training_cost / per_request_savings
-    # - Recommendation logic:
-    #   - "ship_finetuned" if quality improved by >5% OR latency improved by >20%
-    #   - "keep_baseline" if no meaningful improvement
-    #   - "needs_more_data" if improvement is marginal (1-5%)
+    # Step 1 -- Compute metrics for each model:
+    #   def compute_metrics(outputs: list[ModelOutput], task_type: str) -> dict:
+    #       if task_type == "classification":
+    #           # Exact match: normalize both strings (lowercase, strip)
+    #           exact_matches = sum(
+    #               1 for o in outputs
+    #               if o.predicted_output.strip().lower() == o.expected_output.strip().lower()
+    #           )
+    #           exact_match_rate = exact_matches / len(outputs)
+    #
+    #           # Per-class accuracy: group by expected, compute accuracy per group
+    #           from collections import defaultdict
+    #           by_class = defaultdict(list)
+    #           for o in outputs:
+    #               key = o.expected_output.strip().lower()
+    #               match = o.predicted_output.strip().lower() == key
+    #               by_class[key].append(match)
+    #           per_class = {k: sum(v)/len(v) for k, v in by_class.items()}
+    #
+    #           return {"exact_match": exact_match_rate, "per_class_accuracy": per_class}
+    #
+    #       elif task_type == "generation":
+    #           # Simple ROUGE-L: longest common subsequence / reference length
+    #           def lcs_length(a: list, b: list) -> int:
+    #               m, n = len(a), len(b)
+    #               dp = [[0] * (n+1) for _ in range(m+1)]
+    #               for i in range(1, m+1):
+    #                   for j in range(1, n+1):
+    #                       if a[i-1] == b[j-1]:
+    #                           dp[i][j] = dp[i-1][j-1] + 1
+    #                       else:
+    #                           dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+    #               return dp[m][n]
+    #           scores = []
+    #           for o in outputs:
+    #               pred_tokens = o.predicted_output.lower().split()
+    #               ref_tokens = o.expected_output.lower().split()
+    #               lcs = lcs_length(pred_tokens, ref_tokens)
+    #               rouge_l = lcs / len(ref_tokens) if ref_tokens else 0.0
+    #               scores.append(rouge_l)
+    #           return {"rouge_l": sum(scores)/len(scores)}
+    #
+    #       elif task_type == "extraction":
+    #           # exact_match + partial_match (expected is substring of predicted)
+    #           ...  (similar pattern)
+    #
+    # Step 2 -- Compute improvement:
+    #   For each metric, compute:
+    #     absolute = finetuned_value - baseline_value
+    #     relative_pct = (absolute / baseline_value) * 100 if baseline_value > 0 else 0
+    #
+    # Step 3 -- Latency comparison:
+    #   baseline_avg_ms = sum(o.latency_ms for o in baseline_outputs) / len(baseline_outputs)
+    #   finetuned_avg_ms = sum(o.latency_ms for o in finetuned_outputs) / len(finetuned_outputs)
+    #   speedup = baseline_avg_ms / finetuned_avg_ms
+    #
+    # Step 4 -- Cost analysis:
+    #   cost_per_token = 0.00001  # Approximate
+    #   baseline_avg_tokens = avg of baseline token_count
+    #   finetuned_avg_tokens = avg of finetuned token_count
+    #   savings_per_request = (baseline_avg_tokens - finetuned_avg_tokens) * cost_per_token
+    #   savings_per_1k = savings_per_request * 1000
+    #   break_even_requests = training_cost_usd / savings_per_request (if savings > 0)
+    #
+    # Step 5 -- Recommendation:
+    #   quality_improvement = improvement on primary metric (exact_match or rouge_l)
+    #   latency_improvement_pct = (baseline_avg_ms - finetuned_avg_ms) / baseline_avg_ms
+    #   if quality_improvement > 0.05 or latency_improvement_pct > 0.20:
+    #       recommendation = "ship_finetuned"
+    #   elif quality_improvement > 0.01:
+    #       recommendation = "needs_more_data"
+    #   else:
+    #       recommendation = "keep_baseline"
     raise NotImplementedError("Implement evaluate_and_compare")
 
 
@@ -455,6 +681,24 @@ def verify_exercise_4():
 # ============================================================================
 # EXERCISE 5: Training Cost and GPU Requirements Calculator
 #
+# READ FIRST:
+#   01-fine-tuning-fundamentals.md
+#     -> "GPU Requirements and Cost" -- memory-by-method table, GPU quick
+#        reference table, cost estimates table
+#     -> "Fine-Tuning Approaches" -- memory formulas for full FT, LoRA, QLoRA
+#   03-advanced-fine-tuning-and-infrastructure.md
+#     -> "Key Numbers Reference" -- fine-tuning method comparison table,
+#        training hyperparameter starting points
+#
+# ALSO SEE:
+#   examples.py -> Section 4 "TRAINING CONFIGURATION BUILDER":
+#     - TrainingConfigBuilder class (memory estimation, GPU selection)
+#     - estimate_memory_requirements() (bytes-per-param formulas)
+#     - select_gpu() (feasibility checks per GPU)
+#   examples.py -> Section 7 "COST ESTIMATOR":
+#     - CostEstimator class (estimate_training_cost, estimate_training_time)
+#     - GPU_THROUGHPUT dict (tokens/second by GPU and method)
+#
 # Given a model size, dataset, and hardware constraints, calculate the
 # training cost, time, and recommend the right infrastructure.
 # ============================================================================
@@ -498,18 +742,55 @@ def calculate_training_requirements(
     """
     # TODO: Implement the calculator
     #
-    # Steps:
-    # 1. For each available GPU, determine which methods are feasible
-    #    (does the model fit in VRAM with that method?)
-    # 2. Choose the cheapest feasible option that fits the budget
-    # 3. Calculate training time and cost
-    # 4. Add warnings for potential issues:
-    #    - "Dataset may be too small for the number of epochs (risk of overfitting)"
-    #      if dataset_size < 500 and num_epochs > 3
-    #    - "Full fine-tuning on this model size requires significant compute"
-    #      if method is "full" and model_size_b > 13
-    #    - "QLoRA may have slightly lower quality than LoRA"
-    #      if method is "qlora"
+    # Step 1 -- Memory estimation per method (in GB):
+    #   params = model_size_b * 1e9
+    #
+    #   Full fine-tune FP16:
+    #     model_gb   = (params * 2) / 1e9           # 2 bytes/param (BF16)
+    #     grad_gb    = (params * 4) / 1e9            # 4 bytes/param (FP32 gradients)
+    #     optim_gb   = (params * 8) / 1e9            # 8 bytes/param (Adam: 2 moments)
+    #     total_gb   = model_gb + grad_gb + optim_gb # ~14 bytes/param
+    #
+    #   LoRA FP16:
+    #     model_gb   = (params * 2) / 1e9            # Base model frozen in BF16
+    #     lora_pct   = 0.01                           # ~1% of params trainable
+    #     lora_params = params * lora_pct
+    #     lora_gb    = (lora_params * 2) / 1e9
+    #     optim_gb   = (lora_params * 8) / 1e9        # Optimizer only for LoRA params
+    #     total_gb   = model_gb + lora_gb + optim_gb + 2  # +2 GB overhead
+    #
+    #   QLoRA (4-bit base):
+    #     model_gb   = (params * 0.5) / 1e9           # 0.5 bytes/param in 4-bit
+    #     lora_gb    = (lora_params * 2) / 1e9         # LoRA in FP16
+    #     optim_gb   = (lora_params * 8) / 1e9
+    #     total_gb   = model_gb + lora_gb + optim_gb + 2
+    #
+    # Step 2 -- Determine feasibility per GPU:
+    #   For each gpu in available_gpus:
+    #     feasible_methods = []
+    #     if total_gb["full"] <= gpu["vram_gb"] * 0.9:  # 90% of VRAM
+    #         feasible_methods.append("full")
+    #     if total_gb["lora"] <= gpu["vram_gb"] * 0.9:
+    #         feasible_methods.append("lora")
+    #     if total_gb["qlora"] <= gpu["vram_gb"] * 0.9:
+    #         feasible_methods.append("qlora")
+    #
+    # Step 3 -- Choose cheapest feasible option:
+    #   GPU throughput (tokens/second) -- use the dict from the docstring
+    #   total_tokens = dataset_size * avg_example_tokens * num_epochs
+    #   For each (gpu, method) pair:
+    #     throughput = GPU_THROUGHPUT[gpu_name][method]
+    #     hours = total_tokens / throughput / 3600
+    #     cost = hours * gpu["cost_per_hour"] * gpu.get("count", 1)
+    #   Pick the combination with lowest cost that fits budget
+    #
+    # Step 4 -- Build memory breakdown dict:
+    #   {"model_gb": ..., "lora_gb": ..., "optimizer_gb": ..., "total_gb": ...}
+    #
+    # Step 5 -- Add warnings (list of strings):
+    #   Check the conditions listed in the docstring above
+    #
+    # Step 6 -- Return the full result dict
     raise NotImplementedError("Implement calculate_training_requirements")
 
 
@@ -559,6 +840,23 @@ def verify_exercise_5():
 # ============================================================================
 # EXERCISE 6: LoRA Configuration Designer
 #
+# READ FIRST:
+#   01-fine-tuning-fundamentals.md
+#     -> "LoRA (Low-Rank Adaptation)" -- rank, alpha, target_modules explained,
+#        code example with LoraConfig, trainable parameter calculation
+#     -> "QLoRA" -- when to use 4-bit quantization, BitsAndBytesConfig code
+#     -> "Other Adapter Methods" comparison table
+#   03-advanced-fine-tuning-and-infrastructure.md
+#     -> "LoRA-Specific Parameters" table (rank range, alpha convention, dropout)
+#     -> "Key Numbers Reference" -> "Fine-Tuning Method Comparison" (VRAM by method)
+#
+# ALSO SEE:
+#   examples.py -> Section 4 "TRAINING CONFIGURATION BUILDER":
+#     - TrainingConfigBuilder.build_lora_config() (rank/alpha/target selection)
+#     - select_target_modules() (module lists by quality tier)
+#     - estimate_trainable_params() (percentage calculation)
+#     - select_quantization() (QLoRA decision logic)
+#
 # Given constraints (GPU RAM, quality target, data size, task complexity),
 # design an optimal LoRA configuration with justification for each choice.
 # ============================================================================
@@ -597,34 +895,68 @@ def design_lora_config(
     """
     # TODO: Implement the configuration designer
     #
-    # Decision logic:
+    # Step 1 -- Determine if QLoRA is needed (use_4bit):
+    #   model_fp16_gb = model_size_b * 2  # 2 GB per billion params in FP16
+    #   needs_quant = model_fp16_gb > gpu_vram_gb * 0.7
+    #   if quality_target == "maximum" and not needs_quant:
+    #       use_4bit = False  # Prefer full precision when possible
+    #   else:
+    #       use_4bit = needs_quant
     #
-    # Rank selection:
-    #   simple task + small data → 8
-    #   simple task + large data → 16
-    #   moderate task → 16 or 32
-    #   complex task + enough data → 32 or 64
-    #   complex task + small data → 16 (prevent overfitting)
-    #   "maximum" quality → double the above
+    # Step 2 -- Select rank based on task complexity + data:
+    #   Base rank by complexity:
+    #     "simple":   base_rank = 8
+    #     "moderate":  base_rank = 16
+    #     "complex":   base_rank = 32
     #
-    # Target modules:
-    #   "good_enough" quality → ["q_proj", "v_proj"]
-    #   "high" quality → ["q_proj", "k_proj", "v_proj", "o_proj"]
-    #   "maximum" quality → ["q_proj", "k_proj", "v_proj", "o_proj",
-    #                         "gate_proj", "up_proj", "down_proj"]
+    #   Adjust for data size:
+    #     if dataset_size < 500: rank = min(base_rank, 16)  # Prevent overfitting
+    #     elif dataset_size >= 5000: rank = base_rank  # Data supports full rank
+    #     else: rank = base_rank  # Default
     #
-    # Dropout:
-    #   dataset_size < 500 → 0.1
-    #   dataset_size < 5000 → 0.05
-    #   dataset_size >= 5000 → 0.0
+    #   Adjust for quality target:
+    #     if quality_target == "maximum": rank = rank * 2
+    #     elif quality_target == "good_enough" and rank > 16: rank = 16
     #
-    # QLoRA decision:
-    #   Model FP16 size (model_size_b * 2) > gpu_vram_gb * 0.7 → use 4-bit
-    #   quality_target == "maximum" → prefer not using 4-bit
+    # Step 3 -- Set alpha (standard convention):
+    #   alpha = rank * 2
     #
-    # VRAM estimation:
-    #   QLoRA: model_size_b * 0.5 + lora_overhead (typically 1-3 GB)
-    #   LoRA: model_size_b * 2 + lora_overhead
+    # Step 4 -- Select target modules by quality target:
+    #   "good_enough": ["q_proj", "v_proj"]
+    #   "high":        ["q_proj", "k_proj", "v_proj", "o_proj"]
+    #   "maximum":     ["q_proj", "k_proj", "v_proj", "o_proj",
+    #                    "gate_proj", "up_proj", "down_proj"]
+    #
+    # Step 5 -- Set dropout based on dataset size:
+    #   dataset_size < 500:   dropout = 0.1
+    #   dataset_size < 5000:  dropout = 0.05
+    #   dataset_size >= 5000: dropout = 0.0
+    #
+    # Step 6 -- Estimate trainable params percentage:
+    #   num_target_modules = len(target_modules)
+    #   # Each module adds 2 * rank * hidden_dim params
+    #   # Rough estimate: (num_modules * 2 * rank) / (model_total_params) * 100
+    #   # For a 7B model with r=16 and 4 modules: ~0.1%
+    #   estimated_trainable_pct = (num_target_modules * 2 * rank * 4096) / (model_size_b * 1e9) * 100
+    #
+    # Step 7 -- Estimate VRAM:
+    #   if use_4bit:
+    #       model_gb = model_size_b * 0.5
+    #   else:
+    #       model_gb = model_size_b * 2
+    #   lora_overhead = 1 + (rank / 16)  # ~1-3 GB depending on rank
+    #   estimated_vram = model_gb + lora_overhead
+    #
+    # Step 8 -- Build justification dict:
+    #   {
+    #       "rank": "Why this rank was chosen...",
+    #       "alpha": "Standard 2x rank convention...",
+    #       "target_modules": "Why these modules...",
+    #       "dropout": "Why this dropout value...",
+    #       "use_4bit": "Why QLoRA was/wasn't needed...",
+    #   }
+    #
+    # Return the full config dict
     raise NotImplementedError("Implement design_lora_config")
 
 

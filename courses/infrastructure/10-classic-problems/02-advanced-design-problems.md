@@ -364,3 +364,51 @@ User opens app -> Recommendation Service
 | **Video Streaming** | Streaming protocol | HLS vs. DASH vs. WebRTC | Device compatibility, latency needs |
 | **Video Streaming** | CDN tier | Single CDN vs. multi-CDN | Cost, redundancy, geographic coverage |
 | **Video Streaming** | Live latency | Standard HLS vs. LL-HLS vs. WebRTC | Interactivity requirement |
+
+---
+
+## Related Reading
+
+Each advanced problem draws on specific modules. Use these references to deepen your understanding:
+
+**Distributed Task Scheduler:**
+- [Module 02: Database Platforms and Scaling](../02-databases-at-scale/03-database-platforms-and-scaling.md) -- PostgreSQL advisory locks and atomic UPDATE...WHERE for exactly-once task claiming; Redis sorted sets for priority queues
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- SQS and Redis Streams as task queues; DLQ for dead-letter tasks after max retries
+- [Module 04: Event Sourcing, CQRS, and Sagas](../04-message-queues/02-event-sourcing-cqrs-and-sagas.md) -- task dependencies resemble saga orchestration; compensating transactions for failed tasks
+- [Module 05: Circuit Breakers and Retry Strategies](../05-load-balancing/02-circuit-breakers-and-retry-strategies.md) -- exponential backoff with jitter for task retry, and circuit breakers for downstream services that tasks call
+
+**Search Autocomplete:**
+- [Module 03: Caching Patterns and Redis Basics](../03-caching/01-caching-patterns-and-redis-basics.md) -- Redis sorted sets for the trending overlay; in-memory caching of the serialized trie artifact
+- [Module 04: Message Queue Operations](../04-message-queues/03-message-queue-operations-and-patterns.md) -- Kafka for streaming search logs to the aggregation pipeline; stream processing (Spark/Flink) for building the trie
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- CDN caching of autocomplete responses for common prefixes; global load balancing for sub-50ms p99 latency
+
+**Video Streaming Platform:**
+- [Module 05: Advanced Load Balancing Patterns](../05-load-balancing/03-advanced-load-balancing-patterns.md) -- multi-tier CDN architecture (edge PoPs, regional caches, origin shield) is critical for video delivery
+- [Module 04: Message Brokers](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md) -- SQS/SNS for the transcoding pipeline job queue; Kafka for video view event streaming to the recommendation engine
+- [Module 06: Kubernetes Core and Operations](../06-containers-orchestration/02-kubernetes-core-and-operations.md) -- transcoding workers as Kubernetes Jobs with GPU node pools and KEDA autoscaling based on queue depth
+
+**General:**
+- [Module 01: System Design Framework Essentials](../01-system-design-framework/01-system-design-framework-essentials.md) -- the structured approach applied to each problem
+- [Module 01: Advanced System Design](../01-system-design-framework/02-advanced-system-design.md) -- staff-level expectations including multi-region, cost estimation, and migration strategies
+- [Module 08: SLOs, Alerting, and Incident Response](../08-observability/02-slos-alerting-and-incident-response.md) -- every design should include SLOs; the task scheduler needs alerting on execution delays, autocomplete on p99 latency, video on playback start time
+- [Module 09: Authentication and Authorization](../09-security/01-authentication-and-authorization.md) -- video access control (private videos, DRM), task scheduler authentication (which services can submit tasks), autocomplete privacy (not leaking other users' searches)
+
+---
+
+## Practice
+
+For each advanced problem, try the following exercises to connect the design to specific modules:
+
+1. **Task Scheduler -- Exactly-once proof:** Walk through the failure scenarios for each of the three approaches (database locking, Redis distributed lock, idempotent execution). For each, describe a scenario where the approach alone fails. Then show how combining all three provides defense in depth. Reference distributed locking from [Module 02](../02-databases-at-scale/03-database-platforms-and-scaling.md) and idempotency patterns from [Module 04](../04-message-queues/01-message-brokers-kafka-sqs-rabbitmq.md).
+
+2. **Task Scheduler -- Priority starvation analysis:** With the priority queue design (70% high, 25% normal, 5% low), calculate how long a low-priority task waits when the high-priority queue is saturated. Design a fairness mechanism. Reference queue depth metrics and monitoring from [Module 08](../08-observability/01-logging-metrics-and-tracing.md).
+
+3. **Autocomplete -- Trie memory estimation:** Calculate the memory required for a trie storing 100M unique queries with average length 20 characters. Compare uncompressed vs Patricia trie. Estimate the serialized artifact size for S3 storage and the memory footprint on each autocomplete server. Reference storage estimation formulas from the estimation section.
+
+4. **Autocomplete -- Real-time trending exercise:** A breaking news event causes a new query to spike to 100K searches/minute. How quickly does it appear in autocomplete results with the two-tier approach? What if you only had the batch-rebuilt trie? Design the Count-Min Sketch parameters. Reference stream processing from [Module 04](../04-message-queues/03-message-queue-operations-and-patterns.md).
+
+5. **Video Streaming -- Transcoding cost estimation:** For 100K uploads/day with average 10-minute duration, estimate the compute cost of parallel transcoding into 5 renditions. How many workers do you need? What is the queue depth at peak? Reference Kubernetes autoscaling from [Module 06](../06-containers-orchestration/02-kubernetes-core-and-operations.md).
+
+6. **Video Streaming -- CDN cache efficiency:** If the top 10% of videos account for 90% of views, what percentage of your CDN cache should be dedicated to pre-warming? Estimate the bandwidth cost reduction from a 95% CDN hit rate vs 80%. Reference CDN architecture from [Module 05](../05-load-balancing/03-advanced-load-balancing-patterns.md).
+
+7. **Cross-cutting exercise:** Pick any advanced problem and design the deployment strategy. How do you deploy a new version of the trie builder? How do you canary a new transcoding codec? How do you blue-green a task scheduler migration? Reference deployment strategies from [Module 07](../07-cicd/01-pipeline-design-and-deployment-strategies.md) and feature flags from [Module 07](../07-cicd/02-feature-flags-and-migrations.md).

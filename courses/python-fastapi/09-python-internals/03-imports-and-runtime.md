@@ -253,6 +253,15 @@ Given `D(B, C)`, `B(A)`, `C(A)`, show `D.__mro__` and which `method()` is called
 
 ---
 
+## Practice Exercises
+
+The following exercises in `exercises.py` test concepts from this file. Each exercise has self-contained instructions and can be completed independently.
+
+- **Exercise 8 — Fibonacci Iterator**: Implement a class-based iterator using `__iter__` and `__next__` with `StopIteration`. Tests the iterator protocol that underlies Python's `for` loop and is closely related to the generator protocol. (See: "The Generator Protocol in Detail" section above)
+- **Exercise 9 — Generator with send()**: Implement `running_average()` as a generator that receives values via `.send()` and yields running averages. Tests the generator `.send()` protocol. (See: "The Generator Protocol in Detail" section above, specifically the `.send(value)` explanation)
+
+---
+
 ## Key Takeaways
 
 - CPython's VM is stack-based; bytecode is inspectable with `dis`. Python 3.11+ adapts bytecode to observed types at runtime (adaptive specialization).

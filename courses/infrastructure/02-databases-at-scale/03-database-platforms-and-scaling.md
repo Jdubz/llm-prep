@@ -438,6 +438,18 @@ Add specialized databases (DynamoDB, Cassandra, Neo4j, TimescaleDB) only when Po
 
 ---
 
+## Related Reading
+
+- [Module 02: SQL, NoSQL, and Decision Framework](01-sql-nosql-and-decision-framework.md) -- the decision framework for choosing between the database platforms covered here
+- [Module 02: Indexing, Sharding, and Replication](02-indexing-sharding-and-replication.md) -- the general indexing and sharding theory that underpins platform-specific implementations (PostgreSQL EXPLAIN, DynamoDB partition keys)
+- [Module 03: Caching Patterns and Redis Basics](../03-caching/01-caching-patterns-and-redis-basics.md) -- Redis is covered both here (as a data store) and in Module 03 (as a caching layer); the caching module covers eviction policies, clustering, and persistence in more detail
+- [Module 03: Advanced Caching Systems](../03-caching/03-advanced-caching-systems.md) -- multi-tier caching with Redis as L2 cache alongside application-level L1 caches
+- [Module 04: Message Queue Operations](../04-message-queues/03-message-queue-operations-and-patterns.md) -- CDC with Debezium for streaming changes out of PostgreSQL, and the outbox pattern for reliable event publishing from databases
+- [Module 08: Logging, Metrics, and Tracing](../08-observability/01-logging-metrics-and-tracing.md) -- monitoring database performance (connection pool saturation, query latency histograms, replication lag) using the RED and USE methods
+- [Module 09: Authentication and Authorization](../09-security/01-authentication-and-authorization.md) -- encryption at rest for databases, field-level encryption, and secrets management for database credentials
+
+---
+
 ## Key Takeaways
 
 1. **NewSQL databases solve a real problem** -- horizontal scaling with ACID -- but they are not drop-in replacements for PostgreSQL. Evaluate the migration cost and operational complexity honestly.
