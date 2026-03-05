@@ -23,8 +23,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (decorators, closures)
-#   - ../01-fastapi-foundations/01-http-routing-and-decorators.md (decorator patterns in practice)
+#   - ../03-python-internals/02-advanced-python-features.md (decorators, closures)
+#   - ../../fastapi/00-fastapi-foundations/01-http-routing-and-decorators.md (decorator patterns in practice)
 #
 # Write a @memoize decorator that caches function results by arguments.
 # If the function is called again with the same args, return the cached
@@ -80,8 +80,15 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 def memoize(func: F) -> F:
     """Decorator that caches function results by arguments."""
-    # TODO: Implement
-    raise NotImplementedError()
+    cache = {}
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        key = (args, frozenset(kwargs.items()))
+        if key not in cache:
+            cache[key] = func(*args, **kwargs)
+        return cache[key]
+    wrapper.cache = cache # type: ignore
+    return wrapper # type: ignore
 
 
 # ============================================================================
@@ -89,9 +96,9 @@ def memoize(func: F) -> F:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (decorator factories)
-#   - ../01-fastapi-foundations/01-http-routing-and-decorators.md (parameterized decorators)
-#   - ../02-async-python/02-concurrency-patterns.md (retry patterns in production)
+#   - ../03-python-internals/02-advanced-python-features.md (decorator factories)
+#   - ../../fastapi/00-fastapi-foundations/01-http-routing-and-decorators.md (parameterized decorators)
+#   - ../01-async-python/02-concurrency-patterns.md (retry patterns in production)
 #
 # Write a @retry decorator factory that retries a function on exception
 # with exponential backoff.
@@ -161,8 +168,8 @@ def retry(max_attempts: int = 3, delay: float = 0.1) -> Callable[[F], F]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (higher-order functions)
-#   - ../09-python-internals/01-object-model-and-memory.md (callables)
+#   - ../03-python-internals/02-advanced-python-features.md (higher-order functions)
+#   - ../03-python-internals/01-object-model-and-memory.md (callables)
 #
 # Implement pipe() that composes functions left-to-right. The result of
 # each function is passed as input to the next.
@@ -219,8 +226,8 @@ def pipe(*funcs: Callable) -> Callable:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (closures, *args/**kwargs)
-#   - ../01-fastapi-foundations/02-dependency-injection.md (partial application in DI)
+#   - ../03-python-internals/02-advanced-python-features.md (closures, *args/**kwargs)
+#   - ../../fastapi/00-fastapi-foundations/02-dependency-injection.md (partial application in DI)
 #
 # Implement your own partial() function from scratch (don't use
 # functools.partial). It should pre-fill some arguments of a function.
@@ -272,9 +279,9 @@ def my_partial(func: Callable, *fixed_args: Any, **fixed_kwargs: Any) -> Callabl
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (decorator factories, inspect)
-#   - ../01-fastapi-foundations/02-dependency-injection.md (runtime type validation)
-#   - ../09-python-internals/03-imports-and-runtime.md (inspect module)
+#   - ../03-python-internals/02-advanced-python-features.md (decorator factories, inspect)
+#   - ../../fastapi/00-fastapi-foundations/02-dependency-injection.md (runtime type validation)
+#   - ../03-python-internals/03-imports-and-runtime.md (inspect module)
 #
 # Write a @validate decorator factory that type-checks arguments at runtime.
 # This is a simplified version of what Pydantic does under the hood.
@@ -341,9 +348,9 @@ def validate(**type_hints: type) -> Callable[[F], F]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (decorator factories, deque)
-#   - ../05-advanced-api-patterns/02-pagination-filtering-and-bulk-operations.md (rate limiting)
-#   - ../02-async-python/02-concurrency-patterns.md (throttling patterns)
+#   - ../03-python-internals/02-advanced-python-features.md (decorator factories, deque)
+#   - ../../fastapi/03-advanced-api-patterns/02-pagination-filtering-and-bulk-operations.md (rate limiting)
+#   - ../01-async-python/02-concurrency-patterns.md (throttling patterns)
 #
 # Write a rate_limiter decorator factory that limits how often a function
 # can be called within a time window.

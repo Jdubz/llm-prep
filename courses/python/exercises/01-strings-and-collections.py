@@ -18,8 +18,8 @@ from collections import Counter, defaultdict
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (data structures)
-#   - ../08-interview-prep/01-interview-fundamentals.md (common coding patterns)
+#   - ../03-python-internals/02-advanced-python-features.md (data structures)
+#   - ../04-interview-prep/01-interview-fundamentals.md (common coding patterns)
 #
 # Given a list of strings, group anagrams together. Two strings are anagrams
 # if they contain the same characters in any order.
@@ -68,8 +68,8 @@ def group_anagrams(words: list[str]) -> list[list[str]]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (recursion, dict patterns)
-#   - ../08-interview-prep/01-interview-fundamentals.md (data transformation)
+#   - ../03-python-internals/02-advanced-python-features.md (recursion, dict patterns)
+#   - ../04-interview-prep/01-interview-fundamentals.md (data transformation)
 #
 # Convert a nested dictionary into a flat dictionary with dot-separated keys.
 #
@@ -124,8 +124,8 @@ def flatten_dict(nested: dict, prefix: str = "", sep: str = ".") -> dict:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (collections module)
-#   - ../08-interview-prep/01-interview-fundamentals.md (string manipulation)
+#   - ../03-python-internals/02-advanced-python-features.md (collections module)
+#   - ../04-interview-prep/01-interview-fundamentals.md (string manipulation)
 #
 # Given a string of text, return the N most frequent words (case-insensitive).
 #
@@ -175,8 +175,8 @@ def most_frequent(text: str, n: int = 3) -> list[tuple[str, int]]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../08-interview-prep/01-interview-fundamentals.md (classic algorithm patterns)
-#   - ../09-python-internals/02-advanced-python-features.md (sorting, tuples)
+#   - ../04-interview-prep/01-interview-fundamentals.md (classic algorithm patterns)
+#   - ../03-python-internals/02-advanced-python-features.md (sorting, tuples)
 #
 # Given a list of intervals as (start, end) tuples, merge all overlapping
 # intervals and return the result sorted by start time.
@@ -238,8 +238,8 @@ def merge_intervals(intervals: list[tuple[int, int]]) -> list[tuple[int, int]]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (collections module)
-#   - ../08-interview-prep/01-interview-fundamentals.md (data structure design)
+#   - ../03-python-internals/02-advanced-python-features.md (collections module)
+#   - ../04-interview-prep/01-interview-fundamentals.md (data structure design)
 #
 # Build an inverted index from a list of (doc_id, text) pairs. An inverted
 # index maps each word to the set of document IDs that contain it.
@@ -299,8 +299,8 @@ def build_inverted_index(documents: list[tuple[int, str]]) -> dict[str, set[int]
 # ============================================================================
 #
 # RELATED READING:
-#   - ../08-interview-prep/01-interview-fundamentals.md (matrix operations)
-#   - ../09-python-internals/02-advanced-python-features.md (list slicing)
+#   - ../04-interview-prep/01-interview-fundamentals.md (matrix operations)
+#   - ../03-python-internals/02-advanced-python-features.md (list slicing)
 #
 # Rotate an NxN matrix 90 degrees clockwise. Modify the matrix in-place
 # and also return it for convenience.
@@ -349,8 +349,10 @@ def build_inverted_index(documents: list[tuple[int, str]]) -> dict[str, set[int]
 
 def rotate_matrix(matrix: list[list[int]]) -> list[list[int]]:
     """Rotate an NxN matrix 90 degrees clockwise in-place."""
-    # TODO: Implement
-    raise NotImplementedError()
+    rotate = []
+    for row in matrix:
+        
+
 
 
 # ============================================================================

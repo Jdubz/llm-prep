@@ -20,9 +20,9 @@ T = TypeVar("T")
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/01-object-model-and-memory.md (dunder methods, object model)
-#   - ../09-python-internals/02-advanced-python-features.md (operator overloading)
-#   - ../08-interview-prep/01-interview-fundamentals.md (OOP design)
+#   - ../03-python-internals/01-object-model-and-memory.md (dunder methods, object model)
+#   - ../03-python-internals/02-advanced-python-features.md (operator overloading)
+#   - ../04-interview-prep/01-interview-fundamentals.md (OOP design)
 #
 # Implement a Money class with rich comparison, arithmetic, and hashing.
 # This practices the dunder methods that Python uses for operator overloading.
@@ -131,9 +131,9 @@ class Money:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/01-object-model-and-memory.md (iterator protocol)
-#   - ../09-python-internals/02-advanced-python-features.md (dunder methods)
-#   - ../08-interview-prep/01-interview-fundamentals.md (data structures)
+#   - ../03-python-internals/01-object-model-and-memory.md (iterator protocol)
+#   - ../03-python-internals/02-advanced-python-features.md (dunder methods)
+#   - ../04-interview-prep/01-interview-fundamentals.md (data structures)
 #
 # Implement a singly linked list with Python's iterator protocol and
 # collection dunder methods.
@@ -237,9 +237,9 @@ class LinkedList:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (class decorators, metaclass patterns)
-#   - ../01-fastapi-foundations/01-http-routing-and-decorators.md (decorator registration)
-#   - ../09-python-internals/03-imports-and-runtime.md (module-level state)
+#   - ../03-python-internals/02-advanced-python-features.md (class decorators, metaclass patterns)
+#   - ../../fastapi/00-fastapi-foundations/01-http-routing-and-decorators.md (decorator registration)
+#   - ../03-python-internals/03-imports-and-runtime.md (module-level state)
 #
 # Implement a class decorator that auto-registers subclasses in a central
 # registry. This pattern is used in plugin systems and serialization
@@ -312,8 +312,8 @@ def get_registered(name: str) -> type | None:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/01-object-model-and-memory.md (attribute access, descriptors)
-#   - ../09-python-internals/02-advanced-python-features.md (__setattr__, __getattr__)
+#   - ../03-python-internals/01-object-model-and-memory.md (attribute access, descriptors)
+#   - ../03-python-internals/02-advanced-python-features.md (__setattr__, __getattr__)
 #
 # Implement a config class that becomes immutable after initialization.
 # Supports dot-notation access for nested dictionaries.
@@ -402,9 +402,9 @@ class ImmutableConfig:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (Protocol, structural typing)
-#   - ../09-python-internals/01-object-model-and-memory.md (callables, __call__)
-#   - ../01-fastapi-foundations/02-dependency-injection.md (callback patterns)
+#   - ../03-python-internals/02-advanced-python-features.md (Protocol, structural typing)
+#   - ../03-python-internals/01-object-model-and-memory.md (callables, __call__)
+#   - ../../fastapi/00-fastapi-foundations/02-dependency-injection.md (callback patterns)
 #
 # Implement an event system with on(), emit(), and off() methods.
 # Define a Listener protocol for type safety.
@@ -499,8 +499,8 @@ class Observable:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (generics, TypeVar)
-#   - ../09-python-internals/01-object-model-and-memory.md (data model, __class_getitem__)
+#   - ../03-python-internals/02-advanced-python-features.md (generics, TypeVar)
+#   - ../03-python-internals/01-object-model-and-memory.md (data model, __class_getitem__)
 #
 # Implement a type-safe stack using Generic[T]. This practices Python's
 # generics system which is used in Pydantic, SQLAlchemy, and FastAPI.

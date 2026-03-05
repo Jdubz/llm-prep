@@ -20,8 +20,8 @@ from typing import Any, Generator, Iterable, Iterator
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (generators, itertools)
-#   - ../05-advanced-api-patterns/02-pagination-filtering-and-bulk-operations.md (batch processing)
+#   - ../03-python-internals/02-advanced-python-features.md (generators, itertools)
+#   - ../../fastapi/03-advanced-api-patterns/02-pagination-filtering-and-bulk-operations.md (batch processing)
 #
 # Write a generator that yields fixed-size chunks from any iterable.
 # This is useful for batch processing (e.g., inserting records in batches).
@@ -84,8 +84,8 @@ def chunked(iterable: Iterable, size: int) -> Generator[list, None, None]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (deque, generators)
-#   - ../02-async-python/02-concurrency-patterns.md (streaming data patterns)
+#   - ../03-python-internals/02-advanced-python-features.md (deque, generators)
+#   - ../01-async-python/02-concurrency-patterns.md (streaming data patterns)
 #
 # Write a generator that yields overlapping windows (tuples) over an iterable.
 # This is a common pattern for time-series analysis and streaming data.
@@ -138,8 +138,8 @@ def window(iterable: Iterable, size: int) -> Generator[tuple, None, None]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (generators, infinite sequences)
-#   - ../09-python-internals/01-object-model-and-memory.md (lazy evaluation, memory)
+#   - ../03-python-internals/02-advanced-python-features.md (generators, infinite sequences)
+#   - ../03-python-internals/01-object-model-and-memory.md (lazy evaluation, memory)
 #
 # Write an infinite Fibonacci generator plus a take(n) helper that
 # collects the first N items from any iterator.
@@ -198,8 +198,8 @@ def take(n: int, iterable: Iterable) -> list:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (generators, lazy evaluation)
-#   - ../05-advanced-api-patterns/01-file-handling-and-streaming.md (streaming patterns)
+#   - ../03-python-internals/02-advanced-python-features.md (generators, lazy evaluation)
+#   - ../../fastapi/03-advanced-api-patterns/01-file-handling-and-streaming.md (streaming patterns)
 #
 # Write a generator that lazily reads CSV-formatted lines and yields dicts.
 # This simulates processing large files without loading everything into memory.
@@ -264,8 +264,8 @@ def parse_csv(lines: Iterable[str]) -> Generator[dict[str, str], None, None]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (yield from, recursion)
-#   - ../09-python-internals/01-object-model-and-memory.md (Iterable ABC, isinstance)
+#   - ../03-python-internals/02-advanced-python-features.md (yield from, recursion)
+#   - ../03-python-internals/01-object-model-and-memory.md (Iterable ABC, isinstance)
 #
 # Write a generator that recursively flattens arbitrarily nested iterables.
 # Strings should NOT be flattened (they're iterable but should stay whole).
@@ -328,9 +328,9 @@ def flatten(data: Iterable) -> Generator:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../09-python-internals/02-advanced-python-features.md (context managers)
-#   - ../09-python-internals/01-object-model-and-memory.md (__enter__, __exit__)
-#   - ../02-async-python/01-asyncio-fundamentals.md (async context managers)
+#   - ../03-python-internals/02-advanced-python-features.md (context managers)
+#   - ../03-python-internals/01-object-model-and-memory.md (__enter__, __exit__)
+#   - ../01-async-python/01-asyncio-fundamentals.md (async context managers)
 #
 # Implement a Timer context manager that measures elapsed time.
 # Support nested timers that track their own independent durations.

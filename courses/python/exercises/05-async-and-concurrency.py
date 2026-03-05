@@ -21,9 +21,9 @@ T = TypeVar("T")
 # ============================================================================
 #
 # RELATED READING:
-#   - ../02-async-python/01-asyncio-fundamentals.md (coroutines, gather, event loop)
-#   - ../02-async-python/02-concurrency-patterns.md (sequential vs concurrent)
-#   - ../08-interview-prep/01-interview-fundamentals.md (async interview questions)
+#   - ../01-async-python/01-asyncio-fundamentals.md (coroutines, gather, event loop)
+#   - ../01-async-python/02-concurrency-patterns.md (sequential vs concurrent)
+#   - ../04-interview-prep/01-interview-fundamentals.md (async interview questions)
 #
 # Rewrite a sequential fetch pattern using asyncio.gather for concurrency.
 # This is the single most common async interview question.
@@ -102,9 +102,9 @@ async def fetch_all_concurrent(
 # ============================================================================
 #
 # RELATED READING:
-#   - ../02-async-python/02-concurrency-patterns.md (semaphores, bounded concurrency)
-#   - ../02-async-python/01-asyncio-fundamentals.md (async context managers)
-#   - ../07-production/03-performance-and-scaling.md (rate limiting, backpressure)
+#   - ../01-async-python/02-concurrency-patterns.md (semaphores, bounded concurrency)
+#   - ../01-async-python/01-asyncio-fundamentals.md (async context managers)
+#   - ../../fastapi/05-production/03-performance-and-scaling.md (rate limiting, backpressure)
 #
 # Limit concurrent requests to N using asyncio.Semaphore. This prevents
 # overwhelming a downstream service.
@@ -169,9 +169,9 @@ async def fetch_bounded(
 # ============================================================================
 #
 # RELATED READING:
-#   - ../02-async-python/02-concurrency-patterns.md (retry patterns, error handling)
-#   - ../02-async-python/01-asyncio-fundamentals.md (async/await, asyncio.sleep)
-#   - ../09-python-internals/02-advanced-python-features.md (decorator factories)
+#   - ../01-async-python/02-concurrency-patterns.md (retry patterns, error handling)
+#   - ../01-async-python/01-asyncio-fundamentals.md (async/await, asyncio.sleep)
+#   - ../03-python-internals/02-advanced-python-features.md (decorator factories)
 #
 # Write an async-aware retry decorator with exponential backoff.
 # This is the async version of exercise 2 from the functions module.
@@ -243,8 +243,8 @@ def async_retry(
 # ============================================================================
 #
 # RELATED READING:
-#   - ../02-async-python/01-asyncio-fundamentals.md (asyncio.wait_for, timeouts)
-#   - ../02-async-python/03-async-debugging-and-production.md (timeout best practices)
+#   - ../01-async-python/01-asyncio-fundamentals.md (asyncio.wait_for, timeouts)
+#   - ../01-async-python/03-async-debugging-and-production.md (timeout best practices)
 #
 # Write a utility that wraps any coroutine with a timeout and optional
 # fallback value.
@@ -304,9 +304,9 @@ async def with_timeout(
 # ============================================================================
 #
 # RELATED READING:
-#   - ../02-async-python/02-concurrency-patterns.md (producer/consumer, queues)
-#   - ../02-async-python/01-asyncio-fundamentals.md (asyncio.Queue, task coordination)
-#   - ../05-advanced-api-patterns/01-file-handling-and-streaming.md (streaming pipelines)
+#   - ../01-async-python/02-concurrency-patterns.md (producer/consumer, queues)
+#   - ../01-async-python/01-asyncio-fundamentals.md (asyncio.Queue, task coordination)
+#   - ../../fastapi/03-advanced-api-patterns/01-file-handling-and-streaming.md (streaming pipelines)
 #
 # Implement an async producer/consumer pipeline using asyncio.Queue.
 # The producer generates work items, the consumer processes them.
@@ -402,10 +402,10 @@ async def run_pipeline(items: list[str], num_consumers: int = 2) -> list[str]:
 # ============================================================================
 #
 # RELATED READING:
-#   - ../02-async-python/01-asyncio-fundamentals.md (async context managers)
-#   - ../02-async-python/02-concurrency-patterns.md (resource management)
-#   - ../03-sqlalchemy/02-querying-and-session-management.md (connection pooling)
-#   - ../01-fastapi-foundations/03-middleware-asgi-and-advanced-patterns.md (lifespan)
+#   - ../01-async-python/01-asyncio-fundamentals.md (async context managers)
+#   - ../01-async-python/02-concurrency-patterns.md (resource management)
+#   - ../../fastapi/01-sqlalchemy/02-querying-and-session-management.md (connection pooling)
+#   - ../../fastapi/00-fastapi-foundations/03-middleware-asgi-and-advanced-patterns.md (lifespan)
 #
 # Implement an async context manager that simulates a database connection
 # pool. This practices __aenter__/__aexit__ which FastAPI uses for

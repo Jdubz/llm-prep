@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-You should be comfortable with pytest basics and have written at least a few FastAPI endpoints.
+You should be comfortable with Python basics and have written at least a few modules.
 If you've done extensive testing in Vitest/Jest, most concepts transfer — but Python's testing
 ecosystem has different idioms worth internalizing.
 
@@ -45,7 +45,6 @@ def test_creates_user(db):  # <-- db is injected automatically by name
 | `jest.fn()` | `MagicMock()` / `AsyncMock()` | From `unittest.mock` |
 | `test.each([...])` | `@pytest.mark.parametrize` | More flexible |
 | `vitest --coverage` | `pytest --cov=app` | Requires `pytest-cov` |
-| `supertest(app)` | `httpx.AsyncClient` / `TestClient` | In-process ASGI testing |
 
 ---
 
@@ -145,14 +144,6 @@ async def db_session():
         async with session.begin():
             yield session
             await session.rollback()
-
-@pytest.fixture
-async def client(db_session):
-    app.dependency_overrides[get_db] = lambda: db_session
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as c:
-        yield c
-    app.dependency_overrides.clear()
 ```
 
 ---
@@ -177,87 +168,30 @@ async def test_async_database_query(db_session):
 
 ---
 
-## Full Fixture Template
+## Mocking with monkeypatch and unittest.mock
 
 ```python
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from httpx import AsyncClient, ASGITransport
-from app.main import app
-from app.database import get_db, Base
+# monkeypatch — replace attributes/env vars for a test
+def test_with_monkeypatch(monkeypatch):
+    monkeypatch.setenv("API_KEY", "test-key")
+    monkeypatch.setattr("mymodule.external_api", lambda: {"mock": True})
+    result = my_function()
+    assert result["mock"] is True
 
-TEST_DB = "postgresql+asyncpg://test:test@localhost:5432/test_db"
-engine = create_async_engine(TEST_DB)
-TestSession = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+# unittest.mock — more flexible mocking
+from unittest.mock import MagicMock, AsyncMock, patch
 
-@pytest.fixture(scope="session")
-def anyio_backend():
-    return "asyncio"
+def test_with_mock():
+    service = MagicMock()
+    service.get_user.return_value = {"name": "Alice"}
+    result = service.get_user(1)
+    service.get_user.assert_called_once_with(1)
 
-@pytest.fixture(scope="session", autouse=True)
-async def create_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-@pytest.fixture
-async def db():
-    async with TestSession() as session:
-        async with session.begin():
-            yield session
-            await session.rollback()
-
-@pytest.fixture
-async def client(db):
-    app.dependency_overrides[get_db] = lambda: db
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        yield c
-    app.dependency_overrides.clear()
-```
-
----
-
-## httpx Test Client Templates
-
-```python
-# Async (preferred in async codebases)
-async def test_create_user(client: AsyncClient):
-    resp = await client.post("/users/", json={"name": "Alice", "email": "a@t.com"})
-    assert resp.status_code == 201
-
-# Sync (simpler for simple tests)
-from fastapi.testclient import TestClient
-def test_health():
-    assert TestClient(app).get("/health").status_code == 200
-
-# With auth
-async def test_protected(client: AsyncClient):
-    resp = await client.get("/me", headers={"Authorization": "Bearer token"})
-    assert resp.status_code == 200
-
-# File upload
-async def test_upload(client: AsyncClient):
-    import io
-    resp = await client.post("/upload/",
-        files={"file": ("test.txt", io.BytesIO(b"content"), "text/plain")})
-    assert resp.status_code == 200
-```
-
----
-
-## TestClient (Synchronous Alternative)
-
-```python
-from fastapi.testclient import TestClient
-
-client = TestClient(app)
-
-def test_health_check():
-    response = client.get("/health")
-    assert response.status_code == 200
+async def test_async_mock():
+    service = AsyncMock()
+    service.fetch.return_value = {"data": 42}
+    result = await service.fetch("key")
+    assert result["data"] == 42
 ```
 
 ---
@@ -268,26 +202,10 @@ def test_health_check():
 [tool.mypy]
 python_version = "3.12"
 strict = true
-plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
-
-[tool.pydantic-mypy]
-init_forbid_extra = true
-init_typed = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
-```
-
-### Typed Dependencies
-
-```python
-from typing import Annotated
-CurrentUser = Annotated[User, Depends(get_current_user)]
-DbSession = Annotated[AsyncSession, Depends(get_db)]
-
-@app.get("/me")
-async def get_me(user: CurrentUser, db: DbSession) -> UserResponse: ...
 ```
 
 ---
@@ -330,7 +248,7 @@ repos:
     rev: v1.13.0
     hooks:
       - id: mypy
-        additional_dependencies: [pydantic, sqlalchemy[mypy]]
+        additional_dependencies: [pydantic]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -354,18 +272,6 @@ pytest -n auto                      # Parallel (pytest-xdist)
 mypy app/ --strict                  # Type check
 ruff check app/ --fix && ruff format app/  # Lint + format
 ```
-
----
-
-## Practice Exercises
-
-Work through these exercises in `exercises.py` to practice the concepts from this file:
-
-- **Exercise 1 (`TestListItems`)** — Uses the `seeded_client` async fixture (which itself depends on `seeded_db`). Practice making GET requests with `httpx.AsyncClient`, passing query parameters, and asserting status codes and JSON response bodies. Covers: fixture injection, async test functions, `params={}` for query strings.
-
-- **Exercise 5 (`test_valid_item_creation`, `test_invalid_item_creation`)** — Practice `@pytest.mark.parametrize` with `pytest.param(..., id="...")` for data-driven tests. Fill in the parametrize lists and write assertions for both valid (201) and invalid (422) payloads. Covers: parametrize decorator syntax, Pydantic validation error structure.
-
-See also `examples.py` sections 2-4 and 6 for working reference implementations of these patterns.
 
 ---
 

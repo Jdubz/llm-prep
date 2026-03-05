@@ -1,29 +1,29 @@
-# 01 – Interview Fundamentals
+# 01 – Python Interview Fundamentals
 
 ## Top 20 Python Questions — Quick Reference
 
-| # | Question | Answer |
-|---|----------|--------|
-| 1 | What is the GIL? | A mutex in CPython that allows only one thread to execute Python bytecode at a time; released during IO. |
-| 2 | `is` vs `==`? | `is` checks identity (same object in memory); `==` checks value equality (calls `__eq__`). |
-| 3 | `list` vs `tuple`? | Lists are mutable (append/remove); tuples are immutable (hashable, usable as dict keys). |
-| 4 | What are decorators? | Syntactic sugar: `@dec` on `def f` means `f = dec(f)` — a function that wraps another function. |
-| 5 | What are generators? | Functions that `yield` values lazily; produce items one at a time without loading all into memory. |
-| 6 | `*args` vs `**kwargs`? | `*args` collects positional args as a tuple; `**kwargs` collects keyword args as a dict. |
-| 7 | What are context managers? | Objects with `__enter__`/`__exit__` that guarantee cleanup; used with `with`/`async with`. |
-| 8 | `__str__` vs `__repr__`? | `__str__` is human-readable; `__repr__` is unambiguous and developer-facing. |
-| 9 | What are metaclasses? | The class of a class; `type` is the default metaclass; used by frameworks (Pydantic, Django ORM). |
-| 10 | What are descriptors? | Objects with `__get__`/`__set__` that control attribute access; power `@property`, `@classmethod`. |
-| 11 | How does GC work? | Reference counting (primary, deterministic) + generational GC (handles circular references). |
-| 12 | What are `__slots__`? | Replaces instance `__dict__` with fixed-size struct; less memory, faster access, no dynamic attrs. |
-| 13 | `asyncio.gather` vs `TaskGroup`? | `gather` is flexible but can leak tasks; `TaskGroup` (3.11+) provides structured concurrency. |
-| 14 | `threading` vs `multiprocessing`? | Threading = concurrent IO (GIL limits CPU); multiprocessing = true parallelism (separate processes). |
-| 15 | What is a dataclass? | `@dataclass` auto-generates `__init__`, `__repr__`, `__eq__` from type-annotated fields. |
-| 16 | Mutable default argument trap? | `def f(lst=[])` shares one list across all calls; fix: `def f(lst=None): lst = lst or []`. |
-| 17 | What is `__init_subclass__`? | Hook called when a class is subclassed; simpler alternative to metaclasses for registration patterns. |
-| 18 | What is the walrus operator? | `:=` assigns and returns in one expression: `if (n := len(a)) > 10:`. |
-| 19 | How do imports work? | Check `sys.modules` cache, then search `sys.path`; `.pyc` bytecode is cached in `__pycache__/`. |
-| 20 | What is `match`/`case`? | Structural pattern matching (3.10+); like switch but with destructuring and guard clauses. |
+| # | Question | Answer | Further reading |
+|---|----------|--------|-----------------|
+| 1 | What is the GIL? | A mutex in CPython that allows only one thread to execute Python bytecode at a time; released during IO. | [Object Model and Memory](../03-python-internals/01-object-model-and-memory.md) |
+| 2 | `is` vs `==`? | `is` checks identity (same object in memory); `==` checks value equality (calls `__eq__`). | [Q13 in this guide](#q13-explain-the-difference-between-is-and) |
+| 3 | `list` vs `tuple`? | Lists are mutable (append/remove); tuples are immutable (hashable, usable as dict keys). | [Syntax, Types, and Patterns](../00-python-fundamentals/01-syntax-types-and-patterns.md) |
+| 4 | What are decorators? | Syntactic sugar: `@dec` on `def f` means `f = dec(f)` — a function that wraps another function. | [Advanced Python Features](../03-python-internals/02-advanced-python-features.md) |
+| 5 | What are generators? | Functions that `yield` values lazily; produce items one at a time without loading all into memory. | [Q12 in this guide](#q12-how-do-generators-and-iterators-work), [Generator protocol](../03-python-internals/03-imports-and-runtime.md) |
+| 6 | `*args` vs `**kwargs`? | `*args` collects positional args as a tuple; `**kwargs` collects keyword args as a dict. | [Q10 in this guide](#q10-explain-args-and-kwargs), [Syntax, Types, and Patterns](../00-python-fundamentals/01-syntax-types-and-patterns.md) |
+| 7 | What are context managers? | Objects with `__enter__`/`__exit__` that guarantee cleanup; used with `with`/`async with`. | [Q4 in this guide](#q4-what-are-context-managers-and-why-do-they-matter) |
+| 8 | `__str__` vs `__repr__`? | `__str__` is human-readable; `__repr__` is unambiguous and developer-facing. | [Q9 in this guide](#q9-whats-the-difference-between-__str__-and-__repr__) |
+| 9 | What are metaclasses? | The class of a class; `type` is the default metaclass; used by frameworks (Pydantic, Django ORM). | [Q6 in this guide](#q6-what-are-metaclasses-when-would-you-actually-use-one), [Advanced Python Features](../03-python-internals/02-advanced-python-features.md) |
+| 10 | What are descriptors? | Objects with `__get__`/`__set__` that control attribute access; power `@property`, `@classmethod`. | [Q7 in this guide](#q7-explain-descriptors), [Advanced Python Features](../03-python-internals/02-advanced-python-features.md) |
+| 11 | How does GC work? | Reference counting (primary, deterministic) + generational GC (handles circular references). | [Q5 in this guide](#q5-explain-pythons-memory-model--reference-counting--gc), [Object Model and Memory](../03-python-internals/01-object-model-and-memory.md) |
+| 12 | What are `__slots__`? | Replaces instance `__dict__` with fixed-size struct; less memory, faster access, no dynamic attrs. | [Q11 in this guide](#q11-what-are-slots-and-when-would-you-use-them), [Object Model and Memory](../03-python-internals/01-object-model-and-memory.md) |
+| 13 | `asyncio.gather` vs `TaskGroup`? | `gather` is flexible but can leak tasks; `TaskGroup` (3.11+) provides structured concurrency. | [Q19 in this guide](#q19-explain-asynciogather-vs-asynciotaskgroup), [Concurrency Patterns](../01-async-python/02-concurrency-patterns.md) |
+| 14 | `threading` vs `multiprocessing`? | Threading = concurrent IO (GIL limits CPU); multiprocessing = true parallelism (separate processes). | [Q20 in this guide](#q20-whats-the-difference-between-threading-multiprocessing-and-asyncio), [Asyncio Fundamentals](../01-async-python/01-asyncio-fundamentals.md) |
+| 15 | What is a dataclass? | `@dataclass` auto-generates `__init__`, `__repr__`, `__eq__` from type-annotated fields. | [Q18 in this guide](#q18-how-do-dataclasses-compare-to-pydantic-models) |
+| 16 | Mutable default argument trap? | `def f(lst=[])` shares one list across all calls; fix: `def f(lst=None): lst = lst or []`. | [Syntax, Types, and Patterns](../00-python-fundamentals/01-syntax-types-and-patterns.md), [Functions exercises](../exercises/02-functions-and-decorators.py) |
+| 17 | What is `__init_subclass__`? | Hook called when a class is subclassed; simpler alternative to metaclasses for registration patterns. | [Q14 in this guide](#q14-what-is-__init_subclass__-and-when-do-you-use-it), [Advanced Python Features](../03-python-internals/02-advanced-python-features.md) |
+| 18 | What is the walrus operator? | `:=` assigns and returns in one expression: `if (n := len(a)) > 10:`. | [Q17 in this guide](#q17-what-is-the-walrus-operator-) |
+| 19 | How do imports work? | Check `sys.modules` cache, then search `sys.path`; `.pyc` bytecode is cached in `__pycache__/`. | [Q16 in this guide](#q16-explain-pythons-import-system), [Imports, Bytecode, and Runtime](../03-python-internals/03-imports-and-runtime.md) |
+| 20 | What is `match`/`case`? | Structural pattern matching (3.10+); like switch but with destructuring and guard clauses. | [Syntax, Types, and Patterns](../00-python-fundamentals/01-syntax-types-and-patterns.md) |
 
 ---
 
@@ -120,14 +120,14 @@ async for item in stream:         # for await (const item of stream) {
 
 ---
 
-## Python Backend Interview Questions — In Depth
+## Python Interview Questions — In Depth
 
 ### Q1: What is the GIL, and why does it matter for web services?
 
 The Global Interpreter Lock is a mutex in CPython that allows only one thread to execute Python bytecode at a time. For web services:
 
 - **CPU-bound work**: Multiple threads cannot parallelize CPU work. Use `multiprocessing`, `ProcessPoolExecutor`, or offload to Celery workers.
-- **IO-bound work**: The GIL is released during IO operations (`await`, network calls, file reads). Async FastAPI endpoints are largely unaffected.
+- **IO-bound work**: The GIL is released during IO operations (`await`, network calls, file reads). Async endpoints are largely unaffected.
 
 ```python
 # CPU-bound: GIL is a bottleneck — use ProcessPoolExecutor
@@ -296,7 +296,7 @@ Descriptors are objects that define `__get__`, `__set__`, or `__delete__`. They 
 class Validated:
     """A descriptor that validates values on assignment."""
     def __set_name__(self, owner, name):
-        self.name = name  # Automatically called — knows the attribute name
+        self.name = name
 
     def __get__(self, obj, objtype=None):
         if obj is None:
@@ -396,7 +396,6 @@ p.z = 3  # AttributeError — no __dict__, can't add attributes
 A generator is a function that uses `yield` to produce values lazily — one at a time, on demand:
 
 ```python
-# This is like a JavaScript generator function (function*)
 def read_large_file(path):
     with open(path) as f:
         for line in f:
@@ -541,7 +540,7 @@ results = await asyncio.gather(
     fetch_users(),
     fetch_orders(),
     fetch_products(),
-    return_exceptions=True,  # Don't let one failure cancel others
+    return_exceptions=True,
 )
 
 # TaskGroup — newer (3.11+), structured concurrency, better error handling
@@ -563,178 +562,7 @@ async with asyncio.TaskGroup() as tg:
 | `threading` | Yes (preemptive) | No (GIL) | Shared, switched every 5ms | IO-bound with blocking APIs |
 | `multiprocessing` | Yes | Yes (separate processes) | One per process | CPU-bound (computation) |
 
-For FastAPI services: use `asyncio` for everything IO-bound (which is most things). Use `ProcessPoolExecutor` for CPU-heavy work. Avoid raw threading unless you're wrapping blocking third-party libraries.
-
----
-
-## FastAPI-Specific Questions
-
-### F1: How does FastAPI's dependency injection work?
-
-FastAPI uses a function-based DI system. Dependencies are declared as function parameters with `Depends()`:
-
-```python
-from fastapi import Depends
-
-async def get_db():
-    async with async_session() as session:
-        yield session  # Cleanup happens after the response
-
-async def get_current_user(
-    token: str = Header(...),
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    return await authenticate(token, db)
-
-@app.get("/orders")
-async def list_orders(
-    user: User = Depends(get_current_user),  # Depends on get_current_user
-    db: AsyncSession = Depends(get_db),       # Same db session (cached per-request)
-):
-    return await get_user_orders(user.id, db)
-```
-
-**vs NestJS**: NestJS uses class-based DI with decorators and a container. FastAPI's DI is simpler — just functions and `Depends()`. Dependencies are resolved per-request and can use `yield` for cleanup (like context managers).
-
-### F2: Middleware vs Dependencies — when to use which?
-
-| Feature | Middleware | Dependencies |
-|---------|-----------|-------------|
-| Scope | Every request | Specific endpoints |
-| Access to | Raw ASGI scope, request/response | Function parameters, type hints |
-| Use case | Logging, CORS, compression, metrics | Auth, DB sessions, pagination params |
-| Error handling | Must handle manually | FastAPI's exception handlers work |
-| Performance | Runs even for 404s | Only runs for matched routes |
-
-**Rule**: Use middleware for cross-cutting concerns that apply to all requests. Use dependencies for per-endpoint logic that needs type safety and testability.
-
-### F3: What changed in Pydantic v2?
-
-| Aspect | Pydantic v1 | Pydantic v2 |
-|--------|-------------|-------------|
-| Core | Pure Python | Rust-based (`pydantic-core`) |
-| Speed | Baseline | 5-50x faster |
-| Config | `class Config:` inner class | `model_config = ConfigDict(...)` |
-| Validators | `@validator` | `@field_validator` / `@model_validator` |
-| Serialization | `.dict()` / `.json()` | `.model_dump()` / `.model_dump_json()` |
-| Strict mode | No | Yes — `strict=True` disables coercion |
-| Computed fields | Workarounds | `@computed_field` decorator |
-
-```python
-# v2 style
-from pydantic import BaseModel, field_validator, ConfigDict
-
-class User(BaseModel):
-    model_config = ConfigDict(strict=True, frozen=True)
-
-    name: str
-    email: str
-
-    @field_validator("email")
-    @classmethod
-    def validate_email(cls, v: str) -> str:
-        if "@" not in v:
-            raise ValueError("Invalid email")
-        return v.lower()
-```
-
-### F4: Async vs sync endpoints — when to use which?
-
-```python
-# ASYNC — runs on the event loop (like Node.js)
-@app.get("/async")
-async def async_endpoint():
-    result = await db.query(...)  # Non-blocking
-    return result
-
-# SYNC — runs in a thread pool (automatically!)
-@app.get("/sync")
-def sync_endpoint():
-    result = db.query(...)  # Blocking call
-    return result
-```
-
-**FastAPI automatically runs sync endpoints in a thread pool** so they don't block the event loop. Use `async def` when you have async dependencies (async DB drivers, httpx). Use plain `def` when calling blocking libraries.
-
-**Gotcha**: Never do blocking IO inside an `async def` endpoint — it blocks the event loop.
-
-### F5: How do you test FastAPI applications?
-
-```python
-import pytest
-from httpx import AsyncClient, ASGITransport
-from app.main import app
-from app.dependencies import get_db
-
-async def override_get_db():
-    async with test_session() as session:
-        yield session
-
-app.dependency_overrides[get_db] = override_get_db
-
-@pytest.fixture
-async def client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        yield client
-
-async def test_create_user(client: AsyncClient):
-    response = await client.post("/users", json={"name": "Alice", "email": "a@b.com"})
-    assert response.status_code == 201
-    assert response.json()["name"] == "Alice"
-```
-
-**Key concept**: `dependency_overrides` is FastAPI's killer feature for testing. You can replace any dependency (database, auth, external services) without mocking internals.
-
-### F6: Explain FastAPI's response model and serialization.
-
-```python
-class UserOut(BaseModel):
-    id: int
-    name: str
-    email: str
-    # Note: password is NOT included
-
-@app.get("/users/{user_id}", response_model=UserOut)
-async def get_user(user_id: int):
-    user = await db.get(User, user_id)  # Has password field
-    return user  # FastAPI serializes using UserOut — password is stripped
-```
-
-`response_model` controls what's sent to the client. This is like a DTO pattern but enforced by the framework.
-
-### F7: What is the ASGI lifecycle in FastAPI?
-
-```
-Request → ASGI Server (Uvicorn)
-       → ASGI Middleware Stack
-       → ServerErrorMiddleware
-       → ExceptionMiddleware
-       → Your middleware (CORS, logging, etc.)
-       → Router
-       → Dependency resolution
-       → Path operation function
-       → Response
-```
-
-FastAPI is an ASGI application. Uvicorn sends the request as an ASGI scope dict. Each middleware wraps the next. Dependencies are resolved after routing but before the endpoint function runs.
-
-### F8: How do you handle background tasks?
-
-```python
-from fastapi import BackgroundTasks
-
-@app.post("/orders")
-async def create_order(order: OrderIn, background_tasks: BackgroundTasks):
-    db_order = await save_order(order)
-
-    # Runs AFTER the response is sent (not blocking the client)
-    background_tasks.add_task(send_confirmation_email, db_order.email)
-    background_tasks.add_task(update_inventory, db_order.items)
-
-    return db_order
-```
-
-**Limitations**: Background tasks run in the same process. If the process crashes, the tasks are lost. For anything critical, use a proper task queue (Celery, ARQ, Dramatiq).
+For backend services: use `asyncio` for everything IO-bound (which is most things). Use `ProcessPoolExecutor` for CPU-heavy work. Avoid raw threading unless you're wrapping blocking third-party libraries.
 
 ---
 
@@ -787,8 +615,6 @@ b = sys.intern("hello world")
 a is b  # True
 ```
 
-**When to care**: If you're storing millions of strings that are mostly the same values (status codes, country codes), `sys.intern()` can significantly reduce memory.
-
 ### Small Integer Caching
 
 CPython pre-allocates integers from -5 to 256:
@@ -803,23 +629,6 @@ b = 257
 a is b  # False — different objects (outside cache range)
 # Never rely on `is` for integer comparison. Always use ==.
 ```
-
-### Django vs FastAPI Decision Matrix
-
-| Feature | Django | FastAPI |
-|---------|--------|---------|
-| **Philosophy** | Batteries included | Minimal, composable |
-| **ORM** | Built-in (Django ORM) | BYO (SQLAlchemy, Tortoise) |
-| **Admin panel** | Built-in (powerful) | None (use SQLAdmin or build) |
-| **Auth** | Built-in (users, sessions, permissions) | BYO |
-| **Async support** | Partial (views, ORM queries in 4.1+) | Native, async-first |
-| **Validation** | Django forms, DRF serializers | Pydantic (built-in) |
-| **API docs** | Manual (DRF + drf-spectacular) | Automatic (OpenAPI/Swagger) |
-| **Performance** | Moderate | High (Starlette + Pydantic v2 Rust core) |
-
-**Choose Django when**: You need an admin panel, batteries-included auth, or a large ecosystem of packages.
-
-**Choose FastAPI when**: Building a pure API, performance matters, you want automatic OpenAPI docs, or you're coming from TypeScript/Express — FastAPI feels more familiar.
 
 ### PEPs to Know
 
@@ -839,24 +648,14 @@ a is b  # False — different objects (outside cache range)
 
 ## Practice Exercises
 
-The following timed coding challenges in `exercises.py` test concepts covered in this file. Use them to practice under interview conditions.
-
-| Exercise | Time | Concepts from this file |
-|----------|------|------------------------|
-| **Exercise 1: TODO API with CRUD + Filtering** | 15 min | Pydantic models (F3, Q18), Field validation, FastAPI route decorators (F1, F4), query parameter filtering, status codes |
-| **Exercise 2: User Registration with Validation** | 15 min | `@field_validator` (F3), password hashing (F1 dependency injection), Bearer token auth (F1), `HTTPException` status codes |
-| **Exercise 4: Debug Broken Code** | 10 min | `is None` vs `== None` (Q13), proper status codes, Pydantic validation, error handling patterns |
-| **Exercise 5: Code Review** | 10 min | Security (plaintext passwords), Pydantic models (Q18, F3), route ordering, type hints (Q10), HTTP method semantics |
-
-Exercises 3 (Rate Limiter) and 6 (Webhook Delivery) are covered in `02-system-design-and-code-review.md`.
+Work through the exercises in `exercises.py` and in the [standalone exercises](../exercises/) to practice Python interview patterns.
 
 ---
 
 ## Key Takeaways
 
-- Fixtures are composable, dependency-injected, and replace `beforeEach`/`afterEach` with a single function.
-- The GIL blocks CPU-bound threads but is released during IO — async FastAPI is largely unaffected.
+- The GIL blocks CPU-bound threads but is released during IO — async Python is largely unaffected.
 - Python coroutines are lazy (unlike JS Promises): calling `async def f()` does nothing; only `await f()` runs it.
 - `@functools.wraps` is required in every decorator to preserve the wrapped function's metadata.
 - Use `is None` (identity), not `== None` (equality) — `== None` can be overridden by `__eq__`.
-- `dependency_overrides` in FastAPI is the correct way to inject test dependencies — don't monkeypatch.
+- Reference counting gives Python deterministic cleanup; the cyclic GC handles circular references.

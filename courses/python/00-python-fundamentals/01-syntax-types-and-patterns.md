@@ -1,8 +1,6 @@
-# Module 00: Python for TypeScript Engineers
+# 01 – Syntax, Types, and Patterns
 
-Everything you need to know before starting this course. If you're coming from TypeScript/Node.js, Python will feel familiar in spirit but alien in syntax. This guide covers every Python concept the course assumes you already know.
-
-Read this front to back before touching Module 01.
+Everything you need to know about Python syntax if you're coming from TypeScript/Node.js. Python will feel familiar in spirit but alien in syntax.
 
 ---
 
@@ -275,7 +273,7 @@ double(5)  # 10
 
 ## 4. Type Hints
 
-Type hints are central to FastAPI and Pydantic. FastAPI uses them to determine request parameter types, validation rules, and OpenAPI schema generation. This isn't optional decoration — it's how the framework works.
+Type hints are central to modern Python. They drive validation in Pydantic and API behavior in FastAPI.
 
 ### Basic Type Hints
 
@@ -321,30 +319,14 @@ result: Union[int, str] = 42     # same as int | str
 
 ### `Annotated` — Adding Metadata to Types
 
-`Annotated` lets you attach extra information to a type hint. FastAPI and Pydantic use this extensively for validation rules, dependency injection, and documentation.
+`Annotated` lets you attach extra information to a type hint. Pydantic and FastAPI use this extensively for validation rules, dependency injection, and documentation.
 
 ```python
 from typing import Annotated
-from fastapi import Depends, Query
+from pydantic import Field
 
 # Annotated[Type, metadata1, metadata2, ...]
 # The first arg is the actual type, everything after is metadata
-
-# FastAPI uses metadata to configure parameter behavior:
-async def list_items(
-    skip: Annotated[int, Query(ge=0)] = 0,         # query param, >= 0
-    limit: Annotated[int, Query(le=100)] = 20,      # query param, <= 100
-    db: Annotated[Session, Depends(get_db)] = None,  # injected dependency
-):
-    ...
-
-# Without Annotated (older style, still works):
-async def list_items(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(20, le=100),
-    db: Session = Depends(get_db),
-):
-    ...
 ```
 
 ### Generics
@@ -378,373 +360,9 @@ class Tree:
 
 ---
 
-## 5. Classes & OOP
+## 5. Comprehensions
 
-Classes are used pervasively: Pydantic models, SQLAlchemy models, enums, custom exceptions — everything is a class.
-
-### Basic Class
-
-```python
-class User:
-    # __init__ is the constructor (like constructor() in TS)
-    def __init__(self, name: str, email: str) -> None:
-        self.name = name       # instance attributes (like this.name)
-        self.email = email
-        self._internal = 42    # _ prefix = "private" by convention (not enforced)
-
-    # self is explicit (like this, but you must always include it)
-    def greet(self) -> str:
-        return f"Hi, I'm {self.name}"
-
-    # String representation (like toString())
-    def __repr__(self) -> str:
-        return f"User(name={self.name!r})"
-
-user = User("Alice", "alice@example.com")
-user.greet()  # "Hi, I'm Alice"
-```
-
-### Inheritance
-
-```python
-class Animal:
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    def speak(self) -> str:
-        raise NotImplementedError
-
-class Dog(Animal):              # TS: class Dog extends Animal
-    def speak(self) -> str:
-        return "Woof!"
-
-class Cat(Animal):
-    def speak(self) -> str:
-        return "Meow!"
-
-# Multiple inheritance (Python supports it, TS doesn't)
-class GuideDog(Dog, ServiceAnimal):
-    pass
-```
-
-### `@property` — Computed Getters
-
-```python
-class Circle:
-    def __init__(self, radius: float) -> None:
-        self.radius = radius
-
-    @property
-    def area(self) -> float:
-        return 3.14159 * self.radius ** 2
-
-    @property
-    def diameter(self) -> float:
-        return self.radius * 2
-
-c = Circle(5)
-c.area       # 78.5 — accessed like an attribute, not a method call
-c.diameter   # 10.0
-```
-
-Pydantic uses `@computed_field` with `@property` for derived response fields.
-
-### `@classmethod` and `@staticmethod`
-
-```python
-class Config:
-    def __init__(self, db_url: str, debug: bool) -> None:
-        self.db_url = db_url
-        self.debug = debug
-
-    @classmethod
-    def from_env(cls) -> "Config":
-        # cls refers to the class itself (like static methods that can access the class)
-        # Used as alternative constructors
-        return cls(
-            db_url=os.environ["DATABASE_URL"],
-            debug=os.environ.get("DEBUG", "false") == "true",
-        )
-
-    @staticmethod
-    def is_valid_url(url: str) -> bool:
-        # No access to cls or self — just a namespaced function
-        return url.startswith("postgresql://")
-
-# Usage
-config = Config.from_env()          # alternative constructor
-Config.is_valid_url("postgresql://") # True
-```
-
-Pydantic validators use `@classmethod` — you'll see `@field_validator("name") @classmethod` everywhere.
-
-### Dunder (Magic) Methods
-
-"Dunder" = double underscore. These are Python's protocol methods (like implementing interfaces).
-
-```python
-class Money:
-    def __init__(self, amount: float, currency: str = "USD") -> None:
-        self.amount = amount
-        self.currency = currency
-
-    def __repr__(self) -> str:      # developer-friendly string
-        return f"Money({self.amount}, {self.currency!r})"
-
-    def __str__(self) -> str:       # user-friendly string
-        return f"${self.amount:.2f}"
-
-    def __eq__(self, other) -> bool: # == comparison
-        return self.amount == other.amount and self.currency == other.currency
-
-    def __lt__(self, other) -> bool: # < comparison (enables sorting)
-        return self.amount < other.amount
-
-    def __hash__(self) -> int:       # makes it usable as dict key / in sets
-        return hash((self.amount, self.currency))
-
-    def __bool__(self) -> bool:      # truthiness
-        return self.amount != 0
-```
-
-You won't write many of these yourself, but Pydantic and SQLAlchemy use them extensively under the hood.
-
-### Dataclasses (Predecessor to Pydantic Models)
-
-Dataclasses auto-generate `__init__`, `__repr__`, `__eq__` — like a lightweight version of what Pydantic does.
-
-```python
-from dataclasses import dataclass, field
-
-@dataclass
-class Point:
-    x: float
-    y: float
-    label: str = "origin"  # default value
-
-# Automatically generates:
-# __init__(self, x: float, y: float, label: str = "origin")
-# __repr__ -> "Point(x=1.0, y=2.0, label='origin')"
-# __eq__ based on field values
-
-p = Point(1.0, 2.0)
-p.x  # 1.0
-```
-
-Pydantic `BaseModel` is like a dataclass with validation, serialization, and schema generation bolted on.
-
-### Enums
-
-```python
-from enum import Enum, StrEnum
-
-# Basic enum
-class Status(Enum):
-    PENDING = "pending"
-    ACTIVE = "active"
-    DELETED = "deleted"
-
-# StrEnum (3.11+) — values are strings, used with Pydantic/FastAPI
-class Role(StrEnum):
-    ADMIN = "admin"
-    MEMBER = "member"
-    VIEWER = "viewer"
-
-# Usage
-status = Status.PENDING
-status.value    # "pending"
-status.name     # "PENDING"
-
-# In Pydantic models, StrEnum fields serialize to their string values
-```
-
----
-
-## 6. Decorators
-
-Decorators are everywhere in FastAPI (`@app.get`, `@field_validator`, `@asynccontextmanager`). You need to understand what they actually do.
-
-### What a Decorator Is
-
-A decorator is a function that wraps another function. The `@` syntax is just syntactic sugar.
-
-```python
-# These two are identical:
-@my_decorator
-def greet():
-    return "hello"
-
-# is the same as:
-def greet():
-    return "hello"
-greet = my_decorator(greet)
-```
-
-### Writing a Decorator
-
-```python
-import functools
-
-def log_calls(func):
-    @functools.wraps(func)  # preserves the original function's name/docstring
-    def wrapper(*args, **kwargs):
-        print(f"Calling {func.__name__}")
-        result = func(*args, **kwargs)
-        print(f"{func.__name__} returned {result}")
-        return result
-    return wrapper
-
-@log_calls
-def add(a: int, b: int) -> int:
-    return a + b
-
-add(2, 3)
-# Calling add
-# add returned 5
-```
-
-### Decorator Factories (Decorators with Arguments)
-
-When a decorator takes arguments (like `@app.get("/path")`), it's actually a function that returns a decorator.
-
-```python
-def require_role(role: str):            # factory — takes args
-    def decorator(func):                # actual decorator
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):   # wrapper
-            # check role logic here
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
-
-@require_role("admin")  # require_role("admin") returns the decorator
-def delete_user(user_id: int):
-    ...
-```
-
-### Stacking Decorators
-
-```python
-# Decorators apply bottom-up (innermost first)
-@app.post("/users")           # 2nd: registers the route
-@require_role("admin")        # 1st: wraps with role check
-async def create_user():
-    ...
-
-# Pydantic uses this pattern:
-@field_validator("email")
-@classmethod
-def validate_email(cls, v):
-    ...
-```
-
----
-
-## 7. Context Managers (`with` / `async with`)
-
-Context managers handle setup/teardown automatically — like `try/finally` but cleaner. Used in FastAPI for database sessions, HTTP clients, and file handling.
-
-### Basic Usage
-
-```python
-# File I/O — file is automatically closed when the block exits
-with open("data.txt") as f:
-    content = f.read()
-# f is closed here, even if an exception occurred
-
-# TS equivalent:
-# const f = fs.openSync("data.txt")
-# try { ... } finally { fs.closeSync(f) }
-```
-
-### Async Context Managers
-
-```python
-# Used heavily in FastAPI for database sessions and HTTP clients
-async with httpx.AsyncClient() as client:
-    response = await client.get("https://api.example.com")
-# client is automatically closed
-
-async with async_session() as session:
-    result = await session.execute(query)
-# session is automatically closed/returned to pool
-```
-
-### Writing Context Managers
-
-```python
-from contextlib import contextmanager, asynccontextmanager
-
-# Sync context manager
-@contextmanager
-def timer(label: str):
-    start = time.time()
-    yield                    # code inside the `with` block runs here
-    elapsed = time.time() - start
-    print(f"{label}: {elapsed:.2f}s")
-
-with timer("query"):
-    do_something_slow()
-
-# Async context manager — used for FastAPI lifespan
-@asynccontextmanager
-async def lifespan(app):
-    # Startup: runs before the app starts serving
-    db = await connect_db()
-    yield {"db": db}         # app runs during yield
-    # Shutdown: runs when the app stops
-    await db.close()
-```
-
-FastAPI dependency injection with `yield` is a context manager pattern:
-
-```python
-async def get_db():
-    session = async_session()
-    try:
-        yield session        # inject this into the route handler
-    finally:
-        await session.close() # cleanup after the request
-```
-
----
-
-## 8. Generators & `yield`
-
-Generators produce values lazily, one at a time. You need to understand `yield` because FastAPI dependencies use it for cleanup.
-
-```python
-# Generator function — returns values one at a time
-def count_up(n: int):
-    for i in range(n):
-        yield i              # pauses here, resumes on next iteration
-
-for num in count_up(3):
-    print(num)               # 0, 1, 2
-
-# Generator expression (like lazy array.map)
-squares = (x ** 2 for x in range(1000000))  # no memory used yet
-first = next(squares)  # 0 — computed on demand
-```
-
-### Async Generators
-
-```python
-async def stream_data():
-    async with httpx.AsyncClient() as client:
-        async for chunk in client.stream("GET", url):
-            yield chunk      # produces values asynchronously
-
-# Used with async for
-async for chunk in stream_data():
-    process(chunk)
-```
-
----
-
-## 9. Comprehensions
-
-Comprehensions are Python's concise syntax for transforming and filtering collections. Used heavily throughout the course.
+Comprehensions are Python's concise syntax for transforming and filtering collections.
 
 ```python
 # List comprehension (like .map + .filter combined)
@@ -782,7 +400,7 @@ all_active = all(u.is_active for u in users)       # TS: users.every(...)
 
 ---
 
-## 10. Error Handling
+## 6. Error Handling
 
 ### try / except
 
@@ -803,7 +421,6 @@ finally:
 
 # Raise exceptions (like throw in TS)
 raise ValueError("invalid input")
-raise HTTPException(status_code=404, detail="Not found")
 ```
 
 ### Custom Exceptions
@@ -827,7 +444,7 @@ except NotFoundError as e:
 
 ---
 
-## 11. Module & Import System
+## 7. Module & Import System
 
 ### Imports
 
@@ -876,9 +493,9 @@ from .items import router as items_router
 
 ---
 
-## 12. Async / Await
+## 8. Async / Await Basics
 
-The syntax is nearly identical to TypeScript, but the runtime behavior differs significantly (covered in Module 02).
+The syntax is nearly identical to TypeScript, but the runtime behavior differs significantly (covered in [Module 01: Async Python](../01-async-python/01-asyncio-fundamentals.md)).
 
 ```python
 import asyncio
@@ -905,11 +522,11 @@ async def fetch_all():
     return results
 ```
 
-Key difference from Node.js: Python's standard library is **blocking by default**. `time.sleep()`, `open()`, `requests.get()` all freeze the event loop. You must use async-aware alternatives (`asyncio.sleep()`, `aiofiles`, `httpx`). Module 02 covers this in depth.
+Key difference from Node.js: Python's standard library is **blocking by default**. `time.sleep()`, `open()`, `requests.get()` all freeze the event loop. You must use async-aware alternatives (`asyncio.sleep()`, `aiofiles`, `httpx`).
 
 ---
 
-## 13. Common Patterns You'll See Immediately
+## 9. Common Patterns
 
 ### The `...` (Ellipsis) — Required Field Marker
 
@@ -922,8 +539,6 @@ class User(BaseModel):
     age: int = Field(..., gt=0)             # must be provided
     bio: str = Field(None, max_length=500)  # optional, defaults to None
 ```
-
-`...` is Python's Ellipsis literal. Pydantic uses it to mean "this field is required." You could also just omit the default entirely (`name: str = Field(min_length=1)`), but the explicit `...` makes intent clear.
 
 ### Protocol Classes and `typing.Protocol`
 
@@ -977,89 +592,7 @@ config = defaults | overrides    # {"timeout": 60, "retries": 3}
 
 ---
 
-## 14. What Pydantic Actually Is
-
-Before Module 01 throws Pydantic models at you, understand what it does and why.
-
-Pydantic is a data validation library that uses type hints to define schemas. Think of it as Zod but integrated into the type system — you define a class with type annotations, and Pydantic automatically validates input, coerces types, serializes output, and generates JSON Schema.
-
-```python
-from pydantic import BaseModel, Field, field_validator
-
-class User(BaseModel):
-    name: str = Field(..., min_length=1)
-    age: int = Field(..., gt=0)
-    email: str
-
-    @field_validator("email")
-    @classmethod
-    def must_be_valid_email(cls, v: str) -> str:
-        if "@" not in v:
-            raise ValueError("invalid email")
-        return v.lower()
-
-# Validation happens at instantiation
-user = User(name="Alice", age=30, email="ALICE@EXAMPLE.COM")
-user.email  # "alice@example.com" — validator lowercased it
-
-# Invalid data raises ValidationError
-User(name="", age=-1, email="bad")
-# ValidationError: 3 errors — name too short, age too low, invalid email
-
-# Serialization
-user.model_dump()       # {"name": "Alice", "age": 30, "email": "alice@example.com"}
-user.model_dump_json()  # JSON string
-
-# Schema generation (drives OpenAPI docs in FastAPI)
-User.model_json_schema()
-```
-
-### Why FastAPI Uses Pydantic Everywhere
-
-In Express, you parse the body, validate with Zod/Joi, and type-cast manually. In FastAPI, all of that is automatic:
-
-```python
-# FastAPI reads this type hint and:
-# 1. Parses the request body as JSON
-# 2. Validates it against UserCreate's schema
-# 3. Returns 422 with detailed errors if validation fails
-# 4. Passes the validated, typed object to your function
-@app.post("/users", response_model=UserResponse)
-async def create_user(user: UserCreate):
-    # user is already validated — no manual checks needed
-    ...
-```
-
-### Model Inheritance
-
-Pydantic models use inheritance to share fields and avoid repetition:
-
-```python
-# Base — shared fields
-class ItemBase(BaseModel):
-    name: str
-    price: float
-
-# Create — what clients send (no id, no timestamps)
-class ItemCreate(ItemBase):
-    pass
-
-# Update — all fields optional
-class ItemUpdate(BaseModel):
-    name: str | None = None
-    price: float | None = None
-
-# Response — what clients receive (includes server-generated fields)
-class ItemResponse(ItemBase):
-    id: int
-    created_at: datetime
-```
-
-This `Base → Create / Update / Response` pattern is used in every module.
-
----
-
-## 15. Quick Reference: Python vs TypeScript
+## 10. Quick Reference: Python vs TypeScript
 
 | TypeScript | Python |
 |-----------|--------|
@@ -1102,6 +635,11 @@ This `Base → Create / Update / Response` pattern is used in every module.
 
 ---
 
-## Next Steps
+## Key Takeaways
 
-You're now ready for [Module 01: FastAPI Foundations](01-fastapi-foundations/README.md). The module will map FastAPI concepts to Express patterns you already know, building on the Python fundamentals covered here.
+- Python uses indentation for blocks, `elif` instead of `else if`, `and`/`or`/`not` instead of `&&`/`||`/`!`.
+- Everything is an object. There's no `undefined` — only `None`.
+- Type hints are optional but central to modern Python (Pydantic, FastAPI, mypy).
+- `*args`/`**kwargs` are Python's rest/spread operators.
+- Comprehensions replace `.map()` and `.filter()` with a more concise syntax.
+- Python's standard library is blocking by default — async requires explicit opt-in.

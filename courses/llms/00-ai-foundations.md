@@ -254,7 +254,7 @@ The message format is standard: a list of `{role, content}` objects alternating 
 
 ## 5. Python for LLM Engineering
 
-All code examples in this course are Python. If you're primarily a TypeScript engineer, here's the minimum Python you need. For a comprehensive Python guide, see the [Python & FastAPI course prereqs](../python-fastapi/00-python-prereqs.md).
+All code examples in this course are Python. If you're primarily a TypeScript engineer, here's the minimum Python you need. For a comprehensive Python guide, see the [Python for TypeScript Engineers](../python/) course.
 
 ### Environment Setup
 
