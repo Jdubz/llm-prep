@@ -59,6 +59,28 @@ PDFs are output to `cheat-sheets/out/`. Source markdown lives in `cheat-sheets/`
 
 ---
 
+## CodeSignal Practice Mode
+
+For Dropbox/CodeSignal-style practice drills, see `codesignal-drills/`.
+
+- Drill guide: `codesignal-drills/README.md`
+- Command reference: `codesignal-drills/COMMANDS.md`
+
+Toggle minimal editor assistance (CodeSignal-like) in this workspace:
+
+```bash
+# Enable CodeSignal practice mode
+bash codesignal-drills/toggle-codesignal-mode.sh on
+
+# Check whether mode is enabled
+bash codesignal-drills/toggle-codesignal-mode.sh status
+
+# Restore your previous workspace settings
+bash codesignal-drills/toggle-codesignal-mode.sh off
+```
+
+---
+
 ## License
 
 MIT
