@@ -75,7 +75,7 @@ c = Counter("abracadabra")   # Counter({'a': 5, 'b': 2, ...})
 c.most_common(2)             # [('a', 5), ('b', 2)]
 c["z"]                       # 0 (missing keys default to 0)
 c1 + c2                      # add counts
-c1 - c2                      # subtract (drops ≤ 0)
+c1 - c2                      # subtract (drops <= 0)
 
 # defaultdict — dict with auto-initialized values
 graph = defaultdict(list)
