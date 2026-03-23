@@ -128,53 +128,50 @@ I supported AZ in implementing our eventing system and API as we developed it. W
 ### Project 2
 
 ```
-Project Name: _______________________________________________
-One-sentence summary: ______________________________________
-Your role: __________________________________________________
-Duration: ___________________________________________________
-Team size: __________________________________________________
+Project Name: Structured Logging refactor
+One-sentence summary: We had 3 different order sources that all used unique methods for order placement, status updates, and delivery summoning.
+Duration: 1 month
+Team size: 3 Engineers
 
 TECHNICAL ARCHITECTURE
 What was the system?
-_____________________________________________________________
-_____________________________________________________________
+3 sources: Fulfil order PWA, Uber Eats, Doordash. Each system used a different combination of webhooks, API requests, last mile delivery mechanisms, payment processing, and customer communication. We needed a DRY way to manage all order pipelines and onboard new ones.
 
 Key technical decisions:
-1. ___________________________________________________________
-2. ___________________________________________________________
-3. ___________________________________________________________
+1. While a complete abstraction layer allowing for source onboarding with only a new source config record would be ideal, there were enough unique needs to make that implausible. Unique webhooks and status update APIs, battle tested code, and inventory syncing that a branching central pipeline with hardcoded switches based on order properties was the only feasible solution. 
+2. Creating a new table for each source to record the original order placement was necessary vs simple logging for sql searchability. 
+3. The order pipeline required enough references to the unique source properties that our internal order schema was extended with a polymorphic foreign key vs. normalizing all properties.
 
 THE CHALLENGE
 What made this hard?
-_____________________________________________________________
+Each source had many unique features that the consolidated pipeline had to support. Some required async queue job processing, some required scheduled orders up to a week ahead of time, some required us to manage the payment and delivery. Each feature had to be abstracted to allow switching based on order data to guarantee proper handling of each order.
 
 What constraints did you face?
-_____________________________________________________________
+Some internal systems required properties that some sources did not provide. We had to normalize data that didn't exist and assign meaningful values in it's place. 
 
 What trade-offs did you make?
-_____________________________________________________________
+Each source's code would have been much simpler if we simply hardcoded the steps to support each individually. The headache that would have caused would surface during the rapid iteration in our system. A change in our system would have meant changes to all code paths.
 
 YOUR CONTRIBUTION
 What did YOU specifically do?
-_____________________________________________________________
-_____________________________________________________________
+I wrote the abstraction layer and created the new data schemas to normalize the properties required by our systems. I also tested and supported all 3 implementation.
 
 How did you enable others?
-_____________________________________________________________
+This abstraction allowed for the AZ integration to happen smoothely and efficiently. Very little new code or changes to our inteernal order management had to be made to support an entirely new order marketplace.
 
 What was the measurable outcome/impact?
-_____________________________________________________________
+Logging, debugging, order tracking, and management was all consolidated behind a single dashboard that was able to handle all issues from all order sources uniformaly. Previously 3 operators we required, 1 for each source, after 1 could handle a standard order volume. implementing the new AZ source only took a few days where the previous implementations took multiple weeks.
 
 LESSONS LEARNED
 What would you do differently?
-_____________________________________________________________
+One of the sources originally required the initial creation ot sit behind a queue job, so we implemented that pattern across all 3 sources. This created difficulties in log tracing, each job was a new trace and log source seperated from the original order request. It also complicated the mental model when tracing the code path.
 
 What did this project teach you?
-_____________________________________________________________
+There is a balance to be maintained between abstraction and simplicity. Overly abstracted code, while composable, can be difficult to troubleshoot and debug.
 
 TSE RELEVANCE
 How does this relate to the TSE role?
-_____________________________________________________________
+I've been on the implementation side of public api's enough times to know the headaches that come with dependence on a vendor's product for business critical operations and how important timely support is. 
 ```
 
 ### Project 3 (optional)
@@ -202,21 +199,15 @@ Write your answers now. If you can't write them, you'll stumble when asked.
 
 **Why Stripe?**
 ```
-_____________________________________________________________
-_____________________________________________________________
-_____________________________________________________________
+I have experience with the Stripe API. It was a wonderful experience implementing it and I want to thearn what goes into achieving such an elegant public api. I also admire the culture and reputation that Stripe has achieved as a company, I believe I can contribute happily where Stripe is clearly putting in the effort to have a positive impact.
 ```
 
 **Why TSE specifically (not SWE, not product, not sales)?**
 ```
-_____________________________________________________________
-_____________________________________________________________
-_____________________________________________________________
+I have been on the other side of the fence and want to be able to support and enable others in the struggle I've personally faced. I enjoy being people focused and want to be able to interact with the real users that our product is impacting.
 ```
 
 **What are you looking for in your next role?**
 ```
-_____________________________________________________________
-_____________________________________________________________
-_____________________________________________________________
+Mentorship, growth, a positive team. I'm excited to be cross org, not strictly engineering. It's also enticing to have my primary KPI be quantifiable day-to-day. how many tickets did you resolve. In other roles there's a lot of guesswork in how effective I'm actually being. More about peer reviews than customer happiness.
 ```
