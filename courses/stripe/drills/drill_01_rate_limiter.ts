@@ -1,116 +1,194 @@
 /*
 Drill 01 — Rate Limiter
 
-Build a RateLimiter service. This is a commonly reported Stripe
-Programming Exercise pattern. Focus on clean design, speed of
-implementation, and handling edge cases.
+Build a rate-limiting service. Given a stream of requests identified
+by client ID and timestamp, decide whether to allow or deny each one.
 
-Target time: 35 minutes for all 4 levels.
+Commonly reported Stripe Programming Exercise pattern.
 
-────────────────────────────────────────
-Level 1 — Fixed Window
+Target time: 30 minutes for all 3 parts.
+
+────────────────────────────────────
+Part 1 — Fixed Window (10 min)
+
+  Build a RateLimiter class.
 
   constructor(maxRequests: number, windowMs: number)
-
   allow(clientId: string, timestamp: number): boolean
-    Returns true if the request is allowed, false if rate-limited.
-    Each client gets maxRequests per window.
-    Windows are aligned to multiples of windowMs
-    (e.g., windowMs=1000 → windows are [0,999], [1000,1999], ...).
 
-  getRemaining(clientId: string, timestamp: number): number
-    Returns how many requests the client has left in the current window.
+  Windows are aligned to multiples of windowMs.
+  Each client gets up to maxRequests per window.
 
-────────────────────────────────────────
-Level 2 — Sliding Window Log
+  Example (maxRequests=3, windowMs=1000):
+    rl.allow("u1", 0)    → true   // 1st in window [0..999]
+    rl.allow("u1", 100)  → true   // 2nd
+    rl.allow("u1", 200)  → true   // 3rd
+    rl.allow("u1", 300)  → false  // exceeded limit
+    rl.allow("u1", 1000) → true   // new window [1000..1999]
+    rl.allow("u2", 300)  → true   // separate client
+
+────────────────────────────────────
+Part 2 — Sliding Window (10 min)
 
   allowSliding(clientId: string, timestamp: number): boolean
-    Uses a sliding window: count requests in (timestamp - windowMs, timestamp].
-    More accurate than fixed window but uses more memory.
 
-  getRequestCount(clientId: string, timestamp: number): number
-    Returns the number of requests in the current sliding window.
+  Instead of aligned windows, count requests in the trailing
+  interval (timestamp - windowMs, timestamp]. More accurate
+  than fixed windows.
 
-────────────────────────────────────────
-Level 3 — Multi-Tier Limits
+  Example (maxRequests=3, windowMs=1000):
+    rl.allowSliding("u1", 100)  → true
+    rl.allowSliding("u1", 500)  → true
+    rl.allowSliding("u1", 900)  → true
+    rl.allowSliding("u1", 950)  → false  // 3 requests in (0, 950]
+    rl.allowSliding("u1", 1100) → true   // request at t=100 expired
 
-  addTier(name: string, maxRequests: number, windowMs: number): void
-    Add a named rate limit tier. All tiers must pass for a request
-    to be allowed. Example: 10/second AND 100/minute AND 1000/hour.
-
-  allowTiered(clientId: string, timestamp: number): boolean
-    Returns true only if ALL tiers allow the request.
-    Uses sliding window logic per tier.
-
-  getBlockingTier(clientId: string, timestamp: number): string | null
-    Returns the name of the first tier that would block the request,
-    or null if all tiers would allow it.
-
-────────────────────────────────────────
-Level 4 — Token Bucket
+────────────────────────────────────
+Part 3 — Token Bucket (10 min)
 
   createBucket(clientId: string, capacity: number, refillRate: number): void
-    Create a token bucket for the client.
-    capacity: max tokens. refillRate: tokens added per second.
-    Bucket starts full.
-
   allowBucket(clientId: string, timestamp: number, tokens?: number): boolean
-    Consume tokens (default 1) from the bucket.
-    Before checking, refill based on elapsed time since last request.
-    Returns false if not enough tokens available.
 
-  getBucketState(clientId: string, timestamp: number): { tokens: number; capacity: number }
-    Returns current token count (after refill) and capacity.
+  capacity = max tokens. refillRate = tokens added per second.
+  Bucket starts full. Before checking, refill based on elapsed
+  time since last access (capped at capacity). Consume tokens
+  (default 1), return false if insufficient.
+
+  Example (capacity=5, refill=2 tokens/sec):
+    rl.createBucket("u1", 5, 2)
+    rl.allowBucket("u1", 0)         → true   // 4 left
+    // ... consume all 5 ...
+    rl.allowBucket("u1", 0)         → false  // empty
+    rl.allowBucket("u1", 1000)      → true   // 2 refilled after 1s
+    rl.allowBucket("u1", 11000, 3)  → true   // full (capped), consume 3
 */
 
 export class RateLimiter {
+  requestsFixed: Map<string, { count: number, window: number }>;
+  requestsSliding: Map<string, number[]>;
+  requestsBucket: Map<string, { cap: number, tokens: number, lastAccess: number, fillRate: number }>;
+  maxRequests: number;
+  windowMS: number;
   constructor(maxRequests: number, windowMs: number) {
-    throw new Error("TODO: implement constructor");
+    this.requestsFixed = new Map();
+    this.requestsSliding = new Map();
+    this.requestsBucket = new Map();
+    this.maxRequests = maxRequests;
+    this.windowMS = windowMs;
   }
+  // REVIEW: Constructor pre-allocates all three Maps even though
+  // Parts 2 and 3 don't exist yet. In an interview, only declare what
+  // you need now. Add new state when the interviewer reveals the next
+  // part. This also avoids the interviewer wondering what you're
+  // planning to use three Maps for.
+  //
+  // Speed tip: use TypeScript shorthand to skip the manual assignments:
+  //   constructor(private maxRequests: number, private windowMs: number) {}
+  // Then add Maps as needed per part. Saves ~6 lines of boilerplate.
 
-  // Level 1
+  // Part 1
   allow(clientId: string, timestamp: number): boolean {
-    throw new Error("TODO: implement allow");
+    const client = this.requestsFixed.get(clientId);
+    const window = Math.floor(timestamp / this.windowMS);
+    if (!client || client.window !== window) {
+      this.requestsFixed.set(clientId, { count: 1, window });
+      return true;
+    }
+    if (client.count >= this.maxRequests) return false;
+    this.requestsFixed.set(clientId, { count: client.count + 1, window });
+    return true;
   }
+  // REVIEW: Correct and clean. Two small speed wins:
+  //
+  // 1. Mutate instead of re-creating the object on line 89:
+  //      client.count++;
+  //    You already have a reference to the object in the Map — no need
+  //    to .set() a new one. Saves a line and avoids GC churn.
+  //
+  // 2. Combine the "not found" and "new window" branches. They do the
+  //    same thing (reset to count 1). Your current code already handles
+  //    this — good instinct.
 
-  getRemaining(clientId: string, timestamp: number): number {
-    throw new Error("TODO: implement getRemaining");
-  }
-
-  // Level 2
+  // Part 2
   allowSliding(clientId: string, timestamp: number): boolean {
-    throw new Error("TODO: implement allowSliding");
+    const client = this.requestsSliding.get(clientId);
+    if (!client) {
+      this.requestsSliding.set(clientId, [timestamp]);
+      return true;
+    }
+    while (client.length && client[0] <= timestamp - this.windowMS) {
+      client.shift();
+    }
+    if (client.length >= this.maxRequests) {
+      return false
+    }
+    client.push(timestamp);
+    return true;
   }
+  // REVIEW: Correct. The early return for !client on line 96 means
+  // you skip the eviction loop on the first call. That's fine but
+  // adds a code path. Simpler alternative: always initialize with
+  // an empty array so you never need the special case:
+  //
+  //   allowSliding(clientId, timestamp) {
+  //     if (!this.requestsSliding.has(clientId)) this.requestsSliding.set(clientId, []);
+  //     const ts = this.requestsSliding.get(clientId)!;
+  //     while (ts.length && ts[0] <= timestamp - this.windowMS) ts.shift();
+  //     if (ts.length >= this.maxRequests) return false;
+  //     ts.push(timestamp);
+  //     return true;
+  //   }
+  //
+  // One path instead of two. Fewer branches = fewer bugs under pressure.
 
-  getRequestCount(clientId: string, timestamp: number): number {
-    throw new Error("TODO: implement getRequestCount");
-  }
-
-  // Level 3
-  addTier(name: string, maxRequests: number, windowMs: number): void {
-    throw new Error("TODO: implement addTier");
-  }
-
-  allowTiered(clientId: string, timestamp: number): boolean {
-    throw new Error("TODO: implement allowTiered");
-  }
-
-  getBlockingTier(clientId: string, timestamp: number): string | null {
-    throw new Error("TODO: implement getBlockingTier");
-  }
-
-  // Level 4
+  // Part 3
   createBucket(clientId: string, capacity: number, refillRate: number): void {
-    throw new Error("TODO: implement createBucket");
+    this.requestsBucket.set(clientId, {
+      cap: capacity,
+      tokens: capacity,
+      lastAccess: 0,
+      fillRate: refillRate,
+    });
   }
-
-  allowBucket(clientId: string, timestamp: number, tokens: number = 1): boolean {
-    throw new Error("TODO: implement allowBucket");
+  allowBucket(clientId: string, timestamp: number, tokens?: number): boolean {
+    const client = this.requestsBucket.get(clientId)!;
+    const elapsedSeconds = Math.floor((timestamp - client.lastAccess) / 1000);
+    let newTokens = client.tokens + (client.fillRate * elapsedSeconds);
+    if (newTokens > client.cap) newTokens = client.cap;
+    if (newTokens < (tokens || 1)) {
+      return false;
+    }
+    newTokens -= (tokens || 1);
+    client.tokens = newTokens;
+    client.lastAccess = timestamp;
+    return true;
   }
-
-  getBucketState(clientId: string, timestamp: number): { tokens: number; capacity: number } {
-    throw new Error("TODO: implement getBucketState");
-  }
+  // REVIEW: Two issues:
+  //
+  // 1. Math.floor on elapsed seconds (line 121) drops fractional
+  //    refills. If fillRate=2 and 1.5s passes, you get 2 tokens
+  //    instead of 3. Remove Math.floor — keep fractional precision:
+  //      const elapsed = (timestamp - client.lastAccess) / 1000;
+  //      let newTokens = client.tokens + client.fillRate * elapsed;
+  //    The cap clamp handles overflow. No rounding needed.
+  //
+  // 2. `tokens || 1` (lines 124, 127) — if someone passes tokens=0,
+  //    this evaluates to 1. Use `tokens ?? 1` for a correct nullish
+  //    default. Not tested here but an interviewer might notice.
+  //
+  // Speed tip: the refill + clamp + consume pattern is 4 lines.
+  // Write it as a straight sequence, no branching:
+  //   const elapsed = (timestamp - client.lastAccess) / 1000;
+  //   client.tokens = Math.min(client.cap, client.tokens + client.fillRate * elapsed);
+  //   client.lastAccess = timestamp;
+  //   const cost = tokens ?? 1;
+  //   if (client.tokens < cost) return false;
+  //   client.tokens -= cost;
+  //   return true;
+  //
+  // Always update lastAccess and tokens in one place — no separate
+  // "return false" path that skips the update. That's what caused the
+  // original missing-lastAccess bug.
 }
 
 // ─── Self-Checks (do not edit below this line) ──────────────────
@@ -132,14 +210,14 @@ function check(label: string, actual: unknown, expected: unknown): void {
   }
 }
 
-function level(name: string, fn: () => void): void {
+function part(name: string, fn: () => void): void {
   console.log(name);
   try {
     fn();
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.startsWith("TODO:")) {
-      console.log(`  ○ ${msg}`);
+    if (msg.startsWith("TODO") || msg.includes("is not a function")) {
+      console.log(`  ○ not yet implemented`);
     } else {
       _failed++;
       console.log(`  ✗ ${msg}`);
@@ -148,82 +226,37 @@ function level(name: string, fn: () => void): void {
 }
 
 function runSelfChecks(): void {
-  level("Level 1 — Fixed Window", () => {
+  part("Part 1 — Fixed Window", () => {
     const rl = new RateLimiter(3, 1000);
     check("allow 1", rl.allow("u1", 0), true);
     check("allow 2", rl.allow("u1", 100), true);
     check("allow 3", rl.allow("u1", 200), true);
     check("deny 4", rl.allow("u1", 300), false);
-    check("remaining 0", rl.getRemaining("u1", 300), 0);
-    // New window
     check("new window", rl.allow("u1", 1000), true);
-    check("remaining after 1", rl.getRemaining("u1", 1000), 2);
-    // Different client unaffected
     check("other client", rl.allow("u2", 300), true);
-    check("other remaining", rl.getRemaining("u2", 300), 2);
-    // New client has full quota
-    check("fresh client remaining", rl.getRemaining("u3", 0), 3);
   });
 
-  level("Level 2 — Sliding Window", () => {
+  part("Part 2 — Sliding Window", () => {
     const rl = new RateLimiter(3, 1000);
     check("slide allow 1", rl.allowSliding("u1", 100), true);
     check("slide allow 2", rl.allowSliding("u1", 500), true);
     check("slide allow 3", rl.allowSliding("u1", 900), true);
     check("slide deny 4", rl.allowSliding("u1", 950), false);
-    check("count", rl.getRequestCount("u1", 950), 3);
-    // At 1100, the request at 100 has expired
     check("slide after expire", rl.allowSliding("u1", 1100), true);
-    check("count after expire", rl.getRequestCount("u1", 1100), 3);
-    // At 1500, requests at 500 expired
-    check("slide 1500", rl.allowSliding("u1", 1500), true);
-    check("count 1500", rl.getRequestCount("u1", 1500), 3);
   });
 
-  level("Level 3 — Multi-Tier Limits", () => {
-    const rl = new RateLimiter(100, 60000); // base doesn't matter for tiered
-    rl.addTier("second", 2, 1000);
-    rl.addTier("minute", 5, 60000);
-    // 2 per second, 5 per minute
-    check("tier allow 1", rl.allowTiered("u1", 0), true);
-    check("tier allow 2", rl.allowTiered("u1", 100), true);
-    check("tier deny per-sec", rl.allowTiered("u1", 200), false);
-    check("blocking tier", rl.getBlockingTier("u1", 200), "second");
-    // New second
-    check("tier allow 3", rl.allowTiered("u1", 1000), true);
-    check("tier allow 4", rl.allowTiered("u1", 1100), true);
-    // At 2000: 4 requests used in minute window, second window clear
-    check("tier allow 5", rl.allowTiered("u1", 2000), true);
-    // Now at 5 in the minute — minute tier blocks
-    check("tier deny per-min", rl.allowTiered("u1", 2100), false);
-    check("blocking minute", rl.getBlockingTier("u1", 2100), "minute");
-    // No blocking tier for different client
-    check("no blocking", rl.getBlockingTier("u2", 0), null);
-  });
-
-  level("Level 4 — Token Bucket", () => {
-    const rl = new RateLimiter(10, 1000); // base doesn't matter for bucket
-    rl.createBucket("u1", 5, 2); // 5 capacity, 2 tokens/sec, starts full
-    check("bucket state", rl.getBucketState("u1", 0), { tokens: 5, capacity: 5 });
+  part("Part 3 — Token Bucket", () => {
+    const rl = new RateLimiter(10, 1000);
+    rl.createBucket("u1", 5, 2);
     check("bucket allow 1", rl.allowBucket("u1", 0), true);
-    check("bucket state after", rl.getBucketState("u1", 0), { tokens: 4, capacity: 5 });
-    // Consume 3 more
     rl.allowBucket("u1", 0);
     rl.allowBucket("u1", 0);
     rl.allowBucket("u1", 0);
-    check("bucket state 1 left", rl.getBucketState("u1", 0), { tokens: 1, capacity: 5 });
-    // Consume last
     check("bucket allow last", rl.allowBucket("u1", 0), true);
     check("bucket deny empty", rl.allowBucket("u1", 0), false);
-    // After 1 second, 2 tokens refilled
-    check("bucket after refill", rl.getBucketState("u1", 1000), { tokens: 2, capacity: 5 });
-    check("bucket allow refilled", rl.allowBucket("u1", 1000), true);
-    // After 10 seconds, should be capped at capacity
-    check("bucket capped", rl.getBucketState("u1", 11000), { tokens: 5, capacity: 5 });
-    // Consume multiple tokens at once
-    check("bucket multi-token", rl.allowBucket("u1", 11000, 3), true);
-    check("bucket after multi", rl.getBucketState("u1", 11000), { tokens: 2, capacity: 5 });
-    check("bucket multi deny", rl.allowBucket("u1", 11000, 3), false);
+    check("bucket after refill", rl.allowBucket("u1", 1000), true);
+    check("bucket capped", rl.allowBucket("u1", 11000, 3), true);
+    check("bucket insufficient", rl.allowBucket("u1", 11000, 3), false);
   });
 }
 

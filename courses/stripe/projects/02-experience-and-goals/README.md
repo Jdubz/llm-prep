@@ -65,53 +65,64 @@ Prepare 2-3 projects. Fill in every field — Ali will ask follow-ups on anythin
 ### Project 1
 
 ```
-Project Name: _______________________________________________
-One-sentence summary: ______________________________________
-Your role: __________________________________________________
-Duration: ___________________________________________________
-Team size: __________________________________________________
+Project Name: Amazon integration
+One-sentence summary: Built a real-time event pipeline between Fulfil's warehouse system and Amazon's fulfillment network — hundreds of pub/sub events tracking every item state change across two incompatible data models, with a hard launch deadline."
+Your role: Owner of the order/item event pipeline. Point of contact with AZ's integration team for event spec alignment.
+Duration: 1 year
+Team size: Fulfil: 15 AZ: 10+ (exact number unknown)
 
 TECHNICAL ARCHITECTURE
 What was the system?
-_____________________________________________________________
-_____________________________________________________________
+We created an event based system to alert AZ of every change of every item in every order. It used Webhooks to recieve new orders, then pub/sub to send messages on hundreds of discreet events, tracking both AZ ids and Fulfil Ids. 
 
 Key technical decisions you made or influenced:
-1. ___________________________________________________________
-2. ___________________________________________________________
-3. ___________________________________________________________
+1. How are order lifecycle events managed and reconciled between our system and their system.
+2. How do we communicate inventory changes in real time, specifically concerning upcoming orders.
+3. How do we recover from real-world problems elegantly? Bad/broken items, etc.
+  - "Chose pub/sub over polling for order lifecycle events because AZ required sub-second state sync and
+  our order volumes would spike 10x during peak hours"
+  - "Designed dual-ID tracking (AZ ID + Fulfil ID) per item because the two systems had fundamentally
+  different identity models"
+  - "Implemented idempotent event delivery with retry + reconciliation because dropped events would cause
+  AZ's inventory counts to drift"
+
 
 THE CHALLENGE
 What made this hard?
-_____________________________________________________________
+Two companies with incompatible data models building simultaneously against a 20-page spec with ambiguous requirements agains an immovable deadline.
 
 What constraints did you face?
-_____________________________________________________________
+The go live date was set in stone. A hard project dependency. We also had to guarantee that all events lined up to represent the state of the system EXACTLY, meaning event ids with retrys and reconciliation on failed delivery.
 
 What trade-offs did you make? What did you sacrifice and why?
-_____________________________________________________________
+With an overwhelming number of requiements, some inherrently incompatible, we had to work very closely to figure out how how we could deliver a best effort product within the timeline, and at least gave a path to completion for the requirements that didn't fit. For example labor planning tools around predicted order backlogs. Our system worked in real time to figure out what neededto got where in the moment, and had no future planning capabilities as the hardware was not aware of scheduled and queued orders until ther were being fulfilled, so there was no mechanism for predicting order arrival locations.
+
+"We sacrificed: predictive labor planning (our system was real-time, no scheduled order awareness). We kept: exact event-level consistency (non-negotiable for AZ). Why: the hard deadline meant we couldn't build a forecasting system, but if events were wrong, the entire integration was worthless."
 
 YOUR CONTRIBUTION
 What did YOU specifically do? (not the team — you)
-_____________________________________________________________
-_____________________________________________________________
+I implemented hundred of order and item pubsub events according to the AZ spec. This meant structuring the data pipeline in a way to not knock over our DB instances on massive R/W spikes when order volumes were high.
+— how? What was technically hard? The DB scaling mention is the most
+  interesting part and it's one sentence. Expand: what was the R/W spike pattern? What did you do about
+  it? Batch writes? Queue backpressure? Read replicas?
 
 How did you enable others?
-_____________________________________________________________
+I worked closely with the AZ team and Fulfil leadership to helped to develop a mutual understanding of the delta between the spec and the existing system with enough technical detail to brainstorm workarounds and compromises without overloading on implementation specifics.
 
 What was the measurable outcome/impact?
-_____________________________________________________________
+We launched the product on time. AZ immediately ordered 3 more stores. 
 
 LESSONS LEARNED
 What would you do differently?
-_____________________________________________________________
+I would have abstraced the data lifecycle and event factories to a seperate service that could scale independently of the API monolith.
 
 What did this project teach you that you still carry?
-_____________________________________________________________
+How to dig into the why of a requirement beyond the language in the line item on a document. 
 
 TSE RELEVANCE
 How does this project relate to the TSE role at Stripe?
-_____________________________________________________________
+I supported AZ in implementing our eventing system and API as we developed it. We collaborated on the spec, then built simultaneously, and discovered that every time language wasn't perfectly specific we would end up with 2 different interpretations.
+"This was essentially a TSE role — I was the technical bridge between our API team and AZ's integration engineers. I learned that every ambiguous sentence in a spec produces two different implementations, and that the TSE's job is to catch those gaps before they become production bugs."
 ```
 
 ### Project 2

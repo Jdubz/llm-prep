@@ -1,121 +1,86 @@
 /*
-Drill 06 — Express API + Testing (Integration Exercise Prep)
+Drill 06 — Express API (Integration Exercise Prep)
 
-Build and test an Express API server with routes, middleware, and
-external API integration. This is the closest simulation to the
-actual Integration Exercise format: you're given an existing
-server and spec, and need to add functionality + tests.
+Build an Express API server with routes, middleware, and external
+API integration. This simulates the Stripe Integration Exercise:
+you're given a server skeleton + an external API to call, and
+you build the routes.
 
-Run: npx tsx drill_06_express_api.ts
-No external dependencies — uses built-in Router simulation.
+Setup (one-time):
+  cd drills && npm install express supertest @types/express @types/supertest
 
-Target time: 40 minutes for all 4 levels.
+Run:
+  npx tsx drill_06_express_api.ts
 
-────────────────────────────────────────
-Level 1 — CRUD Routes
+Target time: 35 minutes for all 3 parts.
 
-  Given the provided Express app skeleton, implement:
+────────────────────────────────────
+Part 1 — Routes & Auth Middleware (10 min)
 
-  POST   /users          → Create user { name, email }
-                           Returns 201 + { id, name, email, created_at }
-                           Returns 400 if name or email missing
+  Build createApp() returning an Express app. It receives a config
+  with stripeApi, apiKey, and a logs array.
 
-  GET    /users/:id      → Get user by id
-                           Returns 200 + user object
-                           Returns 404 + { error: "Not found" }
+  Routes:
+    GET  /health          → 200 + { status: "ok" } (NO auth required)
 
-  GET    /users          → List all users
-                           Supports ?email= filter (exact, case-insensitive)
-                           Returns 200 + { data: User[], count: number }
+    POST /users           → 201 + { id, name, email, created_at }
+                            400 if name or email missing
 
-  PUT    /users/:id      → Update user (partial update)
-                           Returns 200 + updated user
-                           Returns 404 if not found
+    GET  /users/:id       → 200 + user, or 404 + { error: "Not found" }
 
-  DELETE /users/:id      → Delete user
-                           Returns 200 + { deleted: true }
-                           Returns 404 if not found
+    GET  /users           → 200 + { data: User[], count: number }
+                            Supports ?email= filter (case-insensitive)
 
-────────────────────────────────────────
-Level 2 — Middleware & Validation
+  Auth middleware (all routes EXCEPT /health):
+    Read "x-api-key" header. If missing or wrong, return
+    401 + { error: "Unauthorized" }.
 
-  Add middleware to the app:
+────────────────────────────────────
+Part 2 — External API Integration (15 min)
 
-  requestLogger: Logs method, path, status, and duration (ms)
-    to the provided logs array. Runs on ALL routes.
-    NOTE: The Router's next() only sets a flag — it does NOT run
-    downstream handlers synchronously. To capture the final status,
-    log AFTER the route handler has set res.statusCode (e.g., wrap
-    the route handlers or log in a post-processing step).
-
-  apiKeyAuth: Reads "x-api-key" header. If missing or doesn't
-    match the expected key, return 401 + { error: "Unauthorized" }.
-    Runs on ALL routes except GET /health.
-
-  validateBody(required: string[]): Returns middleware that checks
-    req.body has all required keys with non-empty string values.
-    Returns 400 + { error: "Missing fields", fields: [...] }
-    if validation fails.
-
-  GET /health → Returns 200 + { status: "ok" } (no auth required)
-
-────────────────────────────────────────
-Level 3 — External API Integration
-
-  Add a route that calls an external API (simulated by FakeStripeAPI):
+  Add routes that call the provided FakeStripeAPI:
 
   POST /charges
-    Body: { amount: number, currency: string, source: string,
-            description?: string, idempotency_key?: string }
-    - Validate required fields (amount, currency, source)
-    - amount must be > 0 and an integer (cents)
-    - currency must be 3 lowercase letters
-    - Call FakeStripeAPI.createCharge() with the data
-    - If idempotency_key provided, pass it in headers
-    - Return 201 + charge object on success
-    - Return 402 + { error } if charge is declined
-    - Return 500 + { error } on API errors
+    Body: { amount, currency, source, description?, idempotency_key? }
+    - Validate: amount (> 0, integer), currency (3 lowercase letters),
+      source (required)
+    - Call stripeApi.createCharge()
+    - Pass idempotency_key if provided
+    - Return 201 + charge on success
+    - Return 402 + { error } if declined
+    - Return 400 for validation failures
 
   GET /charges/:id
-    - Call FakeStripeAPI.getCharge(id)
+    - Call stripeApi.getCharge(id)
     - Return 200 + charge, or 404
 
   POST /refunds
-    Body: { charge_id: string, amount?: number }
-    - Call FakeStripeAPI.createRefund()
-    - amount is optional (full refund if omitted)
-    - Return 201 + refund object
-    - Return 400 if charge not found or already fully refunded
+    Body: { charge_id, amount? }
+    - Call stripeApi.createRefund()
+    - Return 201 + refund on success
+    - Return 400 if charge not found or already refunded
 
-────────────────────────────────────────
-Level 4 — Webhook Handler + Tests
+────────────────────────────────────
+Part 3 — Webhook Handler (10 min)
 
   POST /webhooks/stripe
-    - Read raw body (important: must use raw body for signature verification)
-    - Verify signature using FakeStripeAPI.verifyWebhookSignature()
-    - Return 400 if signature invalid
-    - Handle event types:
-      "charge.succeeded" → store in processed events
-      "charge.refunded"  → store in processed events
-      "charge.failed"    → store in processed events
-    - For unrecognized event types, return 200 (acknowledge but don't store)
-    - Deduplicate by event id — return 200 for already-seen events
+    - Use express.raw() for this route (need raw body for signature)
+    - Verify signature: stripeApi.verifyWebhookSignature(rawBody, sig)
+    - Return 400 if invalid signature
+    - Deduplicate by event id
+    - Store events with type "charge.succeeded", "charge.refunded",
+      or "charge.failed". Ignore other types.
     - Return 200 + { received: true }
 
-  The createRouter function should return an object with both
-  the router AND a getProcessedWebhooks() function:
-    return { router, getProcessedWebhooks }
-  getProcessedWebhooks() returns all stored webhook events in order.
-
-  Write tests (using the built-in test harness) for:
-    - Creating a user and retrieving it
-    - Auth middleware rejects missing API key
-    - Creating a charge and refunding it
-    - Webhook signature verification
-    - Idempotency (same key = same response)
+  createApp() should return { app, getProcessedWebhooks }
+  where getProcessedWebhooks() returns stored event objects in order.
 */
 
-// ─── Fake Stripe API (simulates external API calls) ────────────
+import express, { Request, Response, NextFunction } from "express";
+import { error } from "node:console";
+import request from "supertest";
+
+// ─── Fake Stripe API (simulates external service — do not edit) ─
 
 type Charge = {
   id: string;
@@ -158,39 +123,28 @@ class FakeStripeAPI {
     description?: string;
     idempotency_key?: string;
   }): Promise<{ status: number; body: Charge | { error: string } }> {
-    // Idempotency check
     if (data.idempotency_key && this.idempotencyCache.has(data.idempotency_key)) {
       return { status: 200, body: this.idempotencyCache.get(data.idempotency_key)! };
     }
-
-    // Simulate decline for specific test card
     if (data.source === "tok_declined") {
       return { status: 402, body: { error: "Card declined" } };
     }
-
     const charge: Charge = {
       id: `ch_${String(this.nextChargeId++).padStart(4, "0")}`,
-      amount: data.amount,
-      currency: data.currency,
-      source: data.source,
-      status: "succeeded",
-      description: data.description ?? "",
-      amount_refunded: 0,
-      created: Date.now(),
+      amount: data.amount, currency: data.currency, source: data.source,
+      status: "succeeded", description: data.description ?? "",
+      amount_refunded: 0, created: Date.now(),
     };
     this.charges.set(charge.id, charge);
-
-    if (data.idempotency_key) {
-      this.idempotencyCache.set(data.idempotency_key, charge);
-    }
-
+    if (data.idempotency_key) this.idempotencyCache.set(data.idempotency_key, charge);
     return { status: 201, body: charge };
   }
 
   async getCharge(id: string): Promise<{ status: number; body: Charge | { error: string } }> {
     const charge = this.charges.get(id);
-    if (!charge) return { status: 404, body: { error: "Charge not found" } };
-    return { status: 200, body: charge };
+    return charge
+      ? { status: 200, body: charge }
+      : { status: 404, body: { error: "Charge not found" } };
   }
 
   async createRefund(data: {
@@ -199,35 +153,24 @@ class FakeStripeAPI {
   }): Promise<{ status: number; body: Refund | { error: string } }> {
     const charge = this.charges.get(data.charge_id);
     if (!charge) return { status: 400, body: { error: "Charge not found" } };
-
     const refundAmount = data.amount ?? (charge.amount - charge.amount_refunded);
     if (refundAmount <= 0 || refundAmount > charge.amount - charge.amount_refunded) {
       return { status: 400, body: { error: "Invalid refund amount" } };
     }
-
     charge.amount_refunded += refundAmount;
-
     const refund: Refund = {
       id: `re_${String(this.nextRefundId++).padStart(4, "0")}`,
-      charge: charge.id,
-      amount: refundAmount,
-      status: "succeeded",
-      created: Date.now(),
+      charge: charge.id, amount: refundAmount,
+      status: "succeeded", created: Date.now(),
     };
     this.refunds.set(refund.id, refund);
-
     return { status: 201, body: refund };
   }
 
   makeWebhookEvent(type: string, data: Record<string, unknown>): WebhookEvent {
     const id = `evt_${Math.random().toString(36).slice(2, 10)}`;
     const payload = JSON.stringify({ id, type, data: { object: data } });
-    return {
-      id,
-      type,
-      data: { object: data },
-      signature: this.computeSignature(payload),
-    };
+    return { id, type, data: { object: data }, signature: this.computeSignature(payload) };
   }
 
   verifyWebhookSignature(rawBody: string, signature: string): boolean {
@@ -237,60 +180,175 @@ class FakeStripeAPI {
   private computeSignature(payload: string): string {
     let hash = 0;
     const str = payload + this.webhookSecret;
-    for (let i = 0; i < str.length; i++) {
-      hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
-    }
+    for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
     return "sig_" + Math.abs(hash).toString(36);
   }
 }
 
-// ─── Express App Skeleton ──────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────
 
-/*
-  YOUR IMPLEMENTATION GOES HERE.
+type User = { id: string; name: string; email: string; created_at: number };
 
-  You'll build a createApp() function that returns an Express app.
-  This function receives the FakeStripeAPI instance and config.
-
-  The test harness below will call createApp(), make HTTP requests
-  to it, and verify the responses.
-
-  Scaffold:
-
-  import express from "express";
-
-  export function createApp(config: {
-    stripeApi: FakeStripeAPI;
-    apiKey: string;
-    logs: LogEntry[];
-  }) {
-    const app = express();
-    app.use(express.json());
-
-    // ... implement routes and middleware ...
-
-    return app;
-  }
-*/
-
-type LogEntry = {
-  method: string;
-  path: string;
-  status: number;
-  durationMs: number;
+type AppConfig = {
+  stripeApi: FakeStripeAPI;
+  apiKey: string;
 };
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  created_at: number;
-};
+// ─── Your Implementation ────────────────────────────────────────
 
-// ─── Self-Checks ───────────────────────────────────────────────
-// Tests use the built-in Router simulation — no express dependency needed.
-// we use a pure-TypeScript simulation that tests the same patterns.
-// The logic is identical to what you'd write with Express.
+export function createApp(config: AppConfig): {
+  app: express.Express;
+  getProcessedWebhooks: () => WebhookEvent[];
+} {
+  const app = express();
+  const users = new Map<string, User>();
+  let nextId = 1;
+  const processedWebhooks: WebhookEvent[] = [];
+  const seenEventIds = new Set<string>();
+  const { stripeApi, apiKey } = config;
+  
+  app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+    const { body, headers } = req;
+    const verified = stripeApi.verifyWebhookSignature(body, headers['stripe-signature'] as string);
+    if (!verified) return res.status(400).send({ error: 'invalid signature' });
+    const event = JSON.parse(body);
+    if (seenEventIds.has(event.id)) return res.send({ received: true });
+    seenEventIds.add(event.id);
+    if (["charge.succeeded", "charge.refunded", "charge.failed"].includes(event.type)) {
+      processedWebhooks.push(event);
+    }
+    return res.send({ received: true });
+  });
+  // REVIEW: Good — placing this BEFORE express.json() is correct.
+  // The raw body is needed for signature verification and you clearly
+  // understood the ordering issue.
+  //
+  // One bug: line 212 passes `body` (a Buffer) directly to
+  // verifyWebhookSignature, which expects a string. This works in the
+  // tests because supertest sends a string body, but with a real HTTP
+  // client the Buffer wouldn't match. Call `body.toString()` to be safe.
+  //
+  // Line 214: `JSON.parse(body)` — same thing, works here but
+  // `JSON.parse(body.toString())` is more defensive.
+  //
+  // Good: seenEventIds is a Set (O(1) dedup). Good: the type filter
+  // on line 217 is clean. Good: unrecognized events still get 200.
+  //
+  // Minor: the "received: true" response is sent even for duplicates
+  // (line 215) — that matches the spec. Correct.
+
+  app.use(express.json());
+  
+  app.get('/health', (req, res) => {
+    return res.send({ status: 'ok' });
+  });
+  // REVIEW: Clean one-liner.
+
+  app.use((req, res, next) => {
+    const reqKey = req.headers['x-api-key'];
+    if (reqKey !== apiKey) return res.status(401).send({ error: "Unauthorized" });
+    next();
+  });
+  // REVIEW: Correct. Good that /health is registered ABOVE this
+  // middleware so it bypasses auth. This is the cleanest approach —
+  // no conditional check inside the middleware needed.
+
+  app.post('/users', (req, res) => {
+    const { name, email } = req.body;
+    if (!name || !email) return res.status(400).send({ error: 'missing required parameters' });
+    const newUser: User = {
+      id: crypto.randomUUID(),
+      name,
+      email,
+      created_at: Date.now(),
+    }
+    users.set(newUser.id, newUser);
+    return res.status(201).send(newUser);
+  });
+  // REVIEW: Clean. Good use of crypto.randomUUID(), destructuring,
+  // and early return for validation.
+
+  app.get('/users/:id', (req, res) => {
+    const user = users.get(req.params.id);
+    if (!user) return res.status(404).send({ error: 'user not found' });
+    return res.send(user)
+  });
+  // REVIEW: Clean.
+
+  app.get('/users', (req, res) => {
+    const allUsers = Array.from(users.values());
+    const response = { data: allUsers, count: users.size }
+    if (req.query.email) {
+      const filtered = allUsers.filter((u) => u.email === req.query.email);
+      response.data = filtered;
+      response.count = filtered.length;
+    }
+    return res.send(response);
+  });
+  // REVIEW: Works but the email filter is case-sensitive (line 258).
+  // The spec says "case-insensitive." Fix:
+  //   u.email.toLowerCase() === (req.query.email as string).toLowerCase()
+  //
+  // Also: when there's no filter, response.count uses users.size
+  // which is correct. But if you later add delete functionality,
+  // users.size and allUsers.length could diverge if you're not
+  // careful. Using allUsers.length is safer.
+
+  app.post('/charges', async (req, res) => {
+    const { amount, currency, source, description, idempotency_key } = req.body;
+    if (!source) return res.status(400).send({ error: 'missing source' });
+    if (!Number.isInteger(amount) || amount <= 0) return res.status(400).send({ error: 'improper amount format' });
+    if (currency.length !== 3 || currency !== currency.toLowerCase()) return res.status(400).send({ error: 'improper currency' });
+
+    const charge = await stripeApi.createCharge(req.body);
+    return res.status(charge.status).send(charge.body);
+  });
+  // REVIEW: Solid. The validation guards are good — checking integer,
+  // positive, 3-char lowercase currency. The status passthrough on
+  // line 272 (res.status(charge.status)) is elegant — you let the
+  // FakeStripeAPI dictate the status code instead of mapping it
+  // yourself. This handles 201 (success) and 402 (declined) cleanly.
+  //
+  // One edge case: if `currency` is undefined/null, line 269
+  // `currency.length` will throw. Check for its existence before
+  // accessing .length, or validate all required fields together:
+  //   if (!amount || !currency || !source) return res.status(400)...
+  //
+  // Minor: you destructure idempotency_key on line 266 but never
+  // use it — you pass req.body directly to createCharge (line 271).
+  // This works because createCharge reads idempotency_key from the
+  // object, but the unused destructured variable is noise. Either
+  // use it explicitly or don't destructure it.
+
+  app.get('/charges/:id', async (req, res) => {
+    const { id } = req.params;
+    const charge = await stripeApi.getCharge(id);
+    return res.status(charge.status).send(charge.body);
+  });
+  // REVIEW: Clean. Same status passthrough pattern. Good.
+
+  app.post('/refunds', async (req, res) => {
+    const { charge_id, amount } = req.body;
+    const refund = await stripeApi.createRefund({ charge_id, amount });
+
+    return res.status(refund.status).send(refund.body);
+  });
+  // REVIEW: Clean. Same passthrough pattern — consistent with charges.
+  //
+  // Overall architecture note: the status passthrough pattern
+  // (res.status(apiResult.status).send(apiResult.body)) that you use
+  // for charges, get-charge, and refunds is a great instinct. You
+  // wrote it once and applied it consistently. In a real codebase
+  // you'd extract it into a helper:
+  //   const forward = (res, result) => res.status(result.status).send(result.body);
+  // But for a 35-minute interview, the repetition is fine.
+
+  return { app, getProcessedWebhooks: () => processedWebhooks };
+}
+
+
+
+// ─── Self-Checks (do not edit below this line) ──────────────────
 
 let _passed = 0;
 let _failed = 0;
@@ -309,15 +367,15 @@ function check(label: string, actual: unknown, expected: unknown): void {
   }
 }
 
-function level(name: string, fn: () => Promise<void>): Promise<void> {
+function part(name: string, fn: () => Promise<void>): Promise<void> {
   return new Promise((resolve) => {
     console.log(name);
     fn()
       .then(resolve)
       .catch((e) => {
         const msg = e instanceof Error ? e.message : String(e);
-        if (msg.startsWith("TODO:")) {
-          console.log(`  ○ ${msg}`);
+        if (msg.startsWith("TODO") || msg.includes("is not a function")) {
+          console.log(`  ○ not yet implemented`);
         } else {
           _failed++;
           console.log(`  ✗ ${msg}`);
@@ -327,219 +385,29 @@ function level(name: string, fn: () => Promise<void>): Promise<void> {
   });
 }
 
-/*
-  Because Express is an external dependency, this drill provides
-  TWO ways to practice:
-
-  OPTION A (recommended): Install express and implement createApp()
-    npm install express @types/express
-    Then implement createApp with real Express routes.
-    To test, use supertest: npm install supertest @types/supertest
-
-  OPTION B (no dependencies): Implement the Router class below
-    which simulates Express routing patterns in pure TypeScript.
-    Same logic, same patterns, zero npm installs.
-
-  The self-checks below use Option B so they work out of the box.
-*/
-
-// ─── Option B: Pure TypeScript Express Simulator ───────────────
-
-type Handler = (req: SimReq, res: SimRes, next?: () => void) => void | Promise<void>;
-type Middleware = (req: SimReq, res: SimRes, next: () => void) => void | Promise<void>;
-
-interface SimReq {
-  method: string;
-  path: string;
-  params: Record<string, string>;
-  query: Record<string, string>;
-  body: any;
-  headers: Record<string, string>;
-  rawBody?: string;
-}
-
-interface SimRes {
-  statusCode: number;
-  _body: any;
-  _sent: boolean;
-  status(code: number): SimRes;
-  json(data: any): void;
-  send(data?: any): void;
-}
-
-function createSimRes(): SimRes {
-  const res: SimRes = {
-    statusCode: 200,
-    _body: null,
-    _sent: false,
-    status(code: number) { res.statusCode = code; return res; },
-    json(data: any) { res._body = data; res._sent = true; },
-    send(data?: any) { res._body = data; res._sent = true; },
-  };
-  return res;
-}
-
-class Router {
-  private middlewares: Middleware[] = [];
-  private routes: Array<{
-    method: string;
-    pattern: string;
-    handlers: Handler[];
-  }> = [];
-
-  use(...handlers: Middleware[]): void {
-    this.middlewares.push(...handlers);
-  }
-
-  get(path: string, ...handlers: Handler[]): void {
-    this.routes.push({ method: "GET", pattern: path, handlers });
-  }
-
-  post(path: string, ...handlers: Handler[]): void {
-    this.routes.push({ method: "POST", pattern: path, handlers });
-  }
-
-  put(path: string, ...handlers: Handler[]): void {
-    this.routes.push({ method: "PUT", pattern: path, handlers });
-  }
-
-  delete(path: string, ...handlers: Handler[]): void {
-    this.routes.push({ method: "DELETE", pattern: path, handlers });
-  }
-
-  async handle(req: SimReq): Promise<SimRes> {
-    const res = createSimRes();
-
-    // Run global middleware
-    for (const mw of this.middlewares) {
-      let called = false;
-      await mw(req, res, () => { called = true; });
-      if (res._sent) return res;
-      if (!called) return res;
-    }
-
-    // Find matching route
-    for (const route of this.routes) {
-      if (route.method !== req.method) continue;
-      const params = matchRoute(route.pattern, req.path);
-      if (params === null) continue;
-      req.params = params;
-
-      // Run route handlers (including route-level middleware)
-      for (const handler of route.handlers) {
-        let called = false;
-        await handler(req, res, () => { called = true; });
-        if (res._sent) return res;
-      }
-      return res;
-    }
-
-    res.statusCode = 404;
-    res._body = { error: "Not found" };
-    res._sent = true;
-    return res;
-  }
-}
-
-function matchRoute(pattern: string, path: string): Record<string, string> | null {
-  const patternParts = pattern.split("/");
-  const pathParts = path.split("?")[0].split("/");
-  if (patternParts.length !== pathParts.length) return null;
-  const params: Record<string, string> = {};
-  for (let i = 0; i < patternParts.length; i++) {
-    if (patternParts[i].startsWith(":")) {
-      params[patternParts[i].slice(1)] = pathParts[i];
-    } else if (patternParts[i] !== pathParts[i]) {
-      return null;
-    }
-  }
-  return params;
-}
-
-function parseQuery(path: string): Record<string, string> {
-  const idx = path.indexOf("?");
-  if (idx === -1) return {};
-  const params: Record<string, string> = {};
-  for (const pair of path.slice(idx + 1).split("&")) {
-    const [k, v] = pair.split("=");
-    if (k) params[decodeURIComponent(k)] = decodeURIComponent(v ?? "");
-  }
-  return params;
-}
-
-// ─── YOUR IMPLEMENTATION (Option B) ────────────────────────────
-
-function createRouter(config: {
-  stripeApi: FakeStripeAPI;
-  apiKey: string;
-  logs: LogEntry[];
-}): Router {
-  throw new Error("TODO: implement createRouter");
-
-  // Example structure (delete this comment when implementing):
-  //
-  // const router = new Router();
-  // const users = new Map<string, User>();
-  // let nextId = 1;
-  //
-  // // Logging middleware
-  // Hint: The Router's global middleware runs BEFORE the route handler.
-  // To capture the final status code for logging, you'll need to
-  // record the start time here, then log after handle() completes.
-  // One approach: have the middleware just save start time on req,
-  // then do the logging in a wrapper around the router's handle() call.
-  // // Auth middleware
-  // router.use((req, res, next) => {
-  //   if (req.path === "/health") return next();
-  //   if (req.headers["x-api-key"] !== config.apiKey) {
-  //     return res.status(401).json({ error: "Unauthorized" });
-  //   }
-  //   next();
-  // });
-  //
-  // router.get("/health", (req, res) => {
-  //   res.json({ status: "ok" });
-  // });
-  //
-  // ... etc
-  //
-  // return router;
-}
-
-// Helper to make simulated requests
-async function request(
-  router: Router,
-  method: string,
-  path: string,
-  body?: any,
-  headers?: Record<string, string>,
-): Promise<{ status: number; body: any }> {
-  const req: SimReq = {
-    method,
-    path: path.split("?")[0],
-    params: {},
-    query: parseQuery(path),
-    body: body ?? {},
-    headers: headers ?? {},
-    rawBody: body ? JSON.stringify(body) : undefined,
-  };
-  const res = await router.handle(req);
-  return { status: res.statusCode, body: res._body };
-}
-
-// ─── Self-Checks ───────────────────────────────────────────────
-
 async function runSelfChecks(): Promise<void> {
   const stripeApi = new FakeStripeAPI();
-  const logs: LogEntry[] = [];
   const apiKey = "sk_test_abc123";
 
-  await level("Level 1 — CRUD Routes", async () => {
-    const router = createRouter({ stripeApi, apiKey, logs });
+  await part("Part 1 — Routes & Auth Middleware", async () => {
+    const { app } = createApp({ stripeApi, apiKey });
     const h = { "x-api-key": apiKey };
 
+    // Health — no auth
+    const health = await request(app).get("/health");
+    check("health status", health.status, 200);
+    check("health body", health.body.status, "ok");
+
+    // Auth — missing key
+    const noAuth = await request(app).get("/users");
+    check("no auth 401", noAuth.status, 401);
+
+    // Auth — wrong key
+    const badAuth = await request(app).get("/users").set("x-api-key", "wrong");
+    check("bad auth 401", badAuth.status, 401);
+
     // Create user
-    const created = await request(router, "POST", "/users", { name: "Alice", email: "alice@test.com" }, h);
+    const created = await request(app).post("/users").set(h).send({ name: "Alice", email: "alice@test.com" });
     check("create status", created.status, 201);
     check("create name", created.body.name, "Alice");
     check("create email", created.body.email, "alice@test.com");
@@ -548,86 +416,36 @@ async function runSelfChecks(): Promise<void> {
     const userId = created.body.id;
 
     // Get user
-    const fetched = await request(router, "GET", `/users/${userId}`, undefined, h);
+    const fetched = await request(app).get(`/users/${userId}`).set(h);
     check("get status", fetched.status, 200);
     check("get name", fetched.body.name, "Alice");
 
     // Get missing
-    const missing = await request(router, "GET", "/users/nope", undefined, h);
+    const missing = await request(app).get("/users/nope").set(h);
     check("get 404", missing.status, 404);
 
-    // List users
-    const listed = await request(router, "GET", "/users", undefined, h);
-    check("list status", listed.status, 200);
-    check("list count", listed.body.count, 1);
+    // List
+    await request(app).post("/users").set(h).send({ name: "Bob", email: "bob@test.com" });
+    const listed = await request(app).get("/users").set(h);
+    check("list count", listed.body.count, 2);
 
-    // Create second user
-    await request(router, "POST", "/users", { name: "Bob", email: "bob@test.com" }, h);
-
-    // List with email filter
-    const filtered = await request(router, "GET", "/users?email=alice@test.com", undefined, h);
+    // Filter by email
+    const filtered = await request(app).get("/users?email=alice@test.com").set(h);
     check("filter count", filtered.body.count, 1);
     check("filter name", filtered.body.data[0].name, "Alice");
 
-    // Update
-    const updated = await request(router, "PUT", `/users/${userId}`, { name: "Alice Updated" }, h);
-    check("update status", updated.status, 200);
-    check("update name", updated.body.name, "Alice Updated");
-
-    // Delete
-    const deleted = await request(router, "DELETE", `/users/${userId}`, undefined, h);
-    check("delete status", deleted.status, 200);
-    check("delete body", deleted.body.deleted, true);
-
-    // Get after delete
-    const afterDelete = await request(router, "GET", `/users/${userId}`, undefined, h);
-    check("after delete 404", afterDelete.status, 404);
-
-    // Validation: missing fields
-    const badCreate = await request(router, "POST", "/users", { name: "Alice" }, h);
+    // Validation
+    const badCreate = await request(app).post("/users").set(h).send({ name: "Alice" });
     check("missing email 400", badCreate.status, 400);
   });
 
-  await level("Level 2 — Middleware & Validation", async () => {
-    logs.length = 0;
-    const router = createRouter({ stripeApi, apiKey, logs });
-    const h = { "x-api-key": apiKey };
-
-    // Health check — no auth required
-    const health = await request(router, "GET", "/health");
-    check("health status", health.status, 200);
-    check("health body", health.body.status, "ok");
-
-    // Missing auth
-    const noAuth = await request(router, "GET", "/users");
-    check("no auth 401", noAuth.status, 401);
-
-    // Wrong auth
-    const badAuth = await request(router, "GET", "/users", undefined, { "x-api-key": "wrong" });
-    check("bad auth 401", badAuth.status, 401);
-
-    // Valid auth
-    const authed = await request(router, "GET", "/users", undefined, h);
-    check("valid auth 200", authed.status, 200);
-
-    // Request logger
-    check("logs recorded", logs.length > 0, true);
-    check("log has method", typeof logs[0].method, "string");
-    check("log has status", typeof logs[0].status, "number");
-    check("log has duration", typeof logs[0].durationMs, "number");
-  });
-
-  await level("Level 3 — External API Integration", async () => {
-    const router = createRouter({ stripeApi, apiKey, logs });
+  await part("Part 2 — External API Integration", async () => {
+    const { app } = createApp({ stripeApi, apiKey });
     const h = { "x-api-key": apiKey };
 
     // Create charge
-    const charge = await request(router, "POST", "/charges", {
-      amount: 2000,
-      currency: "usd",
-      source: "tok_visa",
-      description: "Test charge",
-    }, h);
+    const charge = await request(app).post("/charges").set(h)
+      .send({ amount: 2000, currency: "usd", source: "tok_visa", description: "Test" });
     check("charge status", charge.status, 201);
     check("charge amount", charge.body.amount, 2000);
     check("charge id", charge.body.id.startsWith("ch_"), true);
@@ -635,103 +453,105 @@ async function runSelfChecks(): Promise<void> {
     const chargeId = charge.body.id;
 
     // Get charge
-    const fetched = await request(router, "GET", `/charges/${chargeId}`, undefined, h);
+    const fetched = await request(app).get(`/charges/${chargeId}`).set(h);
     check("get charge", fetched.status, 200);
     check("get charge amount", fetched.body.amount, 2000);
 
-    // Get missing charge
-    const missingCharge = await request(router, "GET", "/charges/ch_9999", undefined, h);
-    check("missing charge 404", missingCharge.status, 404);
+    // Missing charge
+    const missing = await request(app).get("/charges/ch_9999").set(h);
+    check("missing charge 404", missing.status, 404);
 
     // Declined card
-    const declined = await request(router, "POST", "/charges", {
-      amount: 1000,
-      currency: "usd",
-      source: "tok_declined",
-    }, h);
+    const declined = await request(app).post("/charges").set(h)
+      .send({ amount: 1000, currency: "usd", source: "tok_declined" });
     check("declined 402", declined.status, 402);
 
-    // Validation
-    const badCharge = await request(router, "POST", "/charges", { amount: 1000 }, h);
-    check("missing fields 400", badCharge.status, 400);
+    // Validation — missing fields
+    const noSource = await request(app).post("/charges").set(h).send({ amount: 1000 });
+    check("missing fields 400", noSource.status, 400);
 
-    const badAmount = await request(router, "POST", "/charges", {
-      amount: -5,
-      currency: "usd",
-      source: "tok_visa",
-    }, h);
-    check("negative amount 400", badAmount.status, 400);
+    // Validation — bad amount
+    const badAmt = await request(app).post("/charges").set(h)
+      .send({ amount: -5, currency: "usd", source: "tok_visa" });
+    check("negative amount 400", badAmt.status, 400);
 
     // Refund
-    const refund = await request(router, "POST", "/refunds", { charge_id: chargeId, amount: 500 }, h);
+    const refund = await request(app).post("/refunds").set(h)
+      .send({ charge_id: chargeId, amount: 500 });
     check("refund status", refund.status, 201);
     check("refund amount", refund.body.amount, 500);
 
-    // Partial refund — remainder
-    const refund2 = await request(router, "POST", "/refunds", { charge_id: chargeId }, h);
+    // Full refund of remainder
+    const refund2 = await request(app).post("/refunds").set(h)
+      .send({ charge_id: chargeId });
     check("full refund", refund2.status, 201);
     check("full refund amount", refund2.body.amount, 1500);
 
     // Over-refund
-    const overRefund = await request(router, "POST", "/refunds", { charge_id: chargeId }, h);
+    const overRefund = await request(app).post("/refunds").set(h)
+      .send({ charge_id: chargeId });
     check("over-refund 400", overRefund.status, 400);
 
     // Idempotency
-    const idem1 = await request(router, "POST", "/charges", {
-      amount: 3000,
-      currency: "usd",
-      source: "tok_visa",
-      idempotency_key: "idem_123",
-    }, h);
-    const idem2 = await request(router, "POST", "/charges", {
-      amount: 3000,
-      currency: "usd",
-      source: "tok_visa",
-      idempotency_key: "idem_123",
-    }, h);
+    const idem1 = await request(app).post("/charges").set(h)
+      .send({ amount: 3000, currency: "usd", source: "tok_visa", idempotency_key: "idem_1" });
+    const idem2 = await request(app).post("/charges").set(h)
+      .send({ amount: 3000, currency: "usd", source: "tok_visa", idempotency_key: "idem_1" });
     check("idempotent same id", idem1.body.id, idem2.body.id);
   });
 
-  await level("Level 4 — Webhook Handler + Tests", async () => {
-    const router = createRouter({ stripeApi, apiKey, logs });
+  await part("Part 3 — Webhook Handler", async () => {
+    const localApi = new FakeStripeAPI();
+    const { app, getProcessedWebhooks } = createApp({ stripeApi: localApi, apiKey });
 
-    // Valid webhook — request() helper computes rawBody from the body for signature verification
-    const evt = stripeApi.makeWebhookEvent("charge.succeeded", { id: "ch_0001", amount: 2000 });
-    const whRes = await request(router, "POST", "/webhooks/stripe",
-      { id: evt.id, type: evt.type, data: evt.data },
-      { "stripe-signature": evt.signature });
+    // Valid webhook
+    const evt = localApi.makeWebhookEvent("charge.succeeded", { id: "ch_0001", amount: 2000 });
+    const payload = JSON.stringify({ id: evt.id, type: evt.type, data: evt.data });
+    const whRes = await request(app).post("/webhooks/stripe")
+      .set("content-type", "application/json")
+      .set("stripe-signature", evt.signature)
+      .send(payload);
     check("webhook 200", whRes.status, 200);
     check("webhook received", whRes.body.received, true);
 
     // Duplicate
-    const dupRes = await request(router, "POST", "/webhooks/stripe",
-      { id: evt.id, type: evt.type, data: evt.data },
-      { "stripe-signature": evt.signature });
-    check("duplicate skipped", dupRes.status, 200);
+    const dupRes = await request(app).post("/webhooks/stripe")
+      .set("content-type", "application/json")
+      .set("stripe-signature", evt.signature)
+      .send(payload);
+    check("duplicate 200", dupRes.status, 200);
+    check("not stored twice", getProcessedWebhooks().length, 1);
 
     // Bad signature
-    const badSigRes = await request(router, "POST", "/webhooks/stripe",
-      { id: "evt_bad", type: "charge.succeeded", data: {} },
-      { "stripe-signature": "bad_sig" });
+    const badSigRes = await request(app).post("/webhooks/stripe")
+      .set("content-type", "application/json")
+      .set("stripe-signature", "bad_sig")
+      .send(JSON.stringify({ id: "evt_bad", type: "charge.succeeded", data: {} }));
     check("bad sig 400", badSigRes.status, 400);
 
-    // Second event
-    const evt2 = stripeApi.makeWebhookEvent("charge.refunded", { id: "ch_0001", amount_refunded: 500 });
-    await request(router, "POST", "/webhooks/stripe",
-      { id: evt2.id, type: evt2.type, data: evt2.data },
-      { "stripe-signature": evt2.signature });
+    // Second valid event
+    const evt2 = localApi.makeWebhookEvent("charge.refunded", { id: "ch_0001" });
+    const payload2 = JSON.stringify({ id: evt2.id, type: evt2.type, data: evt2.data });
+    await request(app).post("/webhooks/stripe")
+      .set("content-type", "application/json")
+      .set("stripe-signature", evt2.signature)
+      .send(payload2);
+    check("two events stored", getProcessedWebhooks().length, 2);
 
-    // Unhandled event type
-    const evt3 = stripeApi.makeWebhookEvent("customer.created", { id: "cus_001" });
-    const unhandled = await request(router, "POST", "/webhooks/stripe",
-      { id: evt3.id, type: evt3.type, data: evt3.data },
-      { "stripe-signature": evt3.signature });
-    check("unhandled event 200", unhandled.status, 200);
+    // Unrecognized event type — acknowledged but not stored
+    const evt3 = localApi.makeWebhookEvent("customer.created", { id: "cus_001" });
+    const payload3 = JSON.stringify({ id: evt3.id, type: evt3.type, data: evt3.data });
+    const unkRes = await request(app).post("/webhooks/stripe")
+      .set("content-type", "application/json")
+      .set("stripe-signature", evt3.signature)
+      .send(payload3);
+    check("unrecognized 200", unkRes.status, 200);
+    check("not stored", getProcessedWebhooks().length, 2);
   });
 }
 
 async function main(): Promise<void> {
-  console.log("\nExpress API + Testing\n");
+  console.log("\nExpress API (Integration Exercise Prep)\n");
   await runSelfChecks();
   const total = _passed + _failed;
   console.log(`\n${_passed}/${total} passed`);

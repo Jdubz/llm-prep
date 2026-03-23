@@ -153,23 +153,209 @@ type OrderResult = {
 
 // Level 1
 function calculateFlat(config: FlatConfig, order: Order): number {
-  throw new Error("TODO: implement calculateFlat");
+
+  // Returns unitPrice * quantity.
+  //  If the (destination, product) pair is not in config, return -1.
+  const destination = config[order.destination];
+  if (!destination) return -1;
+  const product = destination[order.product];
+  if (!product || !product.unitPrice) return -1;
+  return product.unitPrice * order.quantity
 }
+// REVIEW: Works. Minor: `!product.unitPrice` on line 162 would
+// return -1 for a valid unitPrice of 0. Use `product == null` instead.
+// Also: the 3-line lookup (config → destination → product → null check)
+// will repeat verbatim in every level. Extract a generic lookup helper
+// now — you'll thank yourself when Level 3+ arrives:
+//   function lookup<T>(cfg: Record<string, Record<string, T>>, dest: string, prod: string): T | null {
+//     return cfg[dest]?.[prod] ?? null;
+//   }
 
 // Level 2
 function calculateTiered(config: TieredConfig, order: Order): number {
-  throw new Error("TODO: implement calculateTiered");
+  // Each tier's upTo is inclusive. Apply each tier only to items
+  //   in that range (graduated/marginal pricing).
+
+  //   Tiers are sorted ascending by upTo. The last tier may use Infinity.
+
+  //   Example: tiers [{upTo: 5, unitPrice: 10}, {upTo: 10, unitPrice: 8}, {upTo: Infinity, unitPrice: 5}]
+  //     quantity=7:  first 5 at $10 = $50, next 2 at $8 = $16 → total $66
+  //     quantity=12: first 5 at $10 = $50, next 5 at $8 = $40, next 2 at $5 = $10 → total $100
+
+  //   If the (destination, product) pair is not in config, return -1.
+  const destination = config[order.destination];
+  if (!destination) return -1;
+  const product = destination[order.product];
+  if (!product || !product.tiers) return -1;
+
+  let total = 0, prev = 0;
+
+  for (const { upTo, unitPrice } of product.tiers) {
+    const qty = Math.min(order.quantity, upTo) - prev;
+    if (qty <= 0) break;
+    total += qty * unitPrice;
+    prev = upTo;
+  }
+
+  return total;
 }
+// REVIEW: Correct. The tiered loop (lines 191-198) is pure math — it
+// only needs (quantity, tiers), not the config. Extract it now:
+//   function priceTiered(qty: number, tiers: Tier[]): number { ... }
+// This function becomes: lookup + priceTiered(order.quantity, product.tiers).
+// When the next level lands, you'll be able to reuse priceTiered directly
+// instead of copy-pasting the loop. This is the single highest-leverage
+// extraction in this drill — it saves you in Level 3 AND Level 4.
 
 // Level 3
 function calculateBasePlusTiered(config: BasePlusTieredConfig, order: Order): number {
-  throw new Error("TODO: implement calculateBasePlusTiered");
+  // For quantities <= coversUpTo: charge baseFlat.amount.
+  //   For quantities > coversUpTo: charge baseFlat.amount + tiered pricing
+  //   on (quantity - coversUpTo) using the tiers array.
+
+  //   If the (destination, product) pair is not in config, return -1.
+
+  const destination = config[order.destination];
+  if (!destination) return -1;
+  const product = destination[order.product];
+  if (!product || !product.tiers || !product.baseFlat) return -1;
+
+  const { tiers, baseFlat } = product;
+
+  if (order.quantity <= baseFlat.coversUpTo) return baseFlat.amount;
+
+  let total = baseFlat.amount;
+  const overflow = order.quantity - baseFlat.coversUpTo;
+  let prev = 0;
+
+  for (const { upTo, unitPrice } of tiers) {
+    const qty = Math.min(overflow, upTo) - prev;
+    if (qty <= 0) break;
+    total += qty * unitPrice;
+    prev = upTo;
+  }
+
+  return total;
 }
+// REVIEW: Logic is correct now (after the prev fix). But this is a
+// copy-paste of the tiered loop from Level 2. If you had extracted
+// priceTiered(qty, tiers), this entire function would be:
+//
+//   const product = lookup(config, order.destination, order.product);
+//   if (!product) return -1;
+//   if (order.quantity <= product.baseFlat.coversUpTo) return product.baseFlat.amount;
+//   return product.baseFlat.amount + priceTiered(order.quantity - product.baseFlat.coversUpTo, product.tiers);
+//
+// 4 lines, zero chance of the prev bug because priceTiered always starts at 0.
 
 // Level 4
 function calculateMulti(config: MultiConfig, order: MultiOrder, discount?: Discount): OrderResult {
-  throw new Error("TODO: implement calculateMulti");
+
+    //   Process each line item using its pricing type (flat, tiered, or basePlusTiered).
+    // If any product is missing from config, its subtotal is -1 and it is excluded
+    // from the order subtotal/discount/total (treat as an error line).
+
+    // If discount is provided and the subtotal (of valid items) > threshold,
+    // apply the percentage discount (0-100) to get the discount amount.
+    // total = subtotal - discount.
+
+    // Return itemized breakdown and totals.
+
+  const destination = config[order.destination];
+
+  const itemized: OrderResult = order.items.reduce<OrderResult>((result: OrderResult, { product, quantity }) => {
+    const productConfig = destination[product];
+    if (!productConfig) {
+      result.items.push({ product, subtotal: -1 });
+      return result;
+    };
+
+    const item = {
+      product,
+      subtotal: 0,
+    }
+    switch (productConfig.type) {
+      case 'flat':
+        item.subtotal = quantity * productConfig.unitPrice
+        result.items.push(item);
+        result.subtotal += item.subtotal;
+        return result;
+      case 'tiered':
+        
+        let total = 0, prev = 0;
+
+        for (const { upTo, unitPrice } of productConfig.tiers) {
+          const qty = Math.min(quantity, upTo) - prev;
+          if (qty <= 0) break;
+          total += qty * unitPrice;
+          prev = upTo;
+        }
+
+        item.subtotal = total;
+
+        result.items.push(item);
+        result.subtotal += total;
+        return result;
+      case 'basePlusTiered':
+        const { tiers, baseFlat } = productConfig;
+
+        if (quantity <= baseFlat.coversUpTo) {
+          item.subtotal = baseFlat.amount;
+        } else {
+          let thisTotal = baseFlat.amount;
+          const overflow = quantity - baseFlat.coversUpTo;
+          let thisPrev = 0;
+
+          for (const { upTo, unitPrice } of tiers) {
+            const qty = Math.min(overflow, upTo) - thisPrev;
+            if (qty <= 0) break;
+            thisTotal += qty * unitPrice;
+            thisPrev = upTo;
+          }
+
+          item.subtotal = thisTotal;
+        }
+
+        result.items.push(item);
+        result.subtotal += item.subtotal;
+
+        return result;
+      default:
+        result.items.push({ product, subtotal: -1 });
+        return result;
+    }
+  }, { items: [], subtotal: 0, discount: 0, total: 0 });
+
+  //calculate discount
+
+  if (discount && itemized.subtotal > discount.threshold) {
+    const discountAmount = Math.round(((itemized.subtotal / 100) * discount.percentage) * 10) / 10;
+    itemized.discount = discountAmount;
+    itemized.total = itemized.subtotal - discountAmount;
+  } else {
+    itemized.total = itemized.subtotal;
+  }
+
+  return itemized;
 }
+// REVIEW: This works but it's 70 lines because you re-implemented the
+// tiered loop twice (lines 268-273 and 290-295). With priceTiered extracted,
+// the entire switch body becomes:
+//   case 'flat':    return quantity * productConfig.unitPrice;
+//   case 'tiered':  return priceTiered(quantity, productConfig.tiers);
+//   case 'basePlusTiered': return quantity <= bf.coversUpTo
+//     ? bf.amount : bf.amount + priceTiered(quantity - bf.coversUpTo, productConfig.tiers);
+//
+// Other notes:
+// - Line 239: no null check on `destination`. If order.destination isn't
+//   in config, `destination[product]` will throw. Add: if (!destination) ...
+// - Line 307: the rounding `Math.round(... * 10) / 10` works for this
+//   test case but is fragile. The spec says percentage of subtotal —
+//   `subtotal * (percentage / 100)` is simpler and reads clearer.
+//   118 * 0.10 = 11.8 — no rounding needed.
+// - The reduce is fine but a simple for-of loop would be easier to read
+//   and debug under interview pressure. Reduce forces you to return the
+//   accumulator in every branch — easy to forget in a case block.
 
 // ─── Self-Checks (do not edit below this line) ──────────────────
 

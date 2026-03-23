@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stripe Interview Helpers</title>
+<style>
+  :root { --bg:#0d1117; --sf:#161b22; --bd:#30363d; --tx:#e6edf3; --mt:#8b949e; --ac:#635bff; --gn:#3fb950; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; background:var(--bg); color:var(--tx); padding:16px 16px 80px; }
+  h1 { font-size:20px; max-width:720px; margin:16px auto 4px; }
+  .sub { font-size:13px; color:var(--mt); max-width:720px; margin:0 auto 20px; }
+  .grid { max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:8px; }
+  .s { background:var(--sf); border:1px solid var(--bd); border-radius:6px; overflow:hidden; }
+  .sh { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; }
+  .sn { font-size:13px; font-weight:600; }
+  .cp { background:var(--ac); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:600; cursor:pointer; }
+  .cp:hover { filter:brightness(1.15); }
+  .cp.ok { background:var(--gn); }
+  pre { margin:0; padding:10px 12px; font-size:12px; line-height:1.5; font-family:'SF Mono','Fira Code',Consolas,monospace; background:var(--bg); overflow-x:auto; border-top:1px solid var(--bd); }
+  .cat { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--ac); max-width:720px; margin:24px auto 8px; padding-left:2px; }
+  .cat:first-of-type { margin-top:0; }
+</style>
+</head>
+<body>
+
+<h1>Stripe Interview Helpers</h1>
+<p class="sub">Small composable helpers. Copy one, use it to build your solution.</p>
+
+<div class="cat">Data Wrangling</div>
+<div class="grid">
+
+<div class="s"><div class="sh"><span class="sn">parseCSV</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function parseCSV(raw: string) {
+  const lines = raw.trim().split("\n");
+  const hdr = lines[0].split(",").map(h => h.trim());
+  return lines.slice(1).map(l => {
+    const v = l.split(",").map(s => s.trim());
+    return Object.fromEntries(hdr.map((h, i) => [h, v[i] ?? ""]));
+  });
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">parseKV</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function parseKV(raw: string): Map&lt;string, string&gt; {
+  const m = new Map&lt;string, string&gt;();
+  for (const line of raw.trim().split("\n")) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const i = t.indexOf("=");
+    if (i !== -1) m.set(t.slice(0, i).trim(), t.slice(i + 1).trim());
+  }
+  return m;
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">groupBy</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function groupBy&lt;T&gt;(arr: T[], key: (x: T) => string) {
+  const m = new Map&lt;string, T[]&gt;();
+  for (const x of arr) {
+    const k = key(x);
+    if (!m.has(k)) m.set(k, []);
+    m.get(k)!.push(x);
+  }
+  return m;
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">countBy</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function countBy&lt;T&gt;(arr: T[], key: (x: T) => string) {
+  const m = new Map&lt;string, number&gt;();
+  for (const x of arr) {
+    const k = key(x);
+    m.set(k, (m.get(k) ?? 0) + 1);
+  }
+  return m;
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">indexBy</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function indexBy&lt;T&gt;(arr: T[], key: (x: T) => string) {
+  return new Map(arr.map(x => [key(x), x]));
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">dedupBy</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function dedupBy&lt;T&gt;(arr: T[], key: (x: T) => string) {
+  const seen = new Set&lt;string&gt;();
+  return arr.filter(x => { const k = key(x); if (seen.has(k)) return false; seen.add(k); return true; });
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">sumBy</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function sumBy&lt;T&gt;(arr: T[], val: (x: T) => number) {
+  return arr.reduce((s, x) => s + val(x), 0);
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">sortBy (numeric desc, string asc tiebreak)</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function sortBy&lt;T&gt;(arr: T[], num: (x: T) => number, str: (x: T) => string) {
+  return [...arr].sort((a, b) => num(b) - num(a) || str(a).localeCompare(str(b)));
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">topN</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function topN&lt;T&gt;(arr: T[], n: number, cmp: (a: T, b: T) => number) {
+  return [...arr].sort(cmp).slice(0, n);
+}</code></pre></div>
+
+</div>
+
+<div class="cat">Balance / Money</div>
+<div class="grid">
+
+<div class="s"><div class="sh"><span class="sn">balances (from transactions)</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function balances(txs: { from: string; to: string; amount: number }[]) {
+  const m = new Map&lt;string, number&gt;();
+  for (const { from, to, amount } of txs) {
+    m.set(from, (m.get(from) ?? 0) - amount);
+    m.set(to, (m.get(to) ?? 0) + amount);
+  }
+  return m;
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">applyTx (with overdraft check)</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function applyTx(bals: Map&lt;string, number&gt;, from: string, to: string, amt: number): boolean {
+  if (amt <= 0 || from === to) return false;
+  const fb = bals.get(from) ?? 0;
+  if (fb < amt) return false;
+  bals.set(from, fb - amt);
+  bals.set(to, (bals.get(to) ?? 0) + amt);
+  return true;
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">tieredPrice</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function tieredPrice(units: number, tiers: { upTo: number | null; rate: number }[]) {
+  let total = 0, prev = 0;
+  for (const { upTo, rate } of tiers) {
+    const cap = upTo ?? Infinity;
+    const qty = Math.min(units, cap) - prev;
+    if (qty <= 0) break;
+    total += qty * rate;
+    prev = cap;
+  }
+  return total;
+}</code></pre></div>
+
+</div>
+
+<div class="cat">Rate Limiting</div>
+<div class="grid">
+
+<div class="s"><div class="sh"><span class="sn">slidingWindowAllow</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function slidingWindowAllow(log: Map&lt;string, number[]&gt;, key: string, now: number, max: number, windowMs: number): boolean {
+  const ts = log.get(key) ?? [];
+  while (ts.length && ts[0] <= now - windowMs) ts.shift();
+  if (ts.length >= max) return false;
+  ts.push(now);
+  log.set(key, ts);
+  return true;
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">fixedWindowAllow</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function fixedWindowAllow(state: Map&lt;string, { c: number; w: number }&gt;, key: string, now: number, max: number, windowMs: number): boolean {
+  const w = Math.floor(now / windowMs);
+  const e = state.get(key);
+  if (!e || e.w !== w) { state.set(key, { c: 1, w }); return true; }
+  if (e.c >= max) return false;
+  e.c++;
+  return true;
+}</code></pre></div>
+
+</div>
+
+<div class="cat">String / Parsing</div>
+<div class="grid">
+
+<div class="s"><div class="sh"><span class="sn">maskPII</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function maskPII(s: string) {
+  return s
+    .replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, m => "****" + m.slice(-4))
+    .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]+\b/g, "[EMAIL]")
+    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, "***-**-****");
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">braceExpand</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function braceExpand(s: string): string[] {
+  const segs: (string | string[])[] = [];
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === "{") { const j = s.indexOf("}", i); segs.push(s.slice(i+1, j).split(",")); i = j+1; }
+    else { let t = ""; while (i < s.length && s[i] !== "{") t += s[i++]; segs.push(t); }
+  }
+  let res = [""];
+  for (const seg of segs) { const opts = typeof seg === "string" ? [seg] : seg; res = res.flatMap(p => opts.map(o => p + o)); }
+  return res.sort();
+}</code></pre></div>
+
+</div>
+
+<div class="cat">Graph / Entity</div>
+<div class="grid">
+
+<div class="s"><div class="sh"><span class="sn">UnionFind</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>class UF {
+  p = new Map&lt;string, string&gt;();
+  find(x: string): string { if (!this.p.has(x)) this.p.set(x, x); if (this.p.get(x) !== x) this.p.set(x, this.find(this.p.get(x)!)); return this.p.get(x)!; }
+  union(a: string, b: string) { this.p.set(this.find(a), this.find(b)); }
+  connected(a: string, b: string) { return this.find(a) === this.find(b); }
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">topoSort</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function topoSort(graph: Map&lt;string, string[]&gt;): string[] | null {
+  const deg = new Map&lt;string, number&gt;();
+  for (const [n, ns] of graph) { deg.set(n, deg.get(n) ?? 0); for (const x of ns) deg.set(x, (deg.get(x) ?? 0) + 1); }
+  const q = [...deg].filter(([,d]) => d === 0).map(([n]) => n), out: string[] = [];
+  while (q.length) { const n = q.shift()!; out.push(n); for (const x of graph.get(n) ?? []) { deg.set(x, deg.get(x)! - 1); if (deg.get(x) === 0) q.push(x); } }
+  return out.length === deg.size ? out : null;
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">mergeIntervals</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function mergeIntervals(ivs: [number, number][]): [number, number][] {
+  const sorted = [...ivs].sort((a, b) => a[0] - b[0]);
+  const res: [number, number][] = [sorted[0]];
+  for (let i = 1; i < sorted.length; i++) {
+    const last = res[res.length - 1];
+    if (sorted[i][0] <= last[1]) last[1] = Math.max(last[1], sorted[i][1]);
+    else res.push(sorted[i]);
+  }
+  return res;
+}</code></pre></div>
+
+</div>
+
+<div class="cat">HTTP / Integration</div>
+<div class="grid">
+
+<div class="s"><div class="sh"><span class="sn">get / post</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>async function get&lt;T&gt;(url: string): Promise&lt;T&gt; { const r = await fetch(url); if (!r.ok) throw new Error(`${r.status}`); return r.json(); }
+async function post&lt;T&gt;(url: string, body: unknown): Promise&lt;T&gt; {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`); return r.json();
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">paginateAll (cursor-based)</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>async function paginateAll&lt;T extends { id: string }&gt;(fetch_: (cursor?: string) => Promise&lt;{ data: T[]; has_more: boolean }&gt;) {
+  const all: T[] = []; let cursor: string | undefined;
+  while (true) { const p = await fetch_(cursor); all.push(...p.data); if (!p.has_more || !p.data.length) break; cursor = p.data.at(-1)!.id; }
+  return all;
+}</code></pre></div>
+
+<div class="s"><div class="sh"><span class="sn">retry</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>async function retry&lt;T&gt;(fn: () => Promise&lt;T&gt;, n = 3, delay = 200): Promise&lt;T&gt; {
+  for (let i = 0; i <= n; i++) { try { return await fn(); } catch (e) { if (i === n) throw e; await new Promise(r => setTimeout(r, delay * 2 ** i)); } }
+  throw new Error();
+}</code></pre></div>
+
+</div>
+
+<div class="cat">File I/O</div>
+<div class="grid">
+
+<div class="s"><div class="sh"><span class="sn">readLines / readJSON / writeJSON</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>import { readFileSync, writeFileSync } from "fs";
+const readText = (p: string) => readFileSync(p, "utf-8");
+const readLines = (p: string) => readText(p).trim().split("\n");
+const readJSON = &lt;T&gt;(p: string): T => JSON.parse(readText(p));
+const writeJSON = (p: string, d: unknown) => writeFileSync(p, JSON.stringify(d, null, 2));</code></pre></div>
+
+</div>
+
+<div class="cat">Testing</div>
+<div class="grid">
+
+<div class="s"><div class="sh"><span class="sn">assertEqual</span><button class="cp" onclick="copy(this)">Copy</button></div>
+<pre><code>function eq&lt;T&gt;(actual: T, expected: T, label: string) {
+  const a = JSON.stringify(actual), e = JSON.stringify(expected);
+  if (a !== e) throw new Error(`${label}: got ${a}, want ${e}`);
+  console.log(`ok: ${label}`);
+}</code></pre></div>
+
+</div>
+
+<script>
+async function copy(btn) {
+  const code = btn.closest('.s').querySelector('code').textContent;
+  await navigator.clipboard.writeText(code);
+  btn.textContent = 'Copied!';
+  btn.classList.add('ok');
+  setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1200);
+}
+</script>
+
+</body>
+</html>

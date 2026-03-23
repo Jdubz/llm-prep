@@ -93,23 +93,183 @@ interface Reconciliation {
 
 // Level 1
 function parseAcceptLanguage(header: string, supported: string[]): string[] {
-  throw new Error("TODO: implement parseAcceptLanguage");
+  const headerLangs = header.split(',').map(lang => lang.trim());
+  const supportedLookup = new Map(supported.map((s) => [s.toLowerCase(), s]));
+  const accepted = headerLangs.filter((h => supportedLookup.has(h.toLowerCase())));
+  return accepted.map(h => supportedLookup.get(h.toLowerCase())!);
 }
+// REVIEW: Correct. Clean use of the Map lookup pattern.
+//
+// Speed tip: you're lowercasing in filter() AND again in map(). You
+// can do both in one pass — filter+map is what flatMap is for:
+//
+//   return headerLangs.flatMap(h => {
+//     const match = supportedLookup.get(h.toLowerCase());
+//     return match ? [match] : [];
+//   });
+//
+// One iteration, one lowercase call per tag.
 
 // Level 2
 function parseAcceptLanguageWithVariants(header: string, supported: string[]): string[] {
-  throw new Error("TODO: implement parseAcceptLanguageWithVariants");
+  const headerTags = header.split(',').map(lang => lang.trim().toLowerCase());
+  const supportedMap = new Map(supported.map((s) => [s.toLowerCase(), s]));
+  const result: string[] = [];                                    
+  const seen = new Set<string>();
+                                                                                                          
+  for (const tag of headerTags) {
+    if (tag === "*") {                                                                                    
+      // all remaining supported                                  
+      for (const s of supported) {                                                                        
+        if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); result.push(s); }
+      }                                                                                                   
+    } else if (tag.includes("-")) {                               
+      // exact match                                                                                      
+      const original = supportedMap.get(tag);                                                             
+      if (original && !seen.has(tag)) { seen.add(tag); result.push(original); }
+    } else {                                                                                              
+      // prefix match — scan supported for "tag-*"                                                        
+      for (const s of supported) {                                                                        
+        const sl = s.toLowerCase();                                                                       
+        if (sl.startsWith(tag + "-") && !seen.has(sl)) { seen.add(sl); result.push(s); }                  
+      }                                                                                                   
+    }                                                             
+  }     
+  
+  return result;
 }
+// REVIEW: Correct. This is well-structured — clean three-branch
+// if/else, seen set handles dedup, supported order preserved for
+// prefix matches. Nothing to fix.
+//
+// Speed tip for the interview: this exact for-loop body (the three
+// branches: wildcard / exact / prefix) is going to repeat in Level 3.
+// Extract it into a helper now:
+//
+//   function matchTag(tag: string, supported: string[], supportedMap, seen, result) { ... }
+//
+// Then Level 3 just parses q-values, sorts, filters q=0, and calls
+// matchTag per entry. You'd finish Level 3 in ~3 minutes.
 
 // Level 3
 function parseAcceptLanguageQuality(header: string, supported: string[]): string[] {
-  throw new Error("TODO: implement parseAcceptLanguageQuality");
+  const headerTags = header.split(',').map(lang => {
+    const tag = lang.trim().toLowerCase();
+    const [l, q] = tag.split(';');
+    let qVal = 1;
+    if (q) {
+      qVal = +(q.split('=')[1])
+    }
+    return { l, q: qVal };
+  });
+  headerTags.sort((a,b) => b.q - a.q);
+  const supportedMap = new Map(supported.map((s) => [s.toLowerCase(), s]));
+  const seen = new Set();
+  const result = [];
+  for (const tag of headerTags) {
+    if (tag.q === 0) break;
+    if (tag.l === "*") {                                                                                    
+      // all remaining supported                                  
+      for (const s of supported) {                                                                        
+        if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); result.push(s); }
+      }                                                                                                   
+    } else if (tag.l.includes("-")) {                               
+      // exact match                                                                                      
+      const original = supportedMap.get(tag.l);                                                             
+      if (original && !seen.has(tag.l)) { seen.add(tag.l); result.push(original); }
+    } else {                                                                                              
+      // prefix match — scan supported for "tag-*"                                                        
+      for (const s of supported) {                                                                        
+        const sl = s.toLowerCase();                                                                       
+        if (sl.startsWith(tag.l + "-") && !seen.has(sl)) { seen.add(sl); result.push(s); }                  
+      }                                                                                                   
+    }   
+  }
+
+  return result;
 }
+// REVIEW: Correct. Good job recognizing this is the same three-branch
+// logic from Level 2. Two things that cost you time:
+//
+// 1. You copy-pasted the matching logic from Level 2 instead of
+//    extracting it. This works but doubled your code and doubled
+//    your debug surface. The spec told you Level 3 "supports prefix
+//    matching and wildcard" — that's a signal to extract first.
+//
+// 2. The q-value parsing is clean. One subtlety: the spec says
+//    "for ties in q-value, preserve original header order." Your
+//    sort is stable in V8/Node (guaranteed since Node 12), so this
+//    works. But worth knowing WHY it works — an interviewer might ask.
+//
+// 3. `break` on q=0 (line 147) only works because you sorted
+//    descending — all q=0 entries are at the end. Correct, but if
+//    you're unsure about sort stability under pressure, `continue`
+//    is safer (skips the entry without relying on position).
 
 // Level 4
 function reconcilePayments(payments: string[], invoices: string[]): Reconciliation[] {
-  throw new Error("TODO: implement reconcilePayments");
+  // Handle:
+  //     - Partial payments (remaining > 0)
+  //     - Multiple payments to the same invoice
+  //     - Payments referencing non-existent invoices (invoiceDate = null,
+  //       invoiceTotal = 0, remaining = -amount)
+  //     - Return results in the order payments appear
+  const parseInvoice = ((i: string): any => {
+    const invArr = i.split(',');
+    return [invArr[0].toLowerCase(), invArr];
+  });
+  const invMap: Map<string, [string, string, string]> = new Map(invoices.map(parseInvoice));
+  const result = payments.map((p) => {
+    const payArr = p.split(',');
+    const invId = payArr[2].split(':')[1].trim();
+    let invoice: [string, string, string, number?] | undefined = invMap.get(invId.toLowerCase());
+    if (!invoice) {
+      invoice = [invId, "", "0"];
+    }
+    const remaining = (invoice[3] ?? +invoice[2]) - +payArr[1];
+    const rec = {
+      paymentId: payArr[0],
+      invoiceId: invoice[0],
+      amount: +payArr[1],
+      invoiceDate: invoice[1] || null,
+      invoiceTotal: +invoice[2],
+      remaining,
+    }
+    invoice.push(remaining);
+    return rec;
+  });
+  console.log(result);
+  return result;
 }
+// REVIEW: Works but several things made this harder than it needs to be:
+//
+// 1. Tuple indexing (invoice[0], invoice[2], payArr[1]) is hard to
+//    read and easy to get wrong. Parse into an object up front:
+//      const [id, date, total] = line.split(",");
+//      return { id, date, total: +total };
+//    Then `invoice.date` instead of `invoice[1]`. Costs 1 extra line,
+//    saves you from off-by-one index bugs under pressure.
+//
+// 2. Tracking remaining via invoice.push(remaining) (line 198) mutates
+//    the tuple by appending a 4th element, then reads it back on the
+//    next payment via invoice[3] (line 189). This is clever but fragile
+//    — the type doesn't express it, and a second push would add a 5th
+//    element. Cleaner: use a separate Map<string, number> for running
+//    totals:
+//      const paid = new Map<string, number>();
+//      // in the loop:
+//      const totalPaid = (paid.get(invId) ?? 0) + amount;
+//      paid.set(invId, totalPaid);
+//      const remaining = invoiceTotal - totalPaid;
+//
+// 3. The memo parsing on line 184 splits on ":" and takes [1], which
+//    works for "Paying off: INV-2024-001" but would break if the memo
+//    had additional colons. Safer: use indexOf + slice, or split with
+//    a regex that captures the invoice ID directly:
+//      const match = memo.match(/(?:paying off|payment for):\s*([\w-]+)/i);
+//
+// 4. Remove console.log before submitting (line 201) — interviewers
+//    notice leftover debug output.
 
 // ─── Self-Checks (do not edit below this line) ──────────────────
 
@@ -278,7 +438,7 @@ function runSelfChecks(): void {
       ),
       [{
         paymentId: "PAY006", invoiceId: "INV-2024-002",
-        amount: 500, invoiceDate: "2024-02-01",
+        amount: 500, invoiceDate: "2024-02-20",
         invoiceTotal: 3000, remaining: 2500
       }]);
   });

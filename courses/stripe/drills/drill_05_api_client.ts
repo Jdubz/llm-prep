@@ -2,84 +2,66 @@
 Drill 05 — API Client (Integration Exercise Prep)
 
 Build a typed API client that interacts with a simulated REST API.
-This drill practices the patterns needed for the Integration Exercise:
-reading a spec, making HTTP-style requests, handling errors, testing.
+Practices the patterns needed for the Integration Exercise:
+pagination, retry with idempotency, webhook processing.
 
-Instead of real HTTP, we provide a FakeServer you interact with via
-request(). The patterns are identical to real fetch() usage.
+The FakeServer below simulates a REST API. Interact with it via
+server.request(method, path, body?, headers?). Returns { status, body }.
 
-Target time: 35 minutes for all 4 levels.
+Target time: 30 minutes for all 3 parts.
 
-────────────────────────────────────────
-Level 1 — Basic CRUD Client
+────────────────────────────────────
+Part 1 — Requests & Pagination (10 min)
 
-  The server exposes a /users resource:
+  The server has 25 seeded users and exposes:
+    POST   /users          → User  (body: { name, email })
+    GET    /users/:id      → User  (404 if not found)
     GET    /users          → { data: User[], has_more: boolean }
-    GET    /users/:id      → User
-    POST   /users          → User (body: { name, email })
-    PUT    /users/:id      → User (body: partial User)
-    DELETE /users/:id      → { deleted: true }
-
-  User = { id: string; name: string; email: string; created_at: number }
+      ?limit=N             max per page (default 10)
+      ?starting_after=ID   cursor for next page
 
   Implement:
-    listUsers(): Promise<User[]>
-    getUser(id: string): Promise<User | null>
-      Returns null on 404.
-    createUser(name: string, email: string): Promise<User>
-    updateUser(id: string, updates: Partial<User>): Promise<User | null>
-    deleteUser(id: string): Promise<boolean>
+    createUser(name, email): Promise<User>
+    getUser(id): Promise<User | null>       ← return null on 404
+    listAllUsers(): Promise<User[]>         ← paginate through ALL pages
 
-────────────────────────────────────────
-Level 2 — Pagination & Search
+  Example:
+    await client.createUser("Alice", "a@test.com")
+    // → { id: "usr_026", name: "Alice", email: "a@test.com", ... }
 
-  GET /users supports query params:
-    ?limit=N         → max results per page (default 10)
-    ?starting_after=ID → cursor-based pagination
-    ?email=X         → exact email filter
+    await client.getUser("usr_999")  → null
 
-  Implement:
-    listAllUsers(): Promise<User[]>
-      Paginate through ALL users (use limit=10 per page).
+    await client.listAllUsers()  → [usr_001, ..., usr_025] (3 pages)
 
-    findByEmail(email: string): Promise<User | null>
-      Use the email filter. Return first match or null.
+────────────────────────────────────
+Part 2 — Retry & Idempotency (10 min)
 
-────────────────────────────────────────
-Level 3 — Idempotency & Retry
+  The server returns 500 on every 5th POST/PUT request.
+  POST/PUT accept an "Idempotency-Key" header — the server
+  returns a cached response for duplicate keys.
 
-  The server occasionally returns 500 errors (simulated).
-  POST/PUT requests accept an Idempotency-Key header.
+  createUserSafe(name, email, idempotencyKey): Promise<User>
+    Retry up to 3 times on 500 errors, passing the same
+    idempotency key each time. Throw on non-500 errors.
 
-  Implement:
-    createUserSafe(name: string, email: string,
-                   idempotencyKey: string): Promise<User>
-      Retry up to 3 times on 500 errors with the same
-      idempotency key. Throw on other error codes.
+  withRetry<T>(fn, maxRetries): Promise<T>
+    Generic retry wrapper. Retries when the thrown error has
+    a .status property === 500. Throws after maxRetries exhausted.
 
-    withRetry<T>(fn: () => Promise<T>, maxRetries: number): Promise<T>
-      Generic retry wrapper. Retries on 500 errors only.
-      Throws after maxRetries exhausted.
+────────────────────────────────────
+Part 3 — Webhook Processing (10 min)
 
-────────────────────────────────────────
-Level 4 — Webhook Processing
+  onEvent(eventType, handler): void
+    Register a handler for an event type (e.g., "user.created").
 
-  The server can emit events. You register a handler.
+  processWebhook(event: WebhookEvent): Promise<boolean>
+    - Verify signature: verifySignature(event.id, event.signature, server.secret)
+    - Deduplicate by event.id (skip already-processed events)
+    - Call the registered handler for event.type
+    - Return true if processed, false if invalid/duplicate/no handler
 
-  Implement:
-    onEvent(eventType: string,
-            handler: (event: WebhookEvent) => Promise<void>): void
-      Register a handler for an event type (e.g., "user.created").
-
-    processWebhook(event: WebhookEvent): Promise<boolean>
-      Process an incoming webhook event.
-      - Verify event.signature using the verifySignature(event, secret) helper provided.
-      - Deduplicate: skip events already processed (by event.id).
-      - Call the registered handler for event.type.
-      - Return true if processed, false if invalid/duplicate/no handler.
-
-    getProcessedEvents(): string[]
-      Returns ids of all successfully processed events, in order.
+  getProcessedEvents(): string[]
+    Return IDs of all successfully processed events, in order.
 */
 
 // ─── Simulated Server (do not edit) ────────────────────────────
@@ -105,7 +87,6 @@ class FakeServer {
   readonly secret = "whsec_test123";
 
   constructor() {
-    // Seed data: 25 users
     for (let i = 1; i <= 25; i++) {
       const id = `usr_${String(i).padStart(3, "0")}`;
       this.users.set(id, {
@@ -125,8 +106,6 @@ class FakeServer {
     headers?: Record<string, string>,
   ): Promise<ServerResponse> {
     this.requestCount++;
-
-    // Strip query string for route matching, keep full path for handlers
     const pathOnly = path.split("?")[0];
 
     // Simulate occasional 500s (every 5th POST/PUT)
@@ -145,12 +124,10 @@ class FakeServer {
     }
 
     let response: ServerResponse;
-
-    // Route
     const userMatch = pathOnly.match(/^\/users\/(.+)$/);
 
     if (pathOnly === "/users" && method === "GET") {
-      response = this.handleListUsers(path, body, headers);
+      response = this.handleListUsers(path);
     } else if (userMatch && method === "GET") {
       const user = this.users.get(userMatch[1]);
       response = user
@@ -166,21 +143,6 @@ class FakeServer {
       };
       this.users.set(id, user);
       response = { status: 201, body: user };
-    } else if (userMatch && method === "PUT") {
-      const user = this.users.get(userMatch[1]);
-      if (!user) {
-        response = { status: 404, body: { error: "Not found" } };
-      } else {
-        Object.assign(user, body);
-        response = { status: 200, body: user };
-      }
-    } else if (userMatch && method === "DELETE") {
-      if (!this.users.has(userMatch[1])) {
-        response = { status: 404, body: { error: "Not found" } };
-      } else {
-        this.users.delete(userMatch[1]);
-        response = { status: 200, body: { deleted: true } };
-      }
     } else {
       response = { status: 404, body: { error: "Not found" } };
     }
@@ -189,22 +151,11 @@ class FakeServer {
     return response;
   }
 
-  private handleListUsers(
-    path: string,
-    body?: Record<string, unknown>,
-    headers?: Record<string, string>,
-  ): ServerResponse {
+  private handleListUsers(path: string): ServerResponse {
     let users = [...this.users.values()].sort((a, b) => a.id.localeCompare(b.id));
-
-    // Parse query params from path
     const url = new URL(`http://localhost${path}`);
     const limit = parseInt(url.searchParams.get("limit") ?? "10");
     const startingAfter = url.searchParams.get("starting_after");
-    const emailFilter = url.searchParams.get("email");
-
-    if (emailFilter) {
-      users = users.filter((u) => u.email === emailFilter);
-    }
 
     if (startingAfter) {
       const idx = users.findIndex((u) => u.id === startingAfter);
@@ -244,61 +195,193 @@ function verifySignature(eventId: string, signature: string, secret: string): bo
 // ─── Your Implementation ───────────────────────────────────────
 
 export class ApiClient {
+  eventHandlers: Map<string, (event: WebhookEvent) => Promise<void>>
+  processedEvents: string[];
   constructor(private server: FakeServer) {
-    throw new Error("TODO: implement constructor");
+    this.eventHandlers = new Map();
+    this.processedEvents = [];
   }
 
-  // Level 1
-  async listUsers(): Promise<User[]> {
-    throw new Error("TODO: implement listUsers");
+  // Part 1
+  async createUser(name: string, email: string): Promise<User> {
+    const { status, body } = await this.server.request('POST', '/users', { name, email });
+    // console.log(status, body);
+    return body;
   }
+  // REVIEW: Works, but doesn't check status. If the server returns a
+  // non-201 (e.g., 400 for missing fields), this silently returns the
+  // error body as if it were a User. In a real integration you'd want:
+  //   if (status !== 201) throw new Error(`Create failed: ${status}`);
+  // Also: remove commented-out console.log before submitting.
 
   async getUser(id: string): Promise<User | null> {
-    throw new Error("TODO: implement getUser");
+    const { status, body } = await this.server.request('GET', `/users/${id}`);
+    return status === 200 ? body : null;
   }
+  // REVIEW: Clean. Good ternary on status.
 
-  async createUser(name: string, email: string): Promise<User> {
-    throw new Error("TODO: implement createUser");
-  }
-
-  async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
-    throw new Error("TODO: implement updateUser");
-  }
-
-  async deleteUser(id: string): Promise<boolean> {
-    throw new Error("TODO: implement deleteUser");
-  }
-
-  // Level 2
   async listAllUsers(): Promise<User[]> {
-    throw new Error("TODO: implement listAllUsers");
+    const users: User[] = [];
+    
+    let lastStatus = 200;
+    let has_more = true;
+    while (lastStatus === 200 && has_more) {
+      const path = `/users${users.length ? '?starting_after=' + users.at(-1)!.id : ''}`;
+      const { status, body } = await this.server.request('GET', path);
+      lastStatus = status;
+      has_more = body.has_more;
+      users.push(...body.data);
+    }
+    return users;
   }
+  // REVIEW: Correct. The pagination loop is solid — building the cursor
+  // from users.at(-1)!.id is clean.
+  //
+  // Minor: `lastStatus` is tracked but the server always returns 200
+  // for list endpoints (errors come as has_more:false + empty data).
+  // Not wrong, just unused complexity. The simpler loop is:
+  //
+  //   let cursor: string | undefined;
+  //   while (true) {
+  //     const path = `/users?limit=10` + (cursor ? `&starting_after=${cursor}` : '');
+  //     const { body } = await this.server.request('GET', path);
+  //     users.push(...body.data);
+  //     if (!body.has_more) break;
+  //     cursor = body.data.at(-1)!.id;
+  //   }
+  //
+  // Also: you don't pass ?limit=10 explicitly. It defaults to 10 in
+  // THIS server, but in a real Stripe API call, always set it
+  // explicitly — the interviewer may notice.
 
-  async findByEmail(email: string): Promise<User | null> {
-    throw new Error("TODO: implement findByEmail");
-  }
+  // Part 2
+  // createUserSafe(name, email, idempotencyKey): Promise<User>
+  //   Retry up to 3 times on 500 errors, passing the same
+  //   idempotency key each time. Throw on non-500 errors.
 
-  // Level 3
+  // withRetry<T>(fn, maxRetries): Promise<T>
+  //   Generic retry wrapper. Retries when the thrown error has
+  //   a .status property === 500. Throws after maxRetries exhausted.
   async createUserSafe(name: string, email: string, idempotencyKey: string): Promise<User> {
-    throw new Error("TODO: implement createUserSafe");
+    const result = await this.withRetry<ServerResponse>(() => this.server.request('POST', '/users', { name, email }, { 'Idempotency-Key': idempotencyKey }), 3);
+    return result?.body;
   }
+  // REVIEW: Works for the happy path, but createUserSafe doesn't
+  // handle non-500 errors. The spec says "throw on non-500 errors."
+  // Right now withRetry retries ALL errors (line 248 catches any
+  // exception regardless of .status). A 400 bad request would be
+  // retried instead of thrown immediately.
+  //
+  // Also: the server returns { status, body }. A 500 response doesn't
+  // THROW — it returns { status: 500, body: {...} }. Your withRetry
+  // expects fn() to throw, but server.request() resolves with the 500
+  // response. You need to check the status and throw manually:
+  //
+  //   const res = await this.server.request(...);
+  //   if (res.status === 500) throw Object.assign(new Error(), { status: 500 });
+  //   return res.body;
+  //
+  // This is a common Stripe interview gotcha — fetch/request doesn't
+  // reject on HTTP errors, you have to check res.ok / res.status.
 
-  async withRetry<T>(fn: () => Promise<T>, maxRetries: number): Promise<T> {
-    throw new Error("TODO: implement withRetry");
+  async withRetry<T>(fn: () => Promise<T>, maxRetries: number): Promise<T | null> {
+    let retries = 0;
+    let result: T | null = null;
+    while (!result && retries <= maxRetries) {
+      try {
+        result = await fn();
+      } catch (e: any) {
+        retries++
+      }
+    }
+    if (!result) throw new Error();
+    return result;
   }
+  // REVIEW: Three bugs:
+  //
+  // 1. Retries on ALL errors, not just status 500. The spec says
+  //    "retries when the thrown error has .status === 500." Add:
+  //      if ((e as any).status !== 500) throw e;
+  //
+  // 2. `while (!result && retries <= maxRetries)` — if fn() returns
+  //    a falsy value (0, "", false, null), the loop keeps going even
+  //    though the call succeeded. Use a success flag instead:
+  //      let lastError; for (let i = 0; i <= maxRetries; i++) {
+  //        try { return await fn(); } catch (e) { lastError = e; ... }
+  //      } throw lastError;
+  //
+  // 3. Return type is `Promise<T | null>` but the spec says
+  //    `Promise<T>`. It should never return null — it either succeeds
+  //    or throws.
+  //
+  // The clearest pattern for retry:
+  //   async withRetry<T>(fn, max): Promise<T> {
+  //     for (let i = 0; i <= max; i++) {
+  //       try { return await fn(); }
+  //       catch (e: any) {
+  //         if (e.status !== 500 || i === max) throw e;
+  //       }
+  //     }
+  //     throw new Error("unreachable");
+  //   }
 
-  // Level 4
+  // Part 3
+  //   onEvent(eventType, handler): void
+  //   Register a handler for an event type (e.g., "user.created").
+
+  // processWebhook(event: WebhookEvent): Promise<boolean>
+  //   - Verify signature: verifySignature(event.id, event.signature, server.secret)
+  //   - Deduplicate by event.id (skip already-processed events)
+  //   - Call the registered handler for event.type
+  //   - Return true if processed, false if invalid/duplicate/no handler
+
+  // getProcessedEvents(): string[]
+  //   Return IDs of all successfully processed events, in order.
   onEvent(eventType: string, handler: (event: WebhookEvent) => Promise<void>): void {
-    throw new Error("TODO: implement onEvent");
+    this.eventHandlers.set(eventType, handler);
   }
+  // REVIEW: Clean one-liner.
 
   async processWebhook(event: WebhookEvent): Promise<boolean> {
-    throw new Error("TODO: implement processWebhook");
+    const handler = this.eventHandlers.get(event.type)!;
+    if (verifySignature(event.id, event.signature, this.server.secret) && handler && !this.processedEvents.includes(event.id)) {
+      await handler(event);
+      this.processedEvents.push(event.id);
+      return true
+    }
+    return false
   }
+  // REVIEW: Works but has a subtle ordering issue. Line 272 does
+  // `this.eventHandlers.get(event.type)!` with a non-null assertion
+  // BEFORE checking if the handler exists. The `!` would mask a
+  // type error if handler were used before the `&& handler` check.
+  // It works at runtime because `&&` short-circuits, but the `!`
+  // is lying to TypeScript.
+  //
+  // The compound `if` on line 273 packs 3 checks into one line.
+  // Under interview pressure, guard clauses are easier to read
+  // and debug:
+  //
+  //   if (!verifySignature(event.id, event.signature, this.server.secret)) return false;
+  //   if (this.processedEvents.includes(event.id)) return false;
+  //   const handler = this.eventHandlers.get(event.type);
+  //   if (!handler) return false;
+  //   await handler(event);
+  //   this.processedEvents.push(event.id);
+  //   return true;
+  //
+  // Also: processedEvents.includes() is O(n) per call. Fine for this
+  // drill, but in a real system you'd use a Set for O(1) dedup.
+  // An interviewer might ask about scaling this.
 
   getProcessedEvents(): string[] {
-    throw new Error("TODO: implement getProcessedEvents");
+    return this.processedEvents;
   }
+  // REVIEW: Returns the internal array directly. A caller doing
+  // getProcessedEvents().push("fake") would corrupt your state.
+  // Return a copy: `return [...this.processedEvents]`.
+  // Small thing but interviewers notice it — shows you think about
+  // API boundaries.
 }
 
 // ─── Self-Checks (do not edit below this line) ──────────────────
@@ -320,15 +403,15 @@ function check(label: string, actual: unknown, expected: unknown): void {
   }
 }
 
-function level(name: string, fn: () => Promise<void>): Promise<void> {
+function part(name: string, fn: () => Promise<void>): Promise<void> {
   return new Promise((resolve) => {
     console.log(name);
     fn()
       .then(resolve)
       .catch((e) => {
         const msg = e instanceof Error ? e.message : String(e);
-        if (msg.startsWith("TODO:")) {
-          console.log(`  ○ ${msg}`);
+        if (msg.startsWith("TODO") || msg.includes("is not a function")) {
+          console.log(`  ○ not yet implemented`);
         } else {
           _failed++;
           console.log(`  ✗ ${msg}`);
@@ -339,51 +422,32 @@ function level(name: string, fn: () => Promise<void>): Promise<void> {
 }
 
 async function runSelfChecks(): Promise<void> {
-  await level("Level 1 — Basic CRUD", async () => {
+  await part("Part 1 — Requests & Pagination", async () => {
     const server = new FakeServer();
     const client = new ApiClient(server);
 
-    const users = await client.listUsers();
-    check("list returns array", Array.isArray(users), true);
-    check("list has users", users.length > 0, true);
-
-    const user = await client.getUser("usr_001");
-    check("get user", user?.name, "User 1");
-    check("get missing", await client.getUser("usr_999"), null);
-
-    const created = await client.createUser("New User", "new@test.com");
-    check("create name", created.name, "New User");
-    check("create email", created.email, "new@test.com");
-    check("create has id", created.id.startsWith("usr_"), true);
-
-    const updated = await client.updateUser(created.id, { name: "Updated" });
-    check("update name", updated?.name, "Updated");
-    check("update missing", await client.updateUser("usr_999", { name: "X" }), null);
-
-    check("delete", await client.deleteUser(created.id), true);
-    check("delete missing", await client.deleteUser("usr_999"), false);
-    check("get after delete", await client.getUser(created.id), null);
-  });
-
-  await level("Level 2 — Pagination & Search", async () => {
-    const server = new FakeServer();
-    const client = new ApiClient(server);
-
+    // Paginate through all seeded users
     const allUsers = await client.listAllUsers();
     check("all users count", allUsers.length, 25);
     check("sorted by id", allUsers[0].id, "usr_001");
     check("last user", allUsers[24].id, "usr_025");
 
-    const found = await client.findByEmail("user5@example.com");
-    check("find by email", found?.name, "User 5");
-    check("find missing email", await client.findByEmail("nope@nope.com"), null);
+    // Get single user
+    const user = await client.getUser("usr_001");
+    check("get user", user?.name, "User 1");
+    check("get missing", await client.getUser("usr_999"), null);
+
+    // Create user
+    const created = await client.createUser("New User", "new@test.com");
+    check("create name", created.name, "New User");
+    check("create has id", created.id.startsWith("usr_"), true);
   });
 
-  await level("Level 3 — Idempotency & Retry", async () => {
+  await part("Part 2 — Retry & Idempotency", async () => {
     const server = new FakeServer();
     const client = new ApiClient(server);
 
-    // createUserSafe should retry on 500 and succeed
+    // createUserSafe should handle server 500s
     const user = await client.createUserSafe("Safe User", "safe@test.com", "idem_key_1");
     check("safe create", user.name, "Safe User");
 
@@ -399,7 +463,7 @@ async function runSelfChecks(): Promise<void> {
     check("retry result", result, "ok");
     check("retry attempts", attempts, 3);
 
-    // withRetry exhausted
+    // Exhausted retries should throw
     let threw = false;
     try {
       await client.withRetry(async () => {
@@ -411,7 +475,7 @@ async function runSelfChecks(): Promise<void> {
     check("retry exhausted throws", threw, true);
   });
 
-  await level("Level 4 — Webhook Processing", async () => {
+  await part("Part 3 — Webhook Processing", async () => {
     const server = new FakeServer();
     const client = new ApiClient(server);
 
@@ -431,9 +495,9 @@ async function runSelfChecks(): Promise<void> {
 
     // Bad signature
     const badEvt = server.makeBadEvent("user.created", { name: "Evil" });
-    check("bad sig", await client.processWebhook(badEvt), false);
+    check("bad sig rejected", await client.processWebhook(badEvt), false);
 
-    // No handler
+    // No handler registered
     const evt2 = server.makeEvent("user.deleted", { id: "usr_001" });
     check("no handler", await client.processWebhook(evt2), false);
 

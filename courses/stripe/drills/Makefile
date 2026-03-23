@@ -1,4 +1,4 @@
-.PHONY: toolbox d1 d2 d3 d4 d5 d6 d7 d8 d9 d10
+.PHONY: toolbox d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13
 
 toolbox:
 	npx tsx toolbox.ts
@@ -33,4 +33,13 @@ d9:
 d10:
 	npx tsx drill_10_event_scheduler.ts
 
-all: d1 d2 d3 d4 d5 d6 d7 d8 d9 d10
+d11:
+	npx tsx drill_11_csv_report.ts
+
+d12:
+	npx tsx drill_12_fee_calculator.ts
+
+d13:
+	npx tsx drill_13_charge_client.ts
+
+all: d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13
