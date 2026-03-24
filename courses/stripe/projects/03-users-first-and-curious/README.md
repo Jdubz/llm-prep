@@ -150,20 +150,20 @@ _____________________________________________________________
 
 ```
 Situation:
-_____________________________________________________________
+The engineering team had decided that Elastic no longer met our needs as a logging platform. It only captured 60-80% of the logs, and became cost prohibitive at the scale that we needed. The on-prem warehouse systems generated a massive amount of logs and metrics.
 
 Task:
-_____________________________________________________________
+I was tasked with refactoring the logging service in the cloud API to be compatible with Grafana / Loki / Prometheus (Promtail). The original ask was merely to get it working so that 100% of our logs were captured and searchable.
 
 Action:
-_____________________________________________________________
-_____________________________________________________________
+During the refactor I noticed that a significant number of our logs were unstructured strings, and encoded line breaks in json structures, making the bulk of the log searches disconnected and difficult to organize. In order to properly leverage the power and composability of Grafana dashboards the logs needed to be JSON structured with predictable keys.
+I took the time to add additional optional arguments to the logging service. These were backwards compatible, and offered searchable fields, enabling custom dashboards for specific tasks and users. Including partners using our systems.
 
 Result:
-_____________________________________________________________
+After re-organizing and de-duplicating logger calls I reduced log volume by 60%, while greatly increasing observability. The developers took a minute to get used to the new log format, but quickly cut the time to resolution in half for most issues. The Grafana dashboards quickly became a key feature that all engineers and operators were trained on.
 
 What sparked the curiosity? Where did it lead you that you didn't expect?
-_____________________________________________________________
+When some of the most powerful features of the Grafana stack were difficult or impossible to implement I knew that there was a deeper issue with our logging beyond the logging service and ingestion pipeline. I did not expect to be training the rest of the team on logging best practices and advocating for migrating away from deprecated formats. Some of the old habits went deep in the team, but they quickly came around once they experienced the observability improvements.
 ```
 
 ### Story 6: Changing approach based on new information

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mock Interview Guide — Stripe TSE</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif; color:#1a1a1a; padding:20px; max-width:780px; margin:0 auto; line-height:1.6; font-size:15px; background:#fafafa; }
+  h1 { font-size:22px; text-align:center; margin-bottom:4px; }
+  .subtitle { text-align:center; color:#666; font-size:13px; margin-bottom:20px; }
+
+  /* Tabs */
+  .tabs { display:flex; gap:8px; margin-bottom:20px; position:sticky; top:0; background:#fafafa; padding:10px 0; z-index:10; border-bottom:2px solid #ddd; }
+  .tab { flex:1; padding:10px; text-align:center; border:1px solid #ccc; border-radius:8px; cursor:pointer; font-weight:600; font-size:14px; background:#fff; transition:all 0.15s; }
+  .tab:hover { background:#f0f0f0; }
+  .tab.active { background:#635bff; color:#fff; border-color:#635bff; }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* Timer */
+  .timer-bar { background:#fff; border:1px solid #ddd; border-radius:8px; padding:12px 16px; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+  .timer-display { font-size:28px; font-weight:700; font-variant-numeric:tabular-nums; min-width:80px; }
+  .timer-btn { padding:8px 16px; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; }
+  .timer-start { background:#635bff; color:#fff; }
+  .timer-start:hover { background:#7a73ff; }
+  .timer-reset { background:#eee; color:#333; }
+  .timer-warn { color:#e6a23c; }
+  .timer-danger { color:#e74c3c; }
+
+  /* Content */
+  h2 { font-size:18px; margin:24px 0 12px; padding-bottom:6px; border-bottom:2px solid #333; }
+  h3 { font-size:15px; margin:18px 0 8px; }
+  p { margin-bottom:10px; }
+  ol, ul { margin-bottom:12px; padding-left:24px; }
+  li { margin-bottom:6px; }
+
+  /* Prompt cards */
+  .prompt { background:#f5f0ff; border-left:4px solid #635bff; padding:12px 16px; margin:10px 0; border-radius:0 8px 8px 0; cursor:pointer; position:relative; }
+  .prompt::after { content:'▶ tap to reveal'; position:absolute; right:12px; top:12px; font-size:11px; color:#999; }
+  .prompt.revealed::after { content:''; }
+  .prompt .followups { display:none; margin-top:10px; padding-top:10px; border-top:1px solid #ddd; }
+  .prompt.revealed .followups { display:block; }
+  .followup { background:#fff8f0; border-left:3px solid #e6a23c; padding:8px 12px; margin:6px 0; border-radius:0 6px 6px 0; font-size:13px; }
+
+  .redflag { background:#fff0f0; border-left:3px solid #e74c3c; padding:10px 14px; margin:12px 0; border-radius:0 8px 8px 0; font-size:13px; }
+  .note { background:#f0f4ff; border-left:3px solid #3498db; padding:10px 14px; margin:12px 0; border-radius:0 8px 8px 0; font-size:13px; }
+
+  /* Scoring */
+  .score-row { background:#fff; border:1px solid #ddd; border-radius:8px; padding:12px 16px; margin:8px 0; }
+  .score-label { font-weight:600; margin-bottom:6px; }
+  .score-buttons { display:flex; gap:6px; }
+  .score-btn { width:60px; padding:8px; text-align:center; border:2px solid #ddd; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.15s; background:#fff; }
+  .score-btn:hover { border-color:#635bff; }
+  .score-btn.selected { background:#635bff; color:#fff; border-color:#635bff; }
+  .score-desc { font-size:11px; color:#666; margin-top:2px; }
+  .total-score { font-size:20px; font-weight:700; text-align:center; padding:16px; background:#fff; border:2px solid #635bff; border-radius:8px; margin:16px 0; }
+
+  /* Notes */
+  .notes-area { width:100%; min-height:80px; border:1px solid #ddd; border-radius:8px; padding:10px; font-family:inherit; font-size:13px; resize:vertical; margin:8px 0; }
+
+  /* Debrief */
+  .debrief-q { background:#fff; border:1px solid #ddd; border-radius:8px; padding:12px 16px; margin:8px 0; }
+  .debrief-q p { font-weight:600; margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<h1>Mock Interview Guide</h1>
+<p class="subtitle">Stripe TSE behavioral interviews — tap prompts to reveal follow-ups</p>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('round1')">Round 1: Experience</div>
+  <div class="tab" onclick="showTab('round2')">Round 2: Users & Curious</div>
+  <div class="tab" onclick="showTab('debrief')">Debrief</div>
+</div>
+
+<!-- ════════════════ ROUND 1 ════════════════ -->
+<div id="round1" class="tab-content active">
+
+<div class="timer-bar">
+  <div class="timer-display" id="timer1">45:00</div>
+  <button class="timer-btn timer-start" onclick="toggleTimer('timer1', 45)">Start</button>
+  <button class="timer-btn timer-reset" onclick="resetTimer('timer1', 45)">Reset</button>
+  <span style="flex:1"></span>
+  <span style="font-size:12px;color:#999">45 min round</span>
+</div>
+
+<h2>Experience &amp; Goals</h2>
+<p>You're evaluating: <strong>career fit, communication, and technical depth.</strong> You want to understand what this person actually DID (not the team), what was hard, and what they learned.</p>
+
+<h3>Opening (5 min)</h3>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>1.</strong> "Tell me about yourself and what you're looking for in your next role."
+  <div class="followups">
+    <p style="font-size:13px;color:#666">Listen for: Is it under 2 minutes? Does it connect their past to why they want THIS role?</p>
+  </div>
+</div>
+
+<h3>Project Deep Dive (25 min)</h3>
+<p>Pick ONE of these, then drill into it for the full 25 minutes:</p>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>2.</strong> "Tell me about the most technically challenging project you've worked on."
+  <div class="followups">
+    <div class="followup">"What was YOUR specific role vs the team's?"</div>
+    <div class="followup">"Walk me through the technical architecture — what components were involved?"</div>
+    <div class="followup">"What was the hardest technical decision? What alternatives did you consider?"</div>
+    <div class="followup">"What constraints were you working under?"</div>
+    <div class="followup">"What did you sacrifice and why?"</div>
+    <div class="followup">"What broke or went wrong? How did you handle it?"</div>
+    <div class="followup">"What was the measurable outcome? Can you put a number on it?"</div>
+    <div class="followup">"What would you do differently if you did it again?"</div>
+    <div class="followup">"How did your work make other people more effective?"</div>
+  </div>
+</div>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>3.</strong> "Tell me about a technical contribution that allowed others to be successful."
+  <div class="followups">
+    <div class="followup">"Who specifically benefited? How do you know?"</div>
+    <div class="followup">"What would have happened if you hadn't done this?"</div>
+    <div class="followup">"Did anyone push back on your approach?"</div>
+  </div>
+</div>
+
+<h3>Career &amp; Motivation (10 min)</h3>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>4.</strong> "Why Stripe? Why this role specifically — not a regular software engineering role?"
+  <div class="followups">
+    <div class="followup">Listen for: personal connection to developer experience, not just "great company"</div>
+  </div>
+</div>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>5.</strong> "Tell me about a time you disagreed with a team decision. What happened?"
+  <div class="followups">
+    <div class="followup">"How did you handle the disagreement?"</div>
+    <div class="followup">"Were you right? How did it turn out?"</div>
+    <div class="followup">"What would you do differently now?"</div>
+  </div>
+</div>
+
+<h3>Candidate Questions (5 min)</h3>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>6.</strong> "What questions do you have for me?"
+  <div class="followups">
+    <p style="font-size:13px;color:#666">If they have no questions, or only generic ones ("what's the culture like?"), that's a weak signal. Good candidates ask specific questions about the team, work, or challenges.</p>
+  </div>
+</div>
+
+<h3>Notes</h3>
+<textarea class="notes-area" placeholder="Write your notes here during the interview..."></textarea>
+
+<h3>Scoring</h3>
+<p style="font-size:13px;color:#666;margin-bottom:12px">Tap a score for each signal:</p>
+
+<div class="score-row">
+  <div class="score-label">Owns their contribution</div>
+  <div class="score-desc">Can they distinguish what THEY did from what the team did?</div>
+  <div class="score-buttons" data-group="r1_owns">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Says "we"</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Vague</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Clear</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Specific + numbers</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Technical depth</div>
+  <div class="score-desc">Can they explain WHY they made decisions, not just WHAT they built?</div>
+  <div class="score-buttons" data-group="r1_depth">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Can't explain</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">What, not why</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Trade-offs</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Deep insight</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Handles follow-ups</div>
+  <div class="score-desc">Does the story get better or worse when you dig deeper?</div>
+  <div class="score-buttons" data-group="r1_followup">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Flustered</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Fine</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Adds detail</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Gets better</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Lessons learned</div>
+  <div class="score-desc">Can they name what they'd do differently and WHY?</div>
+  <div class="score-buttons" data-group="r1_lessons">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">"No changes"</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Vague</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Specific alt</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Broad lesson</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Why Stripe / TSE</div>
+  <div class="score-desc">Is their reason specific to Stripe, or could it apply to any company?</div>
+  <div class="score-buttons" data-group="r1_why">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Generic</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Researched</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Personal</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Lived it</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Communication</div>
+  <div class="score-desc">Clear, concise, answers the question asked?</div>
+  <div class="score-buttons" data-group="r1_comm">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Rambles</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Needs help</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Clear</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Excellent</span></div>
+  </div>
+</div>
+
+<div class="total-score">Round 1 Total: <span id="r1_total">— / 24</span></div>
+
+<div class="redflag"><strong>Red flags to watch for:</strong>
+<ul style="margin-top:4px">
+<li>Story longer than 3 minutes before you can ask a follow-up</li>
+<li>Can't name a specific technical decision</li>
+<li>Says "we" exclusively, never "I"</li>
+<li>"Why Stripe" could apply to any tech company</li>
+<li>Gets defensive about "what would you do differently"</li>
+<li>No questions for the interviewer</li>
+</ul></div>
+
+</div>
+
+<!-- ════════════════ ROUND 2 ════════════════ -->
+<div id="round2" class="tab-content">
+
+<div class="timer-bar">
+  <div class="timer-display" id="timer2">35:00</div>
+  <button class="timer-btn timer-start" onclick="toggleTimer('timer2', 35)">Start</button>
+  <button class="timer-btn timer-reset" onclick="resetTimer('timer2', 35)">Reset</button>
+  <span style="flex:1"></span>
+  <span style="font-size:12px;color:#999">35 min round</span>
+</div>
+
+<h2>Users First &amp; Curious</h2>
+<p>You're evaluating two qualities: <strong>(1) Do they think about the user first?</strong> and <strong>(2) Are they genuinely curious?</strong></p>
+
+<div class="note"><strong>IMPORTANT:</strong> Stories must have ZERO overlap with Round 1. If they reuse a story, say: "You mentioned that earlier — can you give me a different example?"</div>
+
+<h3>Prompts — Ask 4 or 5 of these (~7 min each)</h3>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>1.</strong> "Tell me about a time you designed a solution starting from the user's perspective rather than the technical architecture."
+  <div class="followups">
+    <div class="followup">"What surprised you about the user's perspective?"</div>
+    <div class="followup">"How did you validate that your solution actually solved their problem?"</div>
+  </div>
+</div>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>2.</strong> "Tell me about a time you proactively identified a UX or developer experience issue that nobody asked you to fix."
+  <div class="followups">
+    <div class="followup">"How did you notice the problem? What made you dig in?"</div>
+    <div class="followup">"What would have happened if you hadn't done anything?"</div>
+  </div>
+</div>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>3.</strong> "Tell me about a time you went deep on something out of pure curiosity — not because anyone asked you to."
+  <div class="followups">
+    <div class="followup">"What sparked the curiosity?"</div>
+    <div class="followup">"Where did it lead you that you didn't expect?"</div>
+    <div class="followup">"Did anything you learned change how the team works?"</div>
+  </div>
+</div>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>4.</strong> "Tell me about a time you changed your approach based on new information. What made you willing to change course?"
+  <div class="followups">
+    <div class="followup">"What assumption did you have going in that turned out to be wrong?"</div>
+    <div class="followup">"If a teammate proposed the original approach, how would you convince them to change?"</div>
+  </div>
+</div>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>5.</strong> "Tell me about a time you had to balance what the user wanted against what was technically feasible."
+  <div class="followups">
+    <div class="followup">"How did you figure out what they actually needed vs what they asked for?"</div>
+    <div class="followup">"Were they happy with the outcome?"</div>
+  </div>
+</div>
+
+<div class="prompt" onclick="this.classList.toggle('revealed')">
+  <strong>6.</strong> "Describe a time you learned something unexpected from a user or stakeholder interaction."
+  <div class="followups">
+    <div class="followup">"What did you learn that you still carry today?"</div>
+    <div class="followup">"How did it change your approach going forward?"</div>
+  </div>
+</div>
+
+<h3>Notes</h3>
+<textarea class="notes-area" placeholder="Write your notes here during the interview..."></textarea>
+
+<h3>Scoring</h3>
+
+<div class="score-row">
+  <div class="score-label">Users First</div>
+  <div class="score-desc">Did the user's need drive the decision, or was it an afterthought?</div>
+  <div class="score-buttons" data-group="r2_users">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Afterthought</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Mentioned</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">User drove it</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Went to user</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Proactive</div>
+  <div class="score-desc">Did they act on their own, or wait to be asked?</div>
+  <div class="score-buttons" data-group="r2_proactive">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Assigned</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Noticed, waited</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Acted alone</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Found + fixed</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Curiosity</div>
+  <div class="score-desc">Did they dig in beyond what was required?</div>
+  <div class="score-buttons" data-group="r2_curious">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Minimum</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Required</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Beyond req</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Unexpected</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Adaptability</div>
+  <div class="score-desc">Can they name what they got wrong and what changed their mind?</div>
+  <div class="score-buttons" data-group="r2_adapt">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">"I was right"</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Changed, vague</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Clear pivot</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Named mistake</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">Concrete results</div>
+  <div class="score-desc">Do they have numbers, or just "people liked it"?</div>
+  <div class="score-buttons" data-group="r2_results">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">No outcome</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Qualitative</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Has numbers</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Numbers + ripple</span></div>
+  </div>
+</div>
+
+<div class="score-row">
+  <div class="score-label">No story overlap</div>
+  <div class="score-desc">Are these completely different stories from Round 1?</div>
+  <div class="score-buttons" data-group="r2_overlap">
+    <div class="score-btn" onclick="score(this)" data-val="1">1<br><span style="font-size:9px">Same story</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="2">2<br><span style="font-size:9px">Same theme</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="3">3<br><span style="font-size:9px">Different</span></div>
+    <div class="score-btn" onclick="score(this)" data-val="4">4<br><span style="font-size:9px">Complement</span></div>
+  </div>
+</div>
+
+<div class="total-score">Round 2 Total: <span id="r2_total">— / 24</span></div>
+
+<div class="redflag"><strong>Red flags to watch for:</strong>
+<ul style="margin-top:4px">
+<li>Every story starts with "I was asked to..." (not proactive)</li>
+<li>Can't name what the USER needed — only what the SYSTEM needed</li>
+<li>"Curiosity" story is actually just doing their job</li>
+<li>"Changed approach" story doesn't name the wrong assumption</li>
+<li>Stories overlap with Round 1</li>
+<li>Can't answer "what surprised you about the user"</li>
+</ul></div>
+
+</div>
+
+<!-- ════════════════ DEBRIEF ════════════════ -->
+<div id="debrief" class="tab-content">
+
+<h2>Debrief — Discuss Together</h2>
+
+<div class="debrief-q">
+  <p>1. Which story was the strongest? Why?</p>
+  <textarea class="notes-area" placeholder="Notes..."></textarea>
+</div>
+
+<div class="debrief-q">
+  <p>2. Which story fell apart under follow-up questions?</p>
+  <textarea class="notes-area" placeholder="Notes..."></textarea>
+</div>
+
+<div class="debrief-q">
+  <p>3. Were there any stories that overlapped between the two rounds?</p>
+  <textarea class="notes-area" placeholder="Notes..."></textarea>
+</div>
+
+<div class="debrief-q">
+  <p>4. Did any answer feel rehearsed vs authentic?</p>
+  <textarea class="notes-area" placeholder="Notes..."></textarea>
+</div>
+
+<div class="debrief-q">
+  <p>5. Was there a moment where they got defensive instead of reflective?</p>
+  <textarea class="notes-area" placeholder="Notes..."></textarea>
+</div>
+
+<div class="debrief-q">
+  <p>6. Could they name specific things THEY did (not the team)?</p>
+  <textarea class="notes-area" placeholder="Notes..."></textarea>
+</div>
+
+<div class="debrief-q">
+  <p>7. Overall: would you want to work with this person?</p>
+  <textarea class="notes-area" placeholder="Notes..."></textarea>
+</div>
+
+<h3>Final Scores</h3>
+<div class="total-score">
+  Round 1: <span id="final_r1">—</span> / 24<br>
+  Round 2: <span id="final_r2">—</span> / 24<br>
+  <strong>Combined: <span id="final_total">—</span> / 48</strong>
+</div>
+
+<table style="font-size:13px">
+<tr><th>Score per round</th><th>Assessment</th></tr>
+<tr><td>12–16</td><td><strong>Not ready.</strong> Stories need more specifics, numbers, and "what I learned."</td></tr>
+<tr><td>17–20</td><td><strong>Borderline.</strong> Stories are there but lack depth. Practice follow-ups.</td></tr>
+<tr><td>21–24</td><td><strong>Strong.</strong> Clear, holds up under pressure.</td></tr>
+</table>
+
+</div>
+
+<script>
+// Tabs
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Scoring
+function score(btn) {
+  btn.parentElement.querySelectorAll('.score-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  updateTotals();
+}
+
+function updateTotals() {
+  let r1 = 0, r1count = 0;
+  document.querySelectorAll('[data-group^="r1_"] .score-btn.selected').forEach(b => { r1 += +b.dataset.val; r1count++; });
+  document.getElementById('r1_total').textContent = r1count ? `${r1} / 24` : '— / 24';
+  document.getElementById('final_r1').textContent = r1count ? r1 : '—';
+
+  let r2 = 0, r2count = 0;
+  document.querySelectorAll('[data-group^="r2_"] .score-btn.selected').forEach(b => { r2 += +b.dataset.val; r2count++; });
+  document.getElementById('r2_total').textContent = r2count ? `${r2} / 24` : '— / 24';
+  document.getElementById('final_r2').textContent = r2count ? r2 : '—';
+
+  if (r1count && r2count) {
+    document.getElementById('final_total').textContent = r1 + r2;
+  }
+}
+
+// Timer
+const timers = {};
+function toggleTimer(id, minutes) {
+  const el = document.getElementById(id);
+  const btn = el.parentElement.querySelector('.timer-start');
+  if (timers[id]?.running) {
+    clearInterval(timers[id].interval);
+    timers[id].running = false;
+    btn.textContent = 'Resume';
+  } else {
+    if (!timers[id]) timers[id] = { seconds: minutes * 60, running: false };
+    timers[id].running = true;
+    btn.textContent = 'Pause';
+    timers[id].interval = setInterval(() => {
+      timers[id].seconds--;
+      if (timers[id].seconds <= 0) {
+        clearInterval(timers[id].interval);
+        timers[id].seconds = 0;
+        timers[id].running = false;
+        btn.textContent = 'Done';
+        el.classList.add('timer-danger');
+      }
+      const m = Math.floor(timers[id].seconds / 60);
+      const s = timers[id].seconds % 60;
+      el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+      el.classList.remove('timer-warn', 'timer-danger');
+      if (timers[id].seconds <= 300 && timers[id].seconds > 60) el.classList.add('timer-warn');
+      if (timers[id].seconds <= 60) el.classList.add('timer-danger');
+    }, 1000);
+  }
+}
+function resetTimer(id, minutes) {
+  if (timers[id]?.interval) clearInterval(timers[id].interval);
+  timers[id] = null;
+  const el = document.getElementById(id);
+  el.textContent = `${minutes}:00`;
+  el.classList.remove('timer-warn', 'timer-danger');
+  el.parentElement.querySelector('.timer-start').textContent = 'Start';
+}
+</script>
+
+</body>
+</html>

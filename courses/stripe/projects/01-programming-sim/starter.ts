@@ -66,8 +66,48 @@ export function calculateFees(
   transactions: Transaction[],
   feeSchedule: FeeRule[],
 ): Map<string, MerchantSummary> {
-  throw new Error("TODO: implement calculateFees");
+  const rules = new Map(feeSchedule.map(fr => [fr.type, fr]));
+  const merchants: Map<string, MerchantSummary> = transactions.reduce<Map<string, MerchantSummary>>((merch, t) => {
+    let merchant = merch.get(t.merchant);
+    if (!merchant) {
+      merchant = {
+        totalVolume: 0,
+        totalFees: 0,
+        transactionCount: 0,
+      }
+      merch.set(t.merchant, merchant);
+    }
+
+    merchant.totalVolume += t.amount;
+    merchant.transactionCount++;
+
+    const rule = rules.get(t.type)!;
+    const fee = rule.flatFee + Math.ceil(t.amount * rule.percentFee / 10000);
+
+    merchant.totalFees += fee;
+
+    return merch; 
+  }, new Map());
+  return merchants;
 }
+// REVIEW: Correct. Good: pre-indexing feeSchedule into a Map (line 69)
+// so lookups are O(1). Good: mutating the merchant object in-place
+// instead of re-creating it every iteration.
+//
+// Two issues:
+// 1. Line 84: `rules.get(t.type)!` — if a transaction has an unknown
+//    type, this crashes. In Part 1 the data is clean, but Part 3 adds
+//    invalid types. You ended up filtering before calling this function
+//    in Part 3 (correct), but a guard here would make calculateFees
+//    independently safe.
+//
+// 2. The reduce is harder to read than a for-of under interview
+//    pressure. Same logic, simpler:
+//      const merchants = new Map<string, MerchantSummary>();
+//      for (const t of transactions) { ... }
+//      return merchants;
+//    Fewer generics to type, easier to debug. Save reduce for
+//    one-liners.
 
 // ─── Part 2 — Tiered Volume Discounts ────────────────────────────
 
@@ -75,8 +115,45 @@ export function applyVolumeDiscounts(
   summaries: Map<string, MerchantSummary>,
   tiers: VolumeTier[],
 ): Map<string, DiscountedSummary> {
-  throw new Error("TODO: implement applyVolumeDiscounts");
+  
+  const discountMap = new Map(Array.from(summaries.entries()).map(([merch, sum]) => {
+    let tier = tiers[0];
+    for (const t of tiers) {
+      if (t.upTo >= sum.totalVolume) {
+        tier = t;
+        break;
+      }
+    }
+
+    const discSum: DiscountedSummary = {
+      ...sum,
+      discountPercent: tier!.discountPercent,
+      discountedFees: sum.totalFees - (sum.totalFees / 100) * tier!.discountPercent,
+    }
+
+    return [merch, discSum]
+  }));
+
+  return discountMap;
+
 }
+// REVIEW: Tier selection logic is now correct (you fixed the
+// inversion). Clean loop.
+//
+// Two issues:
+// 1. Line 113: `sum.totalFees - (sum.totalFees / 100) * tier.discountPercent`
+//    uses floating point division. For m3: 7205 / 100 = 72.05,
+//    72.05 * 20 = 1441.0 — works here, but other values could produce
+//    floating point artifacts (e.g., 72.05000000001). The test comments
+//    say floor(), and Stripe convention is to work in integer cents.
+//    Safer: `Math.floor(sum.totalFees * tier.discountPercent / 100)`
+//
+// 2. `Array.from(summaries.entries()).map(...)` then `new Map(...)` is
+//    verbose. A for-of loop building the result Map is simpler and
+//    avoids the tuple-typing issue where `[merch, discSum]` loses its
+//    type information (Map constructor infers `[string, unknown]`).
+//
+// 3. You removed the console.logs from the debug session — good.
 
 // ─── Part 3 — Transaction Validation & Rejection ─────────────────
 
@@ -85,8 +162,60 @@ export function processTransactions(
   feeSchedule: FeeRule[],
   tiers: VolumeTier[],
 ): ProcessingResult {
-  throw new Error("TODO: implement processTransactions");
+  // split valid vs invalid transactions
+  // run calculateFees and applyDiscounts.
+  const fees = new Set(Array.from(feeSchedule.map(f => f.type)));
+  const validT = [];
+  const invalid: RejectedTransaction[] = [];
+  for (const t of transactions) {
+    if (t.amount < 0 || t.amount >= 999999) {
+      invalid.push({
+        id: t.id,
+        reason: 'invalid_amount',
+      });
+      continue;
+    }
+    if (t.currency.length !== 3 || t.currency !== t.currency.toUpperCase()) {
+      invalid.push({
+        id: t.id,
+        reason: 'invalid_currency',
+      });
+      continue;
+    }
+    if (!fees.has(t.type)) {
+      invalid.push({
+        id: t.id,
+        reason: 'invalid_type',
+      });
+      continue;
+    }
+    validT.push(t);
+  }
+
+  const merchFees = calculateFees(validT, feeSchedule);
+  const merchD = applyVolumeDiscounts(merchFees, tiers);
+
+  return {
+    processed: merchD,
+    rejected: invalid,
+  }
+
 }
+// REVIEW: Excellent. This is your cleanest function. The structure
+// is perfect: validate → filter → reuse Parts 1+2. This is exactly
+// what the interviewer wants to see — you didn't reimplement fee
+// calculation, you composed existing functions.
+//
+// One issue: line 136 uses `t.amount >= 999999` as the upper bound.
+// This is a magic number — how did you know the max? If it came from
+// the test data (t12 is 1000000), you reverse-engineered the boundary
+// from the tests. In an interview, ask: "What's the maximum valid
+// amount?" The spec should tell you. If it doesn't, state your
+// assumption aloud: "I'll assume amounts must be under 1M cents."
+//
+// Minor: `new Set(Array.from(feeSchedule.map(...)))` on line 132 —
+// the Array.from is unnecessary. `new Set(feeSchedule.map(f => f.type))`
+// works directly.
 
 // ─── Part 4 — Settlement Report ──────────────────────────────────
 
@@ -94,8 +223,82 @@ export function generateSettlement(
   transactions: Transaction[],
   feeSchedule: FeeRule[],
 ): SettlementEntry[] {
-  throw new Error("TODO: implement generateSettlement");
+  const rules = new Map(feeSchedule.map(fr => [fr.type, fr]));
+  const merchantTMap = transactions.reduce<Map<string, Map<string, Transaction[]>>>((merchMap, t) => {
+    if (!rules.has(t.type)) return merchMap;
+    let merchant = merchMap.get(t.merchant);
+    if (!merchant) {
+      merchant = new Map();
+      merchMap.set(t.merchant, merchant);
+    }
+    let currency = merchant.get(t.currency);
+    if (!currency) {
+      currency = [];
+      merchant.set(t.currency, currency);
+    }
+    currency.push(t);
+
+    return merchMap;
+
+  }, new Map());
+
+  const setEntries = Array.from(merchantTMap.entries()).reduce<SettlementEntry[]>((allEntries, [mId, m]) => {
+    m.forEach((t, k) => {
+      const fees = calculateFees(t, feeSchedule);
+      const merch = fees.get(mId)!;
+      
+      allEntries.push({ merchant: mId, currency: k, grossVolume: merch.totalVolume, totalFees: merch.totalFees, netAmount: merch.totalVolume - merch.totalFees });
+    })
+    return allEntries;
+  }, []);
+
+  setEntries.sort((a, b) => {
+    if (a.merchant === b.merchant) {
+      return a.currency.localeCompare(b.currency);
+    }
+    return(a.merchant.localeCompare(b.merchant));
+  });
+
+  return setEntries;
 }
+// REVIEW: Correct and well-structured. Group by merchant+currency,
+// then compute fees per group by reusing calculateFees. Good
+// instinct to reuse Part 1's function instead of reimplementing.
+//
+// The sort at the end (merchant asc, currency asc) is clean.
+//
+// Two improvements for speed:
+//
+// 1. The double-reduce (lines 177-203) is hard to follow. First
+//    reduce builds Map<merchant, Map<currency, Transaction[]>>,
+//    second reduce flattens it. A single for-of building a
+//    Map<"merchant|currency", {volume, fees}> would be simpler:
+//
+//      const groups = new Map<string, SettlementEntry>();
+//      for (const t of transactions) {
+//        const key = `${t.merchant}|${t.currency}`;
+//        let entry = groups.get(key);
+//        if (!entry) { entry = { merchant: t.merchant, currency: t.currency, grossVolume: 0, totalFees: 0, netAmount: 0 }; groups.set(key, entry); }
+//        const rule = rules.get(t.type)!;
+//        const fee = rule.flatFee + Math.ceil(t.amount * rule.percentFee / 10000);
+//        entry.grossVolume += t.amount;
+//        entry.totalFees += fee;
+//      }
+//      // compute net, sort, return
+//
+//    One pass, no nested Maps, no calling calculateFees per group.
+//
+// 2. You're calling calculateFees once per (merchant, currency) group
+//    (line 197). That works but creates a Map with a single entry
+//    each time — overhead for a function designed for batch processing.
+//    Computing the fee inline (like Part 1 does internally) is faster
+//    to type and avoids the indirection.
+//
+// Overall: all 4 parts pass, you reused Parts 1+2 in Part 3, and
+// the code is readable. In an interview, this is a pass. The main
+// feedback is: prefer for-of over reduce for multi-step logic —
+// it's faster to type, easier to debug live, and an interviewer
+// can follow it without parsing generic type parameters.
 
 // ─── Self-Checks (do not edit below this line) ──────────────────
 

@@ -8,7 +8,19 @@
 
 The Integration Exercise is a practical coding round. In the real interview, you clone an existing repo that has a partially-built service, read the API documentation for an external service, and extend the codebase by making HTTP requests to a running server. The work is ETL-shaped: read data from APIs, transform it, store results, handle errors.
 
-This simulation mirrors that format. The "existing codebase" is `server.ts`. The "external API" is the `PaymentProvider` class (standing in for a real HTTP service). Your implementation goes in `starter.ts`.
+This simulation mirrors that format. The "existing codebase" is `server.ts` — a real Express app with existing routes, existing tests, and a PaymentAPI class. Your implementation goes in `starter.ts`.
+
+### Setup
+
+```
+cd courses/stripe/projects/04-integration
+npm install        # express, supertest
+npx tsx starter.ts # run your implementation
+```
+
+### Key difference from the coding drills
+
+The PaymentAPI returns `{ status, body }` — it does **NOT** throw exceptions. You must check `status` before using `body`. This matches how real HTTP APIs behave (fetch does not reject on 4xx/5xx). Read the existing PaymentAPI tests in server.ts to see the pattern.
 
 ### What the interviewer evaluates
 
@@ -42,10 +54,9 @@ Spend the first few minutes reading this. Understand the patterns before you wri
 | Component | Purpose |
 |---|---|
 | `Database` | Map-based store with products (pre-seeded) and orders |
-| `Router` | Express-like router with `get/post/put/delete`, middleware via `use()` |
-| `PaymentProvider` | Simulates an external payment API -- PaymentIntents, refunds, webhooks |
-| `registerExistingRoutes()` | Already registers product + order routes |
-| `makeRequest()` | Test helper -- `makeRequest(router, "POST", "/path", body)` |
+| `PaymentAPI` | Simulates an external payment service — returns `{ status, body }`, NOT exceptions |
+| `createApp()` | Factory — returns Express app with existing routes. Pass your `registerRoutes` function to add routes. |
+| `runExistingTests()` | Demonstrates supertest + check() testing patterns — **read these before writing your own tests** |
 
 ### Existing Routes (already working)
 
@@ -57,6 +68,14 @@ GET  /orders/:id        -> Order | 404
 GET  /orders?customer_id=X -> { data: Order[], count }
 ```
 
+### Existing Tests (read for patterns)
+
+When you run `npx tsx starter.ts`, the existing tests run first. **Read them in server.ts** — they demonstrate:
+- How to use supertest: `request(app).post("/orders").send({...})`
+- How to check status + body
+- How to test error cases (404, 400)
+- How PaymentAPI returns `{ status, body }` instead of throwing
+
 ### Order Status Flow
 
 ```
@@ -66,41 +85,41 @@ pending -> payment_processing -> paid -> partially_refunded -> refunded
 
 ---
 
-## PaymentProvider API Reference
+## PaymentAPI Reference
 
-All methods are synchronous. Errors throw `PaymentError` with `.code`, `.message`, `.statusCode`.
+All methods are async and return `{ status: number, body: any }`.
+They do **NOT** throw. Check `status` before using `body`.
 
-### createPaymentIntent(amount, currency, metadata?, captureMethod?, idempotencyKey?)
+### createPaymentIntent({ amount, currency, metadata?, capture_method?, idempotency_key? })
 
-Creates a PaymentIntent. Returns object with `id`, `amount`, `currency`, `status: "requires_payment_method"`, `client_secret`.
-
-Errors: `invalid_amount` (400), `amount_too_large` (400).
+Returns `{ status: 201, body: PaymentIntent }` on success.
+Returns `{ status: 400, body: { error: { code, message } } }` on validation error.
 
 ### confirmPaymentIntent(id, paymentMethod)
 
-Confirms a PI. Test methods: `pm_card_visa` (succeeds), `pm_card_declined` (402), `pm_card_3ds_required` (requires_action).
+Test methods: `pm_card_visa` (succeeds), `pm_card_declined` (402), `pm_card_3ds_required` (requires_action).
 
-Errors: `not_found` (404), `invalid_state` (400), `card_declined` (402).
+Returns `{ status: 200, body: PaymentIntent }` on success.
+Returns `{ status: 402, body: { error: { code: "card_declined", ... } } }` on decline.
 
 ### capturePaymentIntent(id, amountToCapture?)
 
 Captures an authorized PI (manual capture only).
-
-Errors: `not_found` (404), `invalid_state` (400), `invalid_capture_amount` (400).
+Returns `{ status: 200, body: PaymentIntent }` or `{ status: 400 }`.
 
 ### getPaymentIntent(id)
 
-Retrieves a PI by ID. Errors: `not_found` (404).
+Returns `{ status: 200, body: PaymentIntent }` or `{ status: 404 }`.
 
-### createRefund(paymentIntentId, amount?, reason?)
+### createRefund({ payment_intent, amount?, reason? })
 
-Refunds a succeeded PI. Returns `Refund` object. Defaults to full remaining amount.
-
-Errors: `not_found` (404), `invalid_state` (400), `invalid_refund_amount` (400), `refund_exceeds_payment` (400).
+Refunds a succeeded PI. Defaults to full remaining amount.
+Returns `{ status: 201, body: Refund }` or `{ status: 400 }`.
 
 ### constructWebhookEvent(rawBody, signature)
 
-Verifies webhook signature, returns parsed event. Errors: `signature_verification_failed` (400).
+**This one DOES throw** on bad signature (matches real Stripe SDK).
+Returns parsed `WebhookEvent` on success.
 
 ### createTestEvent(type, data) -- Test Helper
 
@@ -118,7 +137,7 @@ Creates a test webhook event with valid signature. Returns `{ rawBody, signature
 - Pass through `capture_method` and `idempotency_key` from body if present
 - Store `payment_intent_id` on order, set status to `"payment_processing"`
 - Return 200 + `{ client_secret, payment_intent_id }`
-- Catch `PaymentError` -> return its `statusCode` + `{ error: message }`
+- If PaymentAPI returns non-201, forward its status + body as the response
 
 **`POST /orders/:id/confirm`**
 - Look up order (404), must be `"payment_processing"` (400)
@@ -127,7 +146,7 @@ Creates a test webhook event with valid signature. Returns `{ rawBody, signature
 - `"succeeded"` -> order `"paid"`, return `{ status: "succeeded", payment_intent }`
 - `"requires_action"` -> keep `"payment_processing"`, return `{ status: "requires_action", payment_intent }`
 - `"requires_capture"` -> keep `"payment_processing"`, return `{ status: "requires_capture", payment_intent }`
-- `card_declined` error -> order `"payment_failed"`, return 402
+- 402 response (card_declined) -> order `"payment_failed"`, return 402
 
 ### Part 2: Capture & Refunds (15 min)
 
@@ -149,7 +168,8 @@ Creates a test webhook event with valid signature. Returns `{ rawBody, signature
 
 **`POST /webhooks`**
 - Read `stripe-signature` header (400 if missing)
-- Verify with `constructWebhookEvent(req.rawBody, signature)` -- 400 on failure
+- Verify with `paymentApi.constructWebhookEvent(req.rawBody, signature)` -- throws on failure, catch and return 400
+- Note: `req.rawBody` is available because the app uses `express.json()` with a `verify` callback
 - Deduplicate by `event.id` (return 200 if already processed)
 - `payment_intent.succeeded` -> find order via metadata, set `"paid"`
 - `payment_intent.payment_failed` -> find order, set `"payment_failed"`
@@ -165,6 +185,24 @@ Write at least 5 tests in `runCandidateTests()`:
 4. Webhook: send valid event, verify dedup
 5. Idempotency: pay with same key twice, verify same PI returned
 
+### Part 5: Batch Processing from File (bonus, 8 min)
+
+**This part simulates the file I/O pattern from the real integration exercise.**
+
+Read `batch_orders.json` from disk. Each entry has `customer_id`, `items`, and `payment_method`.
+
+**`processBatchFile(router, filePath): Promise<BatchResult>`**
+- Read and parse the JSON file
+- For each entry: create order → pay → confirm with payment_method
+- Collect results: `{ succeeded: string[]; failed: { customer_id, error }[]; skipped: { customer_id, error }[] }`
+  - `succeeded`: order IDs that reached `"paid"`
+  - `failed`: entries where the card was declined (include customer_id and error)
+  - `skipped`: entries where order creation failed (e.g., bad product_id)
+- Write results to `batch_results.json`
+- Return the result object
+
+The test data includes: 2 successful, 1 declined card, 1 bad product, 1 successful.
+
 ---
 
 ## How to Approach This (Read Before Starting)
@@ -179,7 +217,7 @@ Write at least 5 tests in `runCandidateTests()`:
 
 **Talk out loud.** Narrate your approach: "I'm going to read the order, validate the status, then call the payment provider." When you encounter an error, say what you think the issue is before diving in. This is collaboration signal.
 
-**Handle errors like you mean it.** Every PaymentProvider call can throw `PaymentError`. The `.code`, `.message`, and `.statusCode` fields map directly to your HTTP response. This is a core Stripe pattern -- show that you understand it.
+**Handle errors like you mean it.** PaymentAPI returns `{ status, body }` — it never throws (except `constructWebhookEvent`). Always check `status` before using `body`. If the PaymentAPI returns a 400 or 402, forward it as your HTTP response. This is the core Stripe/fetch pattern — APIs don't throw on errors, they return error status codes.
 
 ---
 
@@ -191,11 +229,9 @@ Write at least 5 tests in `runCandidateTests()`:
 | `pm_card_declined` | Throws `card_declined` (402) |
 | `pm_card_3ds_required` | Returns `requires_action` |
 
-| Error Class | Fields |
+| Testing Pattern | Usage |
 |---|---|
-| `PaymentError` | `.code`, `.message`, `.statusCode` |
-
-| Helper | Usage |
-|---|---|
-| `makeRequest(router, method, path, body?, headers?)` | Returns `{ status, body }` |
-| `paymentProvider.createTestEvent(type, data)` | Returns `{ rawBody, signature, event }` for webhook testing |
+| `request(app).get("/path")` | supertest GET request |
+| `request(app).post("/path").send(body)` | supertest POST with JSON body |
+| `request(app).post("/path").set("header", "value").send(body)` | POST with custom header |
+| `paymentApi.createTestEvent(type, data)` | Returns `{ rawBody, signature, event }` for webhook testing |

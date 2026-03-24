@@ -15,6 +15,29 @@ All on Zoom, same link. Shadow interviewers may be present. AI tools **strictly 
 
 ---
 
+## Recruiter Prep Call (day before)
+
+The recruiter is your advocate — they want you to pass. Use this call to gather intel, not to impress.
+
+### Questions to ask
+
+1. **"Can you tell me anything specific about what to expect in the programming or integration exercise?"** — They sometimes share the general topic area or format hints.
+2. **"Is there anything about my background that I should be prepared to address?"** — Reveals if there's a concern on their side so you can prepare a response.
+3. **"What do the strongest candidates do differently in the behavioral rounds?"** — They see hundreds of debriefs. They know the patterns.
+4. **"Is there anything about the format or logistics beyond the prep doc?"** — Screen sharing setup, paired vs solo, time structure.
+5. **"Can you tell me anything about the interviewers' styles?"** — Sometimes they'll share useful context.
+6. **"What's the most common reason TSE candidates don't pass the onsite?"** — Tells you exactly what to avoid.
+
+### What NOT to do
+
+- Don't ask questions answered by the prep doc (schedule, format, tools policy) — signals you didn't read it
+- Don't ask about comp or timeline — save for after you pass
+- Don't try to impress technically — they're helping you, not evaluating you
+- Have the interview schedule in front of you so you can ask about specific rounds
+- Write your questions down beforehand
+
+---
+
 ## What Stripe Evaluates (All Rounds)
 
 From the official prep doc, Stripe assesses these across every interview:

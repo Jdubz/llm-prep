@@ -1,0 +1,27 @@
+[
+  {
+    "customer_id": "cus_batch_001",
+    "items": [{ "product_id": "prod_0001", "quantity": 2 }],
+    "payment_method": "pm_card_visa"
+  },
+  {
+    "customer_id": "cus_batch_002",
+    "items": [{ "product_id": "prod_0002", "quantity": 1 }],
+    "payment_method": "pm_card_visa"
+  },
+  {
+    "customer_id": "cus_batch_003",
+    "items": [{ "product_id": "prod_0003", "quantity": 1 }, { "product_id": "prod_0001", "quantity": 3 }],
+    "payment_method": "pm_card_declined"
+  },
+  {
+    "customer_id": "cus_batch_004",
+    "items": [{ "product_id": "prod_9999", "quantity": 1 }],
+    "payment_method": "pm_card_visa"
+  },
+  {
+    "customer_id": "cus_batch_005",
+    "items": [{ "product_id": "prod_0004", "quantity": 2 }],
+    "payment_method": "pm_card_visa"
+  }
+]

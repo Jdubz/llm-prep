@@ -3,20 +3,22 @@
 
   YOUR IMPLEMENTATION FILE.
 
-  Read the README.md spec FIRST, then read server.ts to understand the
-  existing codebase. Implement the functions below.
+  1. Read the README.md spec
+  2. Read server.ts — understand the existing code and test patterns
+  3. Implement the routes below
+  4. Write your own tests
 
   Run:   npx tsx starter.ts
   Time:  50 minutes total
 */
 
+import express from "express";
+import request from "supertest";
 import {
-  Router,
+  createApp,
+  PaymentAPI,
   Database,
-  PaymentProvider,
-  PaymentError,
-  registerExistingRoutes,
-  makeRequest,
+  runExistingTests,
   check,
   level,
   _passed,
@@ -24,521 +26,348 @@ import {
   resetCounters,
 } from "./server.js";
 
-import type {
-  Order,
-  PaymentIntent,
-  Refund,
-  RefundRecord,
-  WebhookEvent,
-  SimReq,
-  SimRes,
-} from "./server.js";
+import type { Order, WebhookEvent } from "./server.js";
 
-// ─── Part 1: Checkout Flow (15 min) ───────────────────────────
+// ─── Your Routes ────────────────────────────────────────────────
 //
-// Implement:
-//   POST /orders/:id/pay
-//     - Look up the order by ID (404 if not found)
-//     - Order must be in "pending" status (400 otherwise)
-//     - Create a PaymentIntent via paymentProvider.createPaymentIntent()
-//       with the order's total, currency, and metadata: { order_id }
-//     - If body includes capture_method: "manual", pass it through
-//     - If body includes idempotency_key, pass it through
-//     - Store the payment_intent_id on the order
-//     - Update order status to "payment_processing"
-//     - Return 200 + { client_secret, payment_intent_id }
-//     - Handle PaymentError → return error.statusCode + { error: error.message }
+// This function receives the Express app, database, and PaymentAPI.
+// Add your routes here. The existing product + order routes are
+// already registered by createApp().
 //
-//   POST /orders/:id/confirm
-//     - Look up the order by ID (404 if not found)
-//     - Order must be in "payment_processing" status (400 otherwise)
-//     - Read payment_method from body (required, 400 if missing)
-//     - Call paymentProvider.confirmPaymentIntent(payment_intent_id, payment_method)
-//     - If PI status is "succeeded": update order status to "paid"
-//     - If PI status is "requires_action": keep order in "payment_processing",
-//       return 200 + { status: "requires_action", payment_intent }
-//     - If PI status is "requires_capture": keep order in "payment_processing",
-//       return 200 + { status: "requires_capture", payment_intent }
-//     - Handle PaymentError with code "card_declined":
-//       update order to "payment_failed", return 402 + { error }
-//     - Return 200 + { status: "succeeded", payment_intent } on success
+// IMPORTANT: PaymentAPI returns { status, body } — it does NOT throw.
+// Always check response.status before using response.body.
+// Read the existing PaymentAPI tests in server.ts to see the pattern.
 
-function registerPaymentRoutes(
-  router: Router,
+function registerRoutes(
+  app: express.Express,
   db: Database,
-  paymentProvider: PaymentProvider,
+  paymentApi: PaymentAPI,
 ): void {
-  router.post("/orders/:id/pay", async (req, res) => {
-    throw new Error("TODO: implement POST /orders/:id/pay");
-  });
 
-  router.post("/orders/:id/confirm", async (req, res) => {
-    throw new Error("TODO: implement POST /orders/:id/confirm");
-  });
+  // ── Part 1: Checkout Flow (15 min) ───────────────────────────
+  //
+  //   POST /orders/:id/pay
+  //     - Look up order (404 if not found), must be "pending" (400)
+  //     - Call paymentApi.createPaymentIntent({ amount, currency, metadata: { order_id }, capture_method?, idempotency_key? })
+  //     - Check response status — if not 201, forward the error
+  //     - Store payment_intent_id on order, set status "payment_processing"
+  //     - Return 200 + { client_secret, payment_intent_id }
+  //
+  //   POST /orders/:id/confirm
+  //     - Look up order (404), must be "payment_processing" (400)
+  //     - payment_method required in body (400 if missing)
+  //     - Call paymentApi.confirmPaymentIntent(payment_intent_id, payment_method)
+  //     - Check response status:
+  //       200 + status "succeeded"        → order "paid"
+  //       200 + status "requires_action"  → keep "payment_processing"
+  //       200 + status "requires_capture" → keep "payment_processing"
+  //       402 (card_declined)             → order "payment_failed"
+  //     - Return { status, payment_intent }
+
+  // TODO: implement POST /orders/:id/pay
+  // TODO: implement POST /orders/:id/confirm
+
+  // ── Part 2: Capture & Refunds (15 min) ───────────────────────
+  //
+  //   POST /orders/:id/capture
+  //     - Look up order (404), must be "payment_processing" with payment_intent_id (400)
+  //     - Call paymentApi.getPaymentIntent() to verify "requires_capture" (400 if not)
+  //     - Call paymentApi.capturePaymentIntent(), pass optional amount from body
+  //     - Order → "paid", return { payment_intent }
+  //
+  //   POST /orders/:id/refund
+  //     - Look up order (404), must be "paid" or "partially_refunded" (400)
+  //     - Optional amount (positive integer) and reason from body
+  //     - Call paymentApi.createRefund({ payment_intent, amount, reason })
+  //     - Record on order.refunds array
+  //     - If total refunded >= order.total → "refunded", else "partially_refunded"
+  //     - Return { refund, order }
+
+  // TODO: implement POST /orders/:id/capture
+  // TODO: implement POST /orders/:id/refund
+
+  // ── Part 3: Webhook Handler (12 min) ─────────────────────────
+  //
+  //   POST /webhooks
+  //     - Read req.rawBody and req.headers["stripe-signature"]
+  //     - Missing signature → 400
+  //     - Call paymentApi.constructWebhookEvent(rawBody, signature)
+  //       (this one DOES throw on bad signature — catch it, return 400)
+  //     - Deduplicate by event.id (return 200 if already processed)
+  //     - "payment_intent.succeeded" → find order via metadata.order_id, set "paid"
+  //     - "payment_intent.payment_failed" → find order, set "payment_failed"
+  //     - "charge.refunded" → acknowledge, no order update
+  //     - Return 200 + { received: true }
+
+  // TODO: implement POST /webhooks
 }
 
-// ─── Part 2: Capture & Refunds (15 min) ───────────────────────
+// ─── Part 4: Your Tests (8 min) ────────────────────────────────
 //
-// Implement:
-//   POST /orders/:id/capture
-//     - Look up order (404 if not found)
-//     - Order must be in "payment_processing" with a payment_intent_id (400 otherwise)
-//     - Verify the PI is in "requires_capture" status by calling
-//       paymentProvider.getPaymentIntent() (400 if not capturable)
-//     - If body includes amount, pass it to capturePaymentIntent()
-//     - Call paymentProvider.capturePaymentIntent()
-//     - Update order status to "paid"
-//     - Return 200 + { payment_intent }
-//     - Handle PaymentError appropriately
+// Write at least 5 tests. Follow the patterns from the existing
+// tests in server.ts (supertest + check).
 //
-//   POST /orders/:id/refund
-//     - Look up order (404 if not found)
-//     - Order must be in "paid" or "partially_refunded" status (400 otherwise)
-//     - Read optional amount and reason from body
-//     - If amount provided, validate: must be positive integer (400 otherwise)
-//     - Call paymentProvider.createRefund(payment_intent_id, amount, reason)
-//     - Record the refund on the order's refunds array
-//     - Calculate total refunded; if equals order total → "refunded",
-//       otherwise → "partially_refunded"
-//     - Return 200 + { refund, order }
-//     - Handle PaymentError (e.g., refund exceeds payment) → return statusCode + { error }
-
-function registerCaptureAndRefundRoutes(
-  router: Router,
-  db: Database,
-  paymentProvider: PaymentProvider,
-): void {
-  router.post("/orders/:id/capture", async (req, res) => {
-    throw new Error("TODO: implement POST /orders/:id/capture");
-  });
-
-  router.post("/orders/:id/refund", async (req, res) => {
-    throw new Error("TODO: implement POST /orders/:id/refund");
-  });
-}
-
-// ─── Part 3: Webhook Handler (12 min) ─────────────────────────
-//
-// Implement:
-//   POST /webhooks
-//     - Read rawBody from req.rawBody and signature from
-//       req.headers["stripe-signature"]
-//     - If signature missing, return 400 + { error: "Missing signature" }
-//     - Call paymentProvider.constructWebhookEvent(rawBody, signature)
-//       to verify and parse the event
-//     - If verification fails (PaymentError), return 400 + { error }
-//     - Deduplicate: if event.id already processed, return 200 + { received: true }
-//     - Handle event types:
-//       "payment_intent.succeeded":
-//         - Find order by metadata.order_id in event.data.object
-//         - Update order status to "paid"
-//       "payment_intent.payment_failed":
-//         - Find order by metadata.order_id
-//         - Update order status to "payment_failed"
-//       "charge.refunded":
-//         - Log the event (no order update needed — refund route handles it)
-//     - Store the event ID as processed
-//     - Return 200 + { received: true } immediately
-//
-// Store processed event IDs in a Set (closure variable).
-
-function registerWebhookRoutes(
-  router: Router,
-  db: Database,
-  paymentProvider: PaymentProvider,
-): void {
-  // const processedEventIds = new Set<string>();
-
-  router.post("/webhooks", async (req, res) => {
-    throw new Error("TODO: implement POST /webhooks");
-  });
-}
-
-// ─── Part 4: Your Tests (8 min) ──────────────────────────────
-//
-// Write at least 5 tests covering:
+// Required tests:
 //   1. Happy path: create order → pay → confirm → order is "paid"
-//   2. Declined card: pay → confirm with pm_card_declined → "payment_failed"
-//   3. Refund: paid order → refund → verify order status
-//   4. Webhook: send a valid event → verify 200 + dedup
-//   5. Idempotency: pay with same idempotency_key twice → same PI
+//   2. Declined card: confirm with pm_card_declined → "payment_failed"
+//   3. Refund: paid order → refund → verify status
+//   4. Webhook: valid event → 200, duplicate → 200, bad sig → 400
+//   5. Idempotency: pay with same key twice → same PI returned
+
+async function runCandidateTests(app: express.Express, paymentApi: PaymentAPI): Promise<void> {
+  throw new Error("TODO: implement your tests");
+
+  // Example (follow the pattern from existing tests):
+  //
+  // const order = await request(app).post("/orders")
+  //   .send({ customer_id: "cus_test", items: [{ product_id: "prod_0001", quantity: 1 }] });
+  // const orderId = order.body.id;
+  //
+  // const pay = await request(app).post(`/orders/${orderId}/pay`);
+  // check("pay → 200", pay.status, 200);
+  // check("has client_secret", typeof pay.body.client_secret, "string");
+  //
+  // const confirm = await request(app).post(`/orders/${orderId}/confirm`)
+  //   .send({ payment_method: "pm_card_visa" });
+  // check("confirm → succeeded", confirm.body.status, "succeeded");
+}
+
+// ─── Part 5: Batch File Processing (bonus, 8 min) ──────────────
 //
-// Use the createTestApp() function below and makeRequest() from server.ts.
+// Read batch_orders.json from disk. Each entry has:
+//   { customer_id, items, payment_method }
+//
+// For each: create order → pay → confirm with payment_method.
+// Collect results, write to batch_results.json.
 
-async function runCandidateTests(
-  createApp: () => { router: Router; db: Database; pp: PaymentProvider },
-): Promise<void> {
-  throw new Error("TODO: implement Part 4 — Your Tests");
+type BatchResult = {
+  succeeded: string[];
+  failed: { customer_id: string; error: string }[];
+  skipped: { customer_id: string; error: string }[];
+};
 
-  // Example:
-  // const { router, db, pp } = createApp();
-  //
-  // // Seed an order
-  // const orderRes = await makeRequest(router, "POST", "/orders", {
-  //   customer_id: "cus_test",
-  //   items: [{ product_id: "prod_0001", quantity: 2 }],
-  // });
-  // const orderId = orderRes.body.id;
-  //
-  // // Test 1: Happy path
-  // const payRes = await makeRequest(router, "POST", `/orders/${orderId}/pay`);
-  // check("pay status", payRes.status, 200);
-  // ...
+async function processBatchFile(
+  app: express.Express,
+  filePath: string,
+): Promise<BatchResult> {
+  throw new Error("TODO: implement processBatchFile");
 }
 
-// ─── App Factory ──────────────────────────────────────────────
+// ─── Self-Checks ───────────────────────────────────────────────
 
-function createTestApp(): { router: Router; db: Database; pp: PaymentProvider } {
-  const db = new Database();
-  const pp = new PaymentProvider();
-  const router = new Router();
-
-  registerExistingRoutes(router, db);
-  registerPaymentRoutes(router, db, pp);
-  registerCaptureAndRefundRoutes(router, db, pp);
-  registerWebhookRoutes(router, db, pp);
-
-  return { router, db, pp };
-}
-
-// ─── Self-Checks ──────────────────────────────────────────────
-
-async function runSelfChecks(): Promise<void> {
-  resetCounters();
-
+async function runSelfChecks(app: express.Express, paymentApi: PaymentAPI): Promise<void> {
   await level("Part 1 — Checkout Flow", async () => {
-    const { router, db, pp } = createTestApp();
+    const order = await request(app).post("/orders")
+      .send({ customer_id: "cus_001", items: [{ product_id: "prod_0001", quantity: 2 }] });
+    check("order created", order.status, 201);
+    const orderId = order.body.id;
 
-    // Create an order first
-    const orderRes = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_001",
-      items: [{ product_id: "prod_0001", quantity: 2 }],
-    });
-    check("order created", orderRes.status, 201);
-    const orderId = orderRes.body.id;
+    const pay = await request(app).post(`/orders/${orderId}/pay`);
+    check("pay → 200", pay.status, 200);
+    check("has client_secret", typeof pay.body.client_secret, "string");
+    check("has pi_id", pay.body.payment_intent_id.startsWith("pi_"), true);
 
-    // Pay
-    const payRes = await makeRequest(router, "POST", `/orders/${orderId}/pay`);
-    check("pay status", payRes.status, 200);
-    check("pay has client_secret", typeof payRes.body.client_secret, "string");
-    check("pay has pi_id", payRes.body.payment_intent_id.startsWith("pi_"), true);
+    const afterPay = await request(app).get(`/orders/${orderId}`);
+    check("status → payment_processing", afterPay.body.status, "payment_processing");
 
-    // Verify order updated
-    const orderAfterPay = await makeRequest(router, "GET", `/orders/${orderId}`);
-    check("order status payment_processing", orderAfterPay.body.status, "payment_processing");
-    check("order has pi_id", orderAfterPay.body.payment_intent_id, payRes.body.payment_intent_id);
+    const confirm = await request(app).post(`/orders/${orderId}/confirm`)
+      .send({ payment_method: "pm_card_visa" });
+    check("confirm → 200", confirm.status, 200);
+    check("confirm succeeded", confirm.body.status, "succeeded");
 
-    // Confirm with valid card
-    const confirmRes = await makeRequest(router, "POST", `/orders/${orderId}/confirm`, {
-      payment_method: "pm_card_visa",
-    });
-    check("confirm status", confirmRes.status, 200);
-    check("confirm result", confirmRes.body.status, "succeeded");
+    const afterConfirm = await request(app).get(`/orders/${orderId}`);
+    check("order → paid", afterConfirm.body.status, "paid");
 
-    // Verify order is paid
-    const orderAfterConfirm = await makeRequest(router, "GET", `/orders/${orderId}`);
-    check("order paid", orderAfterConfirm.body.status, "paid");
+    // Error cases
+    const no404 = await request(app).post("/orders/ord_9999/pay");
+    check("pay missing → 404", no404.status, 404);
 
-    // Pay non-existent order
-    const noOrder = await makeRequest(router, "POST", "/orders/ord_9999/pay");
-    check("pay 404", noOrder.status, 404);
-
-    // Pay already-processing order
-    const dupPay = await makeRequest(router, "POST", `/orders/${orderId}/pay`);
-    check("pay already paid 400", dupPay.status, 400);
+    const dupPay = await request(app).post(`/orders/${orderId}/pay`);
+    check("pay non-pending → 400", dupPay.status, 400);
 
     // Confirm missing payment_method
-    // Create fresh order for this test
-    const orderRes2 = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_002",
-      items: [{ product_id: "prod_0002", quantity: 1 }],
-    });
-    await makeRequest(router, "POST", `/orders/${orderRes2.body.id}/pay`);
-    const badConfirm = await makeRequest(router, "POST", `/orders/${orderRes2.body.id}/confirm`, {});
-    check("confirm missing pm 400", badConfirm.status, 400);
+    const order2 = await request(app).post("/orders")
+      .send({ customer_id: "cus_002", items: [{ product_id: "prod_0002", quantity: 1 }] });
+    await request(app).post(`/orders/${order2.body.id}/pay`);
+    const badConfirm = await request(app).post(`/orders/${order2.body.id}/confirm`).send({});
+    check("confirm missing pm → 400", badConfirm.status, 400);
   });
 
   await level("Part 1b — Declined Card & 3DS", async () => {
-    const { router, db, pp } = createTestApp();
+    // Declined
+    const order = await request(app).post("/orders")
+      .send({ customer_id: "cus_003", items: [{ product_id: "prod_0001", quantity: 1 }] });
+    await request(app).post(`/orders/${order.body.id}/pay`);
+    const declined = await request(app).post(`/orders/${order.body.id}/confirm`)
+      .send({ payment_method: "pm_card_declined" });
+    check("declined → 402", declined.status, 402);
 
-    // Declined card
-    const orderRes = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_003",
-      items: [{ product_id: "prod_0001", quantity: 1 }],
-    });
-    const orderId = orderRes.body.id;
-
-    await makeRequest(router, "POST", `/orders/${orderId}/pay`);
-    const declinedRes = await makeRequest(router, "POST", `/orders/${orderId}/confirm`, {
-      payment_method: "pm_card_declined",
-    });
-    check("declined 402", declinedRes.status, 402);
-
-    const declinedOrder = await makeRequest(router, "GET", `/orders/${orderId}`);
-    check("order payment_failed", declinedOrder.body.status, "payment_failed");
+    const afterDecline = await request(app).get(`/orders/${order.body.id}`);
+    check("order → payment_failed", afterDecline.body.status, "payment_failed");
 
     // 3DS required
-    const orderRes2 = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_004",
-      items: [{ product_id: "prod_0002", quantity: 1 }],
-    });
-    const orderId2 = orderRes2.body.id;
+    const order2 = await request(app).post("/orders")
+      .send({ customer_id: "cus_004", items: [{ product_id: "prod_0002", quantity: 1 }] });
+    await request(app).post(`/orders/${order2.body.id}/pay`);
+    const threeds = await request(app).post(`/orders/${order2.body.id}/confirm`)
+      .send({ payment_method: "pm_card_3ds_required" });
+    check("3ds → requires_action", threeds.body.status, "requires_action");
 
-    await makeRequest(router, "POST", `/orders/${orderId2}/pay`);
-    const threeDsRes = await makeRequest(router, "POST", `/orders/${orderId2}/confirm`, {
-      payment_method: "pm_card_3ds_required",
-    });
-    check("3ds status", threeDsRes.status, 200);
-    check("3ds requires_action", threeDsRes.body.status, "requires_action");
-
-    // Order still payment_processing
-    const order3ds = await makeRequest(router, "GET", `/orders/${orderId2}`);
-    check("3ds order still processing", order3ds.body.status, "payment_processing");
+    const after3ds = await request(app).get(`/orders/${order2.body.id}`);
+    check("order still processing", after3ds.body.status, "payment_processing");
   });
 
   await level("Part 1c — Idempotency", async () => {
-    const { router, db, pp } = createTestApp();
+    const order1 = await request(app).post("/orders")
+      .send({ customer_id: "cus_005", items: [{ product_id: "prod_0001", quantity: 1 }] });
+    const pay1 = await request(app).post(`/orders/${order1.body.id}/pay`)
+      .send({ idempotency_key: "idem_abc" });
+    check("idem pay 1", pay1.status, 200);
 
-    const orderRes = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_005",
-      items: [{ product_id: "prod_0001", quantity: 1 }],
-    });
-    const orderId = orderRes.body.id;
-
-    const payRes1 = await makeRequest(router, "POST", `/orders/${orderId}/pay`, {
-      idempotency_key: "idem_abc",
-    });
-    check("idem pay 1 ok", payRes1.status, 200);
-
-    // Second pay with same key on different order should get same PI
-    const orderRes2 = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_006",
-      items: [{ product_id: "prod_0002", quantity: 1 }],
-    });
-    const payRes2 = await makeRequest(router, "POST", `/orders/${orderRes2.body.id}/pay`, {
-      idempotency_key: "idem_abc",
-    });
-    check("idem pay 2 ok", payRes2.status, 200);
-    check("idem same pi_id", payRes1.body.payment_intent_id, payRes2.body.payment_intent_id);
+    const order2 = await request(app).post("/orders")
+      .send({ customer_id: "cus_006", items: [{ product_id: "prod_0002", quantity: 1 }] });
+    const pay2 = await request(app).post(`/orders/${order2.body.id}/pay`)
+      .send({ idempotency_key: "idem_abc" });
+    check("idem pay 2", pay2.status, 200);
+    check("same PI returned", pay1.body.payment_intent_id, pay2.body.payment_intent_id);
   });
 
   await level("Part 2 — Manual Capture", async () => {
-    const { router, db, pp } = createTestApp();
+    const order = await request(app).post("/orders")
+      .send({ customer_id: "cus_010", items: [{ product_id: "prod_0003", quantity: 1 }] });
+    await request(app).post(`/orders/${order.body.id}/pay`).send({ capture_method: "manual" });
+    const confirm = await request(app).post(`/orders/${order.body.id}/confirm`)
+      .send({ payment_method: "pm_card_visa" });
+    check("requires_capture", confirm.body.status, "requires_capture");
 
-    const orderRes = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_010",
-      items: [{ product_id: "prod_0003", quantity: 1 }],
-    });
-    const orderId = orderRes.body.id;
+    const capture = await request(app).post(`/orders/${order.body.id}/capture`);
+    check("capture → 200", capture.status, 200);
 
-    // Pay with manual capture
-    const payRes = await makeRequest(router, "POST", `/orders/${orderId}/pay`, {
-      capture_method: "manual",
-    });
-    check("manual pay ok", payRes.status, 200);
+    const after = await request(app).get(`/orders/${order.body.id}`);
+    check("order → paid", after.body.status, "paid");
 
-    // Confirm
-    const confirmRes = await makeRequest(router, "POST", `/orders/${orderId}/confirm`, {
-      payment_method: "pm_card_visa",
-    });
-    check("manual confirm ok", confirmRes.status, 200);
-    check("requires_capture", confirmRes.body.status, "requires_capture");
-
-    // Capture
-    const captureRes = await makeRequest(router, "POST", `/orders/${orderId}/capture`);
-    check("capture ok", captureRes.status, 200);
-
-    const capturedOrder = await makeRequest(router, "GET", `/orders/${orderId}`);
-    check("order paid after capture", capturedOrder.body.status, "paid");
-
-    // Capture non-capturable order
-    const dupCapture = await makeRequest(router, "POST", `/orders/${orderId}/capture`);
-    check("double capture 400", dupCapture.status, 400);
+    const dup = await request(app).post(`/orders/${order.body.id}/capture`);
+    check("double capture → 400", dup.status, 400);
   });
 
   await level("Part 2b — Refunds", async () => {
-    const { router, db, pp } = createTestApp();
+    const order = await request(app).post("/orders")
+      .send({ customer_id: "cus_020", items: [{ product_id: "prod_0001", quantity: 3 }] });
+    const orderId = order.body.id;
+    const orderTotal = order.body.total;
+    await request(app).post(`/orders/${orderId}/pay`);
+    await request(app).post(`/orders/${orderId}/confirm`)
+      .send({ payment_method: "pm_card_visa" });
 
-    // Create and pay an order
-    const orderRes = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_020",
-      items: [{ product_id: "prod_0001", quantity: 3 }], // 1999 * 3 = 5997
-    });
-    const orderId = orderRes.body.id;
-    const orderTotal = orderRes.body.total;
+    const ref1 = await request(app).post(`/orders/${orderId}/refund`)
+      .send({ amount: 1000, reason: "item_damaged" });
+    check("partial refund → 200", ref1.status, 200);
+    check("refund amount", ref1.body.refund.amount, 1000);
+    check("order → partially_refunded", ref1.body.order.status, "partially_refunded");
+    check("refund recorded", ref1.body.order.refunds.length, 1);
 
-    await makeRequest(router, "POST", `/orders/${orderId}/pay`);
-    await makeRequest(router, "POST", `/orders/${orderId}/confirm`, {
-      payment_method: "pm_card_visa",
-    });
+    const ref2 = await request(app).post(`/orders/${orderId}/refund`)
+      .send({ amount: orderTotal - 1000 });
+    check("full refund", ref2.body.order.status, "refunded");
+    check("two refunds", ref2.body.order.refunds.length, 2);
 
-    // Partial refund
-    const refundRes = await makeRequest(router, "POST", `/orders/${orderId}/refund`, {
-      amount: 1000,
-      reason: "item_damaged",
-    });
-    check("partial refund ok", refundRes.status, 200);
-    check("refund amount", refundRes.body.refund.amount, 1000);
-    check("order partially_refunded", refundRes.body.order.status, "partially_refunded");
-    check("refund recorded", refundRes.body.order.refunds.length, 1);
+    const over = await request(app).post(`/orders/${orderId}/refund`).send({ amount: 1 });
+    check("over-refund → 400", over.status, 400);
 
-    // Second partial refund (rest)
-    const refundRes2 = await makeRequest(router, "POST", `/orders/${orderId}/refund`, {
-      amount: orderTotal - 1000,
-    });
-    check("full refund ok", refundRes2.status, 200);
-    check("order fully refunded", refundRes2.body.order.status, "refunded");
-    check("two refunds recorded", refundRes2.body.order.refunds.length, 2);
-
-    // Over-refund
-    const overRefund = await makeRequest(router, "POST", `/orders/${orderId}/refund`, {
-      amount: 1,
-    });
-    check("over-refund 400", overRefund.status, 400);
-
-    // Refund unpaid order
-    const pendingOrder = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_021",
-      items: [{ product_id: "prod_0001", quantity: 1 }],
-    });
-    const badRefund = await makeRequest(router, "POST", `/orders/${pendingOrder.body.id}/refund`);
-    check("refund pending order 400", badRefund.status, 400);
-
-    // Refund non-existent order
-    const noOrderRefund = await makeRequest(router, "POST", "/orders/ord_9999/refund");
-    check("refund 404", noOrderRefund.status, 404);
+    const pending = await request(app).post("/orders")
+      .send({ customer_id: "cus_021", items: [{ product_id: "prod_0001", quantity: 1 }] });
+    const badRefund = await request(app).post(`/orders/${pending.body.id}/refund`);
+    check("refund pending → 400", badRefund.status, 400);
   });
 
   await level("Part 3 — Webhook Handler", async () => {
-    const { router, db, pp } = createTestApp();
-
     // Create and pay an order for webhook to reference
-    const orderRes = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_030",
-      items: [{ product_id: "prod_0001", quantity: 1 }],
+    const order = await request(app).post("/orders")
+      .send({ customer_id: "cus_030", items: [{ product_id: "prod_0001", quantity: 1 }] });
+    const orderId = order.body.id;
+    await request(app).post(`/orders/${orderId}/pay`);
+    const detail = await request(app).get(`/orders/${orderId}`);
+    const piId = detail.body.payment_intent_id;
+
+    // Successful payment webhook
+    const evt = paymentApi.createTestEvent("payment_intent.succeeded", {
+      id: piId, metadata: { order_id: orderId },
     });
-    const orderId = orderRes.body.id;
-    await makeRequest(router, "POST", `/orders/${orderId}/pay`);
+    const wh = await request(app).post("/webhooks")
+      .set("stripe-signature", evt.signature)
+      .send(evt.event);
+    check("webhook → 200", wh.status, 200);
+    check("received: true", wh.body.received, true);
 
-    // Get the PI ID
-    const orderDetail = await makeRequest(router, "GET", `/orders/${orderId}`);
-    const piId = orderDetail.body.payment_intent_id;
+    const afterWh = await request(app).get(`/orders/${orderId}`);
+    check("order → paid via webhook", afterWh.body.status, "paid");
 
-    // Simulate payment_intent.succeeded webhook
-    const { rawBody, signature, event } = pp.createTestEvent("payment_intent.succeeded", {
-      id: piId,
-      amount: orderRes.body.total,
-      metadata: { order_id: orderId },
-    });
-
-    // Send webhook with rawBody as the body (special: we pass rawBody directly)
-    const whReq = {
-      method: "POST",
-      path: "/webhooks",
-      params: {},
-      query: {},
-      body: JSON.parse(rawBody),
-      headers: { "stripe-signature": signature },
-      rawBody,
-    };
-    const whRes = await router.handle(whReq);
-    check("webhook 200", whRes.statusCode, 200);
-    check("webhook received", whRes._body.received, true);
-
-    // Check order updated by webhook
-    const orderAfterWh = await makeRequest(router, "GET", `/orders/${orderId}`);
-    check("order paid via webhook", orderAfterWh.body.status, "paid");
-
-    // Duplicate event
-    const whReq2 = {
-      method: "POST",
-      path: "/webhooks",
-      params: {},
-      query: {},
-      body: JSON.parse(rawBody),
-      headers: { "stripe-signature": signature },
-      rawBody,
-    };
-    const whRes2 = await router.handle(whReq2);
-    check("duplicate 200", whRes2.statusCode, 200);
-    check("duplicate received", whRes2._body.received, true);
+    // Duplicate
+    const dup = await request(app).post("/webhooks")
+      .set("stripe-signature", evt.signature)
+      .send(evt.event);
+    check("duplicate → 200", dup.status, 200);
 
     // Bad signature
-    const badSigReq = {
-      method: "POST",
-      path: "/webhooks",
-      params: {},
-      query: {},
-      body: { fake: true },
-      headers: { "stripe-signature": "bad_signature" },
-      rawBody: JSON.stringify({ fake: true }),
-    };
-    const badSigRes = await router.handle(badSigReq);
-    check("bad sig 400", badSigRes.statusCode, 400);
+    const badSig = await request(app).post("/webhooks")
+      .set("stripe-signature", "bad_sig")
+      .send({ fake: true });
+    check("bad sig → 400", badSig.status, 400);
 
     // Missing signature
-    const noSigReq = {
-      method: "POST",
-      path: "/webhooks",
-      params: {},
-      query: {},
-      body: {},
-      headers: {},
-      rawBody: "{}",
-    };
-    const noSigRes = await router.handle(noSigReq);
-    check("no sig 400", noSigRes.statusCode, 400);
+    const noSig = await request(app).post("/webhooks").send({});
+    check("no sig → 400", noSig.status, 400);
 
-    // payment_failed event
-    const orderRes2 = await makeRequest(router, "POST", "/orders", {
-      customer_id: "cus_031",
-      items: [{ product_id: "prod_0002", quantity: 1 }],
+    // Payment failed webhook
+    const order2 = await request(app).post("/orders")
+      .send({ customer_id: "cus_031", items: [{ product_id: "prod_0002", quantity: 1 }] });
+    await request(app).post(`/orders/${order2.body.id}/pay`);
+    const detail2 = await request(app).get(`/orders/${order2.body.id}`);
+    const failEvt = paymentApi.createTestEvent("payment_intent.payment_failed", {
+      id: detail2.body.payment_intent_id, metadata: { order_id: order2.body.id },
     });
-    const orderId2 = orderRes2.body.id;
-    await makeRequest(router, "POST", `/orders/${orderId2}/pay`);
-    const orderDetail2 = await makeRequest(router, "GET", `/orders/${orderId2}`);
-    const piId2 = orderDetail2.body.payment_intent_id;
-
-    const failEvent = pp.createTestEvent("payment_intent.payment_failed", {
-      id: piId2,
-      metadata: { order_id: orderId2 },
-    });
-    const failReq = {
-      method: "POST",
-      path: "/webhooks",
-      params: {},
-      query: {},
-      body: JSON.parse(failEvent.rawBody),
-      headers: { "stripe-signature": failEvent.signature },
-      rawBody: failEvent.rawBody,
-    };
-    const failRes = await router.handle(failReq);
-    check("fail webhook 200", failRes.statusCode, 200);
-
-    const failedOrder = await makeRequest(router, "GET", `/orders/${orderId2}`);
-    check("order failed via webhook", failedOrder.body.status, "payment_failed");
+    await request(app).post("/webhooks")
+      .set("stripe-signature", failEvt.signature)
+      .send(failEvt.event);
+    const failed = await request(app).get(`/orders/${order2.body.id}`);
+    check("order → failed via webhook", failed.body.status, "payment_failed");
   });
 
-  await level("Part 4 — Candidate Tests", async () => {
-    await runCandidateTests(createTestApp);
+  await level("Part 4 — Your Tests", async () => {
+    await runCandidateTests(app, paymentApi);
+  });
+
+  await level("Part 5 — Batch File Processing", async () => {
+    const path = new URL("./batch_orders.json", import.meta.url).pathname;
+    const result = await processBatchFile(app, path);
+    check("batch succeeded", result.succeeded.length, 3);
+    check("batch failed", result.failed.length, 1);
+    check("batch failed customer", result.failed[0].customer_id, "cus_batch_003");
+    check("batch skipped", result.skipped.length, 1);
+    check("batch skipped customer", result.skipped[0].customer_id, "cus_batch_004");
+
+    const { readFileSync } = await import("fs");
+    const written = JSON.parse(readFileSync(
+      new URL("./batch_results.json", import.meta.url).pathname, "utf-8"
+    ));
+    check("results file written", written.succeeded.length, 3);
   });
 }
 
-// ─── Main ─────────────────────────────────────────────────────
+// ─── Main ──────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
   console.log("\nIntegration Sim — Merchant Payment Service\n");
 
-  // Verify existing routes work first
-  const { router, db } = createTestApp();
-  const productsRes = await makeRequest(router, "GET", "/products");
-  if (productsRes.status !== 200 || productsRes.body.count !== 4) {
-    console.log("ERROR: Existing routes are broken. Do not modify server.ts!");
-    return;
-  }
-  console.log("Existing routes verified (products + orders working)\n");
+  const { app, paymentApi } = createApp(registerRoutes);
 
-  await runSelfChecks();
+  // First: run existing tests to verify baseline
+  await runExistingTests(app, paymentApi);
+
+  console.log("\n── Your Implementation Tests ──\n");
+
+  resetCounters();
+  await runSelfChecks(app, paymentApi);
 
   const total = _passed + _failed;
   console.log(`\n${_passed}/${total} passed`);

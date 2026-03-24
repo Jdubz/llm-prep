@@ -1,0 +1,20 @@
+{
+  "name": "04-integration",
+  "version": "1.0.0",
+  "description": "**Timer: 50 minutes.** The actual round is 60 minutes (2:30-3:30 PM with Adam Fuller). This is the LAST interview of the day -- you will be fatigued. Practice this one last in your prep sessions to simulate real conditions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "supertest": "^7.2.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/supertest": "^7.2.0"
+  }
+}
