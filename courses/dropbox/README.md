@@ -35,6 +35,14 @@ Interview preparation for the Full Stack Software Engineer role on Dropbox's Das
 - [01 – Values and Culture](./05-behavioral-and-interview-prep/01-values-and-culture.md) — AOWE framework, Virtual First, career archetypes, impact framework
 - [02 – Interview Process and Strategy](./05-behavioral-and-interview-prep/02-interview-process-and-strategy.md) — Full pipeline walkthrough, stage-by-stage tips, story bank, questions to ask, day-of checklist
 
+### 06 — Exercises & Practice
+- [01 – Coding Challenges](./06-exercises-and-practice/01-coding-challenges.md) — 10 Dropbox-flavored problems with hints, solutions, and follow-ups + OA simulation set
+- [02 – System Design Exercises](./06-exercises-and-practice/02-system-design-exercises.md) — 4 timed design drills with scaling deep-dive probes + 10 quick-fire questions (5 general + 5 scaling-focused)
+- [03 – Knowledge Quizzes](./06-exercises-and-practice/03-knowledge-quizzes.md) — 7 quizzes (38 questions) covering every module, with scoring and study priority guidance
+- [04 – Project Deep Dive Prep](./06-exercises-and-practice/04-project-deep-dive-prep.md) — Structured worksheets for the 1-hour project presentation round, with fill-in exercises
+- [05 – Mock Interview Scripts](./06-exercises-and-practice/05-mock-interview-scripts.md) — Full scripts for all 5 interview stages, with evaluation rubrics and a mock schedule
+- [06 – Scaling at Dropbox Scale](./06-exercises-and-practice/06-scaling-at-dropbox-scale.md) — Mental models, vocabulary, back-of-envelope math, and scaling patterns for reasoning about 700M-user systems
+
 ---
 
 ## Content Per Module
@@ -68,6 +76,7 @@ Each module directory contains numbered files:
 | 4 | 00 — Company & Product | 1.5 hrs | Know Dash inside-out, show genuine product interest |
 | 5 | 01 — Dash Architecture | 2 hrs | Technical depth on RAG, agents, ranking |
 | 6 | 02 — Full Stack Fundamentals | 2 hrs | Dropbox-specific stack patterns |
+| 7 | 06 — Exercises & Practice | 6+ hrs | Coding challenges, quizzes, mock interviews (spread across study days) |
 
 ## Prerequisites
 - [React](../react/) — hooks, performance, patterns
@@ -77,4 +86,4 @@ Each module directory contains numbered files:
 - [General Interview Techniques](../general-interview/) — behavioral prep, negotiation
 
 ## Status
-**Content complete** — all modules written with interview-focused depth.
+**Content complete** — all modules written with interview-focused depth, plus exercises and mock interviews.
