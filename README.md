@@ -16,6 +16,7 @@ A structured collection of advanced study courses for senior full-stack engineer
 | [Infrastructure & Scaling](courses/infrastructure/) | 10 | System design, databases at scale, caching, message queues, K8s, CI/CD, observability, security | Content complete |
 | [Golang](courses/golang/) | 9 | Go for TypeScript engineers — concurrency, stdlib, HTTP services, data storage, production patterns | Content complete |
 | [General Interview](courses/general-interview/) | 8 | Strategy, behavioral, technical communication, coding patterns, negotiation | Content complete |
+| [Dropbox](courses/dropbox/) | 6 | Dropbox Dash (AI search), full-stack prep, CodeSignal OA, system design, AOWE behavioral | Content complete |
 
 ---
 
@@ -43,6 +44,7 @@ Targeted prep for specific company interviews. Each guide covers the company's p
 | Company | Role | Focus |
 |---------|------|-------|
 | [Temporal Technologies](companies/temporal.md) | Senior SWE — Billing/Metering/Cloud Nexus | Temporal internals, Go, billing systems, data pipelines, platform architecture |
+| [Dropbox](courses/dropbox/) | Full Stack SWE — Dash Experiences | Dash AI search, React/TS + Python/Go, CodeSignal OA, hybrid retrieval, RAG, AOWE values |
 
 ---
 
