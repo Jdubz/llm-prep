@@ -146,7 +146,45 @@ If asked about your work style or preferences:
 
 ---
 
-## 5. Engineering Career Framework
+## 5. Working in a 0→1 Product Environment
+
+The listing describes Dash Experiences as a **"0→1 product environment"** and lists "comfortable working in early-stage or ambiguous product environments" as a preferred qualification. This is a distinct cultural signal — they want builders, not maintainers.
+
+### What 0→1 Means in Practice
+
+- **Ambiguous requirements** — the PM might have a vision, not a spec. You fill in the gaps.
+- **Rapid prototyping** — build fast, validate with users, iterate or kill. Not everything ships.
+- **Scope ownership** — you don't just code to a ticket. You help define what the ticket should be.
+- **Shifting priorities** — what matters this sprint may be deprioritized next sprint. Adaptability > attachment.
+- **Cross-functional intimacy** — you sit closer to design and PM than in a mature product team. More influence, more responsibility.
+
+### What They Look For
+
+- You've shipped features in uncertain environments and can tell stories about it
+- You make reasonable decisions with incomplete information, then adjust
+- You're comfortable discarding work when the direction changes (no ego attachment)
+- You proactively de-risk by shipping incrementally (MVP → iterate) rather than building the full vision upfront
+- You can articulate trade-offs between "do it right" and "do it now" and choose wisely per context
+
+### Story Themes
+
+- "Requirements were vague, so I built a lightweight prototype to validate the concept before investing in the full implementation"
+- "We shipped an MVP in 2 weeks, got user feedback that changed our approach entirely, and the final product was better for it"
+- "I proposed cutting scope to hit a launch window, and we added the remaining features in a fast follow based on actual usage data"
+- "The project direction changed mid-sprint based on new user research — I adapted the architecture to support the pivot without starting over"
+
+### AOWE Mapping
+
+| 0→1 Behavior | AOWE Value |
+|---------------|-----------|
+| Proposing an ambitious MVP scope | Aim Higher |
+| Collaborating with PM/design to define requirements | We, Not I |
+| Making decisions under ambiguity without waiting to be told | Own It |
+| Supporting teammates through direction changes without blame | Make Work Human |
+
+---
+
+## 6. Engineering Career Framework
 
 Dropbox publishes their engineering career framework publicly. It's used in hiring evaluation.
 
@@ -182,7 +220,7 @@ The interview assesses whether you match the target level:
 
 ---
 
-## 6. Common Behavioral Questions
+## 7. Common Behavioral Questions
 
 ### Direct Dropbox Questions
 
@@ -216,7 +254,7 @@ Result:    2 sentences. Quantify if possible. What did you learn?
 
 ---
 
-## 7. Questions to Ask Your Interviewers
+## 8. Questions to Ask Your Interviewers
 
 ### About the Team
 - "What does the Dash Experiences team's roadmap look like for the next 6 months?"

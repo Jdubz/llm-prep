@@ -2,9 +2,11 @@
 
 Interview preparation for the Full Stack Software Engineer role on Dropbox's Dash Experiences team. Covers Dropbox Dash (AI-powered universal search), the full-stack tech stack, coding interviews, system design, and behavioral prep.
 
-> **Perspective**: You're an experienced full-stack engineer with AI/LLM knowledge. This course focuses on Dropbox-specific product context (Dash), their interview pipeline (CodeSignal OA + onsite loop), and the full-stack skills (React/TypeScript + Python/Go) that this role demands.
+> **Perspective**: You're an experienced full-stack engineer with AI/LLM knowledge. **This role leans frontend-heavy** — the listing requires React/TypeScript/HTML/CSS experience and treats backend (Python/Go) as a preferred-not-required qualification. Six of ten listed responsibilities are explicitly frontend: responsive UIs, performance optimization, designer collaboration, and building interactive AI interfaces. Prepare accordingly — lead with frontend depth, backend as supporting context.
 >
-> **Prerequisites**: [React](../react/), [Node.js & TypeScript](../nodejs/), [Python](../python/), [LLM Engineering](../llms/), [General Interview Techniques](../general-interview/)
+> **Prerequisites**: [React](../react/) *(critical path)*, [Node.js & TypeScript](../nodejs/), [Python](../python/), [LLM Engineering](../llms/), [General Interview Techniques](../general-interview/)
+>
+> **Job Listing**: [Full Stack Software Engineer, Dash Experiences](https://www.dropbox.jobs/en/jobs/7569140/full-stack-software-engineer-dash-experiences/) (Job ID 7569140)
 
 ---
 
@@ -19,8 +21,8 @@ Interview preparation for the Full Stack Software Engineer role on Dropbox's Das
 - [02 – Agents and Infrastructure](./01-dash-architecture/02-agents-and-infrastructure.md) — Multi-step AI agents, custom DSL/interpreter, feature store (Feast/Spark/Dynovault), XGBoost ranking
 
 ### 02 — Full Stack Fundamentals
-- [01 – Frontend Patterns](./02-full-stack-fundamentals/01-frontend-patterns.md) — React + TypeScript, API-QL (client-side GraphQL), search/AI UI patterns, testing
-- [02 – Backend Patterns](./02-full-stack-fundamentals/02-backend-patterns.md) — Python monolith (Metaserver) to Atlas, Go services, API design, data pipeline patterns
+- [01 – Frontend Patterns](./02-full-stack-fundamentals/01-frontend-patterns.md) — Confirmed Dropbox stack (DIG, Redux, SCSS/BEM, Edison, Rollup), API-QL, CSS & responsive design, AI UX patterns, frontend performance, designer collaboration, data-driven decisions, vanilla JS & React interview prep *(high priority — role is frontend-heavy)*
+- [02 – Backend Patterns](./02-full-stack-fundamentals/02-backend-patterns.md) — Python monolith (Metaserver) to Atlas, Go services, API design, data pipeline patterns *(familiarity level — backend is preferred, not required)*
 
 ### 03 — Coding Interview
 - [01 – CodeSignal OA Guide](./03-coding-interview/01-codesignal-oa-guide.md) — Format, Cosmo AI assistant (required), 4 questions in 60 min, strategy
@@ -68,15 +70,28 @@ Each module directory contains numbered files:
 
 ## Study Plan
 
+### Confirmed Interview Format (from recruiter screen)
+
+**Day 1 (must pass to proceed):**
+1. **Frontend Coding** — React/TypeScript (1 hr)
+2. **Full Stack Coding** — React/TypeScript + Python (1 hr)
+3. **Project Deep Dive** — you select a project, go deep into architecture & structure (1 hr)
+
+**Day 2 (leveling):** Behavioral + System Design (IC4+ only)
+
+### Study Plan
+
 | Priority | Module | Time | Focus |
 |----------|--------|------|-------|
-| 1 | 05 — Behavioral & Interview Prep | 2 hrs | Understand the full pipeline, prep STAR stories |
-| 2 | 03 — Coding Interview | 4 hrs | CodeSignal OA prep, drill classic Dropbox problems |
-| 3 | 04 — System Design | 3 hrs | File sync + search infrastructure design practice |
-| 4 | 00 — Company & Product | 1.5 hrs | Know Dash inside-out, show genuine product interest |
-| 5 | 01 — Dash Architecture | 2 hrs | Technical depth on RAG, agents, ranking |
-| 6 | 02 — Full Stack Fundamentals | 2 hrs | Dropbox-specific stack patterns |
-| 7 | 06 — Exercises & Practice | 6+ hrs | Coding challenges, quizzes, mock interviews (spread across study days) |
+| 1 | 02 — Frontend Patterns | 4 hrs | React/TS coding challenges (autocomplete, hooks), CSS, AI UX, DIG/Redux/SCSS stack — **both coding rounds test React** |
+| 2 | 03 — Coding Interview | 3 hrs | Classic Dropbox problems in Python (for Interview 2), algorithm patterns |
+| 3 | 06 — Exercises: Project Deep Dive Prep | 3 hrs | Select project, practice architecture walkthrough, prepare for deep probing |
+| 4 | 05 — Behavioral & Interview Prep | 2 hrs | AOWE, STAR stories, 0→1 mindset, full pipeline |
+| 5 | 00 — Company & Product | 1.5 hrs | Know Dash inside-out, show genuine product interest |
+| 6 | 04 — System Design | 3 hrs | File sync + search infrastructure (Day 2, IC4+ only) |
+| 7 | 01 — Dash Architecture | 1.5 hrs | Conceptual understanding of RAG, agents, ranking |
+| 8 | 02 — Backend Patterns | 1 hr | Familiarity level — API design, connector lifecycle |
+| 9 | 06 — Exercises & Practice | 6+ hrs | Coding challenges, quizzes, mock interviews (spread across study days) |
 
 ## Prerequisites
 - [React](../react/) — hooks, performance, patterns

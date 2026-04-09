@@ -2,6 +2,8 @@
 
 The backend stack powering Dropbox Dash: Python services (Metaserver/Atlas), Go for performance-critical paths, API design patterns, and data pipeline architecture.
 
+> **Priority for this role:** The job listing requires "familiarity with backend development concepts such as APIs and server-side logic" — backend languages (Python, Go) are a **preferred** qualification, not required. This module is valuable context for system design interviews and cross-stack collaboration, but your study time is better spent deepening frontend skills (Module 02, file 1) and coding interview prep (Module 03). Know the patterns here at a conceptual level; don't try to memorize Go concurrency or Kafka pipeline details.
+
 ---
 
 ## 1. Dropbox Backend Stack
