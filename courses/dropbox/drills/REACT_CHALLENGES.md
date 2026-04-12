@@ -286,6 +286,12 @@ type Connector = {
 
 These challenges span React/TypeScript on the frontend AND Python on the backend. In practice, you'd have both files open in CodeSignal's IDE.
 
+**Framework note:** Dropbox uses a custom proprietary Python framework (not
+Flask/Django/FastAPI), with gRPC for service communication. For the interview,
+the Python backend is likely plain Python with simple HTTP handling (e.g.,
+`http.server` or a minimal provided harness) — focus on clean data modeling and
+API design rather than framework-specific patterns.
+
 ### Challenge 05 — File Explorer with Python API
 
 **Phase 1:** Python backend: implement `list_files(path)`, `create_file(path, content)`, `delete_file(path)` with in-memory filesystem.

@@ -5,6 +5,17 @@ Progressive coding drills modeled after reported Dropbox CodeSignal OA problems.
 **Primary language: Python** (recommended for CodeSignal OA speed).
 TypeScript versions available for cross-training.
 
+### Framework Note
+
+Dropbox does **not** use Flask, Django, or FastAPI. Their Python backend is a
+~3M-line monolith ("Metaserver") running on a custom proprietary framework,
+currently being decomposed into gRPC microservices (project "Atlas"). Dash
+specifically uses Python for RAG/AI pipelines, feature engineering (PySpark),
+and orchestration — not traditional web framework route handlers. The Go layer
+handles low-latency feature serving (~20ms). These drills intentionally test
+**pure Python problem-solving** (data structures, algorithms, systems thinking)
+rather than framework knowledge, which matches what the interview evaluates.
+
 ---
 
 ## Cosmo Simulation Guidelines

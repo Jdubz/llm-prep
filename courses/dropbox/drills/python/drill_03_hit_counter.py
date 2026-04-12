@@ -51,33 +51,66 @@ Level 4 — Top K (15 min)
     Remove all hits strictly before the given timestamp.
     Return the count of hits removed.
 """
-
 from __future__ import annotations
-
+from collections import defaultdict
 
 class HitCounter:
     def __init__(self, window: int = 300) -> None:
-        # TODO: initialize your data structures
+        self.hits = defaultdict(list)
+        self.window = window
         pass
 
     def hit(self, timestamp: int, endpoint: str = "/") -> None:
-        raise NotImplementedError("TODO: implement hit")
+        self.hits[endpoint].append(timestamp)
+    # REVIEW: Clean. Lists stay sorted naturally since timestamps are non-decreasing
+    #   — a property you could exploit with bisect for O(log n) window queries.
 
     def get_hits(self, timestamp: int, endpoint: str | None = None) -> int:
-        raise NotImplementedError("TODO: implement get_hits")
+        hits = []
+        if endpoint:
+            hits += self.hits.get(endpoint, [])
+        else:
+            for h in self.hits.values():
+                hits += h
+        total_hits = [h for h in hits if h <= timestamp and h > timestamp - self.window]
+
+        return len(total_hits)
+    # REVIEW: `if endpoint:` is a falsy check, not a None check. An empty string ""
+    #   would fall through to the all-endpoints branch. Use `if endpoint is not None`.
+    #   Also builds a flat list then filters — O(n) space. Could sum counts in-place.
 
     def get_endpoints(self) -> list[str]:
-        raise NotImplementedError("TODO: implement get_endpoints")
+        return list(self.hits.keys())
+    # REVIEW: Spec says "sorted alphabetically" — this returns insertion order.
+    #   Tests pass by coincidence. Use `sorted(self.hits.keys())`.
+    #   Also returns endpoints even after all their hits are cleared.
 
     def get_hit_rate(self, timestamp: int, endpoint: str | None = None) -> float:
-        raise NotImplementedError("TODO: implement get_hit_rate")
+        hits = self.get_hits(timestamp, endpoint)
+        return hits / self.window
+    # REVIEW: Clean. Good reuse of get_hits.
 
     def top_endpoints(self, timestamp: int, k: int) -> list[tuple[str, int]]:
-        raise NotImplementedError("TODO: implement top_endpoints")
+        all_hits = []
+        for endpoint in self.hits.keys():
+            total_hits = self.get_hits(timestamp, endpoint)
+            if total_hits > 0:
+                all_hits.append((endpoint, total_hits))
+        sorted_hits = sorted(all_hits, key=lambda hit: (-hit[1], hit[0]))
+        return sorted_hits[:k]
+    # REVIEW: Correct. Good (-count, endpoint) sort key for desc count + alpha tiebreak.
 
     def clear_before(self, timestamp: int) -> int:
-        raise NotImplementedError("TODO: implement clear_before")
+        removed = 0
+        for endpoint, hits in self.hits.items():
+            self.hits[endpoint] = [h for h in hits if h > timestamp]
+            removed += len(hits) - len(self.hits[endpoint])
 
+        return removed
+    # REVIEW: Correct. Mutating dict values while iterating .items() is safe in Python
+    #   (you're replacing values, not adding/removing keys) — but an interviewer may
+    #   ask about it. Leaves empty lists for fully-cleared endpoints, so get_endpoints
+    #   still returns them.
 
 # ─── Self-Checks (do not edit below this line) ──────────────────
 

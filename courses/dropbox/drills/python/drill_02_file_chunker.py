@@ -75,61 +75,133 @@ Examples
 """
 
 import hashlib
-
+import math
+import uuid
 
 class FileChunker:
     def __init__(self):
-        # TODO: initialize your data structures
+        self.uploads = {}
+        self.chunk_index = {
+            "duplicates": 0,
+        }
         pass
 
     # ── Level 1 ──────────────────────────────────────────────
 
     def chunk(self, data: str, chunk_size: int) -> list[str]:
-        """Split data into chunks of chunk_size. Last chunk may be smaller."""
-        raise NotImplementedError("Level 1: chunk")
+        chunks = []
+        end = len(data)
+        index = 0
+        while index < end:
+            chunks.append(data[index:index + chunk_size])
+            index += chunk_size
+
+        return chunks
+    # REVIEW: Works, but the manual index tracking is doing what range() gives
+    # you for free: for i in range(0, len(data), chunk_size) with data[i:i+chunk_size].
+    # In an interview, reaching for range with a step argument signals Python fluency.
 
     def reassemble(self, chunks: list[str]) -> str:
-        """Join chunks back into original data."""
-        raise NotImplementedError("Level 1: reassemble")
+        return "".join(chunks)
+    # REVIEW: Clean.
 
     def get_chunk_count(self, data: str, chunk_size: int) -> int:
-        """Number of chunks needed."""
-        raise NotImplementedError("Level 1: get_chunk_count")
+        return math.ceil(len(data) / chunk_size)
+    # REVIEW: Good. math.ceil is readable. The ceiling-division trick
+    # -(-len(data) // chunk_size) avoids the float conversion but is less
+    # readable — fine either way in an interview.
 
     # ── Level 2 ──────────────────────────────────────────────
 
     def init_upload(self, filename: str, total_chunks: int) -> str:
         """Start upload session, return session_id."""
-        raise NotImplementedError("Level 2: init_upload")
+        session_id = str(uuid.uuid4())
+        self.uploads[session_id] = {
+            "filename": filename,
+            "total_chunks": total_chunks,
+            "chunks": [None] * total_chunks,
+        }
+        return session_id
+    # REVIEW: Solid. uuid4 is the right choice for unique IDs.
 
     def upload_chunk(self, session_id: str, chunk_index: int, data: str) -> bool:
         """Upload a chunk. False if invalid session or index out of range."""
-        raise NotImplementedError("Level 2: upload_chunk")
+        upload = self.uploads.get(session_id)
+        if not upload:
+            return False
+        if chunk_index >= upload["total_chunks"] or chunk_index < 0:
+            return False
+        
+        # dedupe
+        hash = self.compute_hash(data)
+        existing_chunk = self.chunk_index.get(hash)
+        if existing_chunk:
+            data = existing_chunk
+            self.chunk_index["duplicates"] += len(data)
+        else:
+            self.chunk_index[hash] = data
+
+        upload["chunks"][chunk_index] = data
+        return True
+    # REVIEW: Two things an interviewer might probe:
+    # 1. `hash` shadows the built-in hash(). Use `h` or `digest` instead.
+    # 2. chunk_index stores hashes mixed with the "duplicates" counter in one
+    #    dict. A sha256 hex digest can never equal "duplicates", so it works,
+    #    but separating content_store and metadata into distinct dicts
+    #    (e.g. self.content_store = {} and self.bytes_saved = 0) is cleaner
+    #    and shows you think about data modeling.
 
     def get_progress(self, session_id: str) -> float:
         """Progress 0.0-1.0, or -1.0 if invalid session."""
-        raise NotImplementedError("Level 2: get_progress")
+        upload = self.uploads.get(session_id)
+        if not upload:
+            return -1.0
+        
+        complete = len([c for c in upload["chunks"] if c])
+        return complete / upload["total_chunks"]
+    # REVIEW: `if c` is falsy for both None AND empty string "". If a chunk
+    # were ever an empty string, this would miscount. Safer to use
+    # `if c is not None`. Same applies to get_missing_chunks below.
 
     # ── Level 3 ──────────────────────────────────────────────
 
     def complete_upload(self, session_id: str) -> str | None:
         """Reassemble if complete, else None. Cleans up session."""
-        raise NotImplementedError("Level 3: complete_upload")
+        progress = self.get_progress(session_id)
+        if progress < 1.0:
+            return None
+        upload = self.uploads.get(session_id)
+        complete = self.reassemble(upload["chunks"])
+        del self.uploads[session_id]
+        return complete
+    # REVIEW: Works, but relies on float comparison (progress < 1.0).
+    # With small integer division this is fine, but an interviewer might ask
+    # about floating point precision at scale. Comparing the count of
+    # non-None chunks to total_chunks as integers avoids float entirely.
 
     def get_missing_chunks(self, session_id: str) -> list[int]:
         """Sorted list of missing chunk indices. [] if invalid session."""
-        raise NotImplementedError("Level 3: get_missing_chunks")
+        upload = self.uploads.get(session_id)
+        if not upload:
+            return []
+        
+        missing_chunks = [i for i, c in enumerate(upload["chunks"]) if not c]
+        return missing_chunks
+    # REVIEW: Same `if not c` vs `c is None` note as get_progress.
+    # Otherwise clean — enumerate + list comp is the right idiom here.
 
     # ── Level 4 ──────────────────────────────────────────────
 
     def compute_hash(self, data: str) -> str:
         """SHA-256 hex digest of data."""
-        raise NotImplementedError("Level 4: compute_hash")
+        hash = hashlib.sha256(data.encode()).hexdigest()
+        return hash
+    # REVIEW: Correct. Same `hash` shadowing note as upload_chunk.
 
     def get_storage_saved(self) -> int:
         """Total characters saved by deduplication."""
-        raise NotImplementedError("Level 4: get_storage_saved")
-
+        return self.chunk_index["duplicates"]
+    # REVIEW: Good fix from before — tracking the running total now.
 
 # ─── Self-Checks (do not edit below this line) ──────────────────
 

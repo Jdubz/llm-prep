@@ -7,21 +7,19 @@
 <style>
   :root { --bg:#0d1117; --sf:#161b22; --bd:#30363d; --tx:#e6edf3; --mt:#8b949e; --ac:#635bff; }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'SF Mono','Fira Code',Consolas,monospace; background:var(--bg); color:var(--tx); padding:20px; font-size:12px; }
-  h1 { font-size:16px; text-align:center; margin-bottom:4px; font-family:-apple-system,sans-serif; }
-  .sub { text-align:center; color:var(--mt); font-size:11px; margin-bottom:16px; font-family:-apple-system,sans-serif; }
-  .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; max-width:1100px; margin:0 auto; }
-  .col { display:flex; flex-direction:column; gap:12px; }
-  .section { background:var(--sf); border:1px solid var(--bd); border-radius:6px; padding:10px 12px; }
-  .section h2 { font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--ac); margin-bottom:8px; font-family:-apple-system,sans-serif; }
+  body { font-family:'SF Mono','Fira Code',Consolas,monospace; background:var(--bg); color:var(--tx); padding:1.25rem; font-size:0.95rem; }
+  h1 { font-size:1.3rem; text-align:center; margin-bottom:0.25rem; font-family:-apple-system,sans-serif; }
+  .sub { text-align:center; color:var(--mt); font-size:0.85rem; margin-bottom:1rem; font-family:-apple-system,sans-serif; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(30rem, 1fr)); gap:0.75rem; margin:0 auto; }
+  .section { background:var(--sf); border:1px solid var(--bd); border-radius:6px; padding:0.625rem 0.75rem; }
+  .section h2 { font-size:0.8rem; text-transform:uppercase; letter-spacing:1.2px; color:var(--ac); margin-bottom:0.5rem; font-family:-apple-system,sans-serif; }
   table { width:100%; border-collapse:collapse; }
-  td { padding:2px 0; vertical-align:top; }
-  td:first-child { color:var(--mt); padding-right:8px; white-space:nowrap; }
+  td { padding:0.15rem 0; vertical-align:top; }
+  td:first-child { color:var(--mt); padding-right:0.5rem; white-space:nowrap; }
   td:last-child { font-weight:600; text-align:right; white-space:nowrap; }
-  kbd { background:#21262d; padding:1px 5px; border-radius:3px; border:1px solid var(--bd); font-size:11px; }
-  .sep { border-top:1px solid var(--bd); margin:6px 0; }
+  kbd { background:#21262d; padding:0.1rem 0.35rem; border-radius:3px; border:1px solid var(--bd); font-size:0.85rem; }
+  .sep { border-top:1px solid var(--bd); margin:0.375rem 0; }
   @media print { body { background:#fff; color:#000; } .section { border-color:#ccc; } kbd { background:#eee; border-color:#ccc; } td:first-child { color:#666; } .section h2 { color:#333; } }
-  @media (max-width:800px) { .grid { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -30,8 +28,6 @@
 <p class="sub">Linux keybindings. Print this page (Ctrl+P) for a physical reference.</p>
 
 <div class="grid">
-
-<div class="col">
 
 <div class="section">
 <h2>Navigate</h2>
@@ -66,10 +62,6 @@
 <tr><td>Select all in file</td><td><kbd>Ctrl</kbd>+<kbd>A</kbd></td></tr>
 </table>
 </div>
-
-</div>
-
-<div class="col">
 
 <div class="section">
 <h2>Edit</h2>
@@ -117,10 +109,6 @@
 </table>
 </div>
 
-</div>
-
-<div class="col">
-
 <div class="section">
 <h2>IntelliSense</h2>
 <table>
@@ -163,8 +151,6 @@
 <tr><td colspan="2" style="color:var(--ac);font-weight:700;padding:4px 0">Run file in terminal</td></tr>
 <tr><td></td><td><kbd>Ctrl</kbd>+<kbd>`</kbd> → <kbd>↑</kbd> → <kbd>Enter</kbd></td></tr>
 </table>
-</div>
-
 </div>
 
 </div>
